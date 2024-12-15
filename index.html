@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>諭示裁定樞機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+
+    <!-- 網頁標題列 -->
+    <header class="bg-blue-600 text-white py-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">諭示裁定樞機</h1>
+            <button class="bg-white text-blue-600 py-2 px-4 rounded hover:bg-gray-200 transition" onclick="showContentDisclaimer()">內容聲明</button>
+        </div>
+    </header>
+
+    <!-- 主體內容 -->
+    <main class="flex-grow flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96">
+            <h2 class="text-2xl font-bold mb-2 text-center">選擇你的選項</h2>
+
+            <!-- 新增的描述文字 -->
+            <p class="text-center text-gray-700 mb-6">諭示裁定樞機會幫你在兩人之間作抉擇。</p>
+
+            <div class="mb-4">
+                <label class="block mb-2 font-semibold">選擇第一方身份（可多選）</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">選項一
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">選項二
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">選項三
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">選項四
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">選項五
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">選項六
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">選項七
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player1" value="0" class="mr-2 none-option" onclick="handleNoneOption('player1')">以上皆無
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block mb-2 font-semibold">選擇第二方身份（可多選）</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">選項一
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">選項二
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">選項三
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">選項四
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">選項五
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">選項六
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">選項七
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="player2" value="0" class="mr-2 none-option" onclick="handleNoneOption('player2')">以上皆無
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="determineWinner()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
+                判斷輸贏
+            </button>
+
+            <div id="result" class="mt-4 text-center font-bold"></div>
+        </div>
+    </main>
+
+    <!-- 頁腳 -->
+    <footer class="bg-gray-800 text-white py-4 text-center">
+        © 2024 諭示裁定樞機. 保留所有權利.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            alert('本網站的內容僅供娛樂用途，所提供的資訊不代表任何立場，也不應被視為對任何個人的攻擊或歧視。我們絕不支持任何形式的種族、性別、宗教、性取向、身心障礙、年齡、國籍或任何其他群體的歧視。本網站旨在提供輕鬆和愉快的娛樂內容，請謹慎解讀，並在使用時保持包容和尊重的態度。如有任何內容引起您的不適，敬請理解這並非我們的本意，並且我們會盡力改進。');
+        });
+
+        function showContentDisclaimer() {
+            alert('本網站的內容僅供娛樂用途，所提供的資訊不代表任何立場，也不應被視為對任何個人的攻擊或歧視。我們絕不支持任何形式的種族、性別、宗教、性取向、身心障礙、年齡、國籍或任何其他群體的歧視。本網站旨在提供輕鬆和愉快的娛樂內容，請謹慎解讀，並在使用時保持包容和尊重的態度。如有任何內容引起您的不適，敬請理解這並非我們的本意，並且我們會盡力改進。');
+        }
+
+        function handleNoneOption(player) {
+            const noneOption = document.querySelector(`input[name="${player}"][value="0"]`);
+            const otherOptions = document.querySelectorAll(`input[name="${player}"].option`);
+
+            if (noneOption.checked) {
+                otherOptions.forEach(option => option.disabled = true);
+            } else {
+                otherOptions.forEach(option => option.disabled = false);
+            }
+        }
+
+        function determineWinner() {
+            const player1Choices = Array.from(document.querySelectorAll('input[name="player1"]:checked')).map(el => parseInt(el.value));
+            const player2Choices = Array.from(document.querySelectorAll('input[name="player2"]:checked')).map(el => parseInt(el.value));
+            const resultDiv = document.getElementById('result');
+
+            if (player1Choices.length === 0 || player2Choices.length === 0) {
+                resultDiv.innerHTML = '請至少選擇每方一個身份';
+                resultDiv.className = 'mt-4 text-center font-bold text-red-500';
+                return;
+            }
+
+            let player1Score = player1Choices.reduce((acc, val) => acc + val, 0);
+            let player2Score = player2Choices.reduce((acc, val) => acc + val, 0);
+
+            if (player1Score > player2Score) {
+                resultDiv.innerHTML = '第一方勝利';
+                resultDiv.className = 'mt-4 text-center font-bold text-green-500';
+            } else if (player2Score > player1Score) {
+                resultDiv.innerHTML = '第二方勝利';
+                resultDiv.className = 'mt-4 text-center font-bold text-green-500';
+            } else {
+                resultDiv.innerHTML = '平手';
+                resultDiv.className = 'mt-4 text-center font-bold text-gray-500';
+            }
+        }
+    </script>
+</body>
+</html>
