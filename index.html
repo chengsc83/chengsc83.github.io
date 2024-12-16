@@ -4,48 +4,91 @@
     <meta charset="UTF-8">
     <title>諭示裁定樞機</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #e6f2ff 0%, #f0f9ff 100%);
+        }
+        .checkbox-custom:checked + label {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .shadow-subtle {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex flex-col min-h-screen">
+<body class="min-h-screen flex flex-col">
 
     <!-- 網頁標題列 -->
-    <header class="bg-blue-600 text-white py-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">諭示裁定樞機</h1>
-            <button class="bg-white text-blue-600 py-2 px-4 rounded hover:bg-gray-200 transition" onclick="showContentDisclaimer()">內容聲明</button>
+    <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <h1 class="text-3xl font-bold tracking-wide flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                諭示裁定樞機
+            </h1>
+            <button onclick="showContentDisclaimer()" class="bg-white text-blue-600 px-4 py-2 rounded-full hover:bg-blue-50 transition transform hover:scale-105">
+                內容聲明
+            </button>
         </div>
     </header>
 
     <!-- 主體內容 -->
-    <main class="flex-grow flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-md w-96">
-            <h2 class="text-2xl font-bold mb-2 text-center">選擇你的選項</h2>
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xl rounded-2xl shadow-subtle border border-gray-100 p-8 transform transition hover:scale-[1.02]">
+            <h2 class="text-3xl font-bold mb-4 text-center text-blue-600">公平裁決</h2>
 
-            <!-- 新增的描述文字 -->
-            <p class="text-center text-gray-700 mb-6">諭示裁定樞機會幫你在兩人之間作抉擇。</p>
+            <!-- 名稱輸入 -->
+            <div class="mb-6 grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-700">第一方名稱</label>
+                    <input 
+                        type="text" 
+                        id="player1Name" 
+                        placeholder="請輸入第一方名稱(非必須)" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-700">第二方名稱</label>
+                    <input 
+                        type="text" 
+                        id="player2Name" 
+                        placeholder="請輸入第二方名稱(非必須)" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+            </div>
 
-            <div class="mb-4">
-                <label class="block mb-2 font-semibold">選擇第一方身份（可多選）</label>
-                <div class="grid grid-cols-3 gap-2">
+            <p class="text-center text-gray-500 mb-6">只看身份，不論事實。最公平、中立的裁決</p>
+
+            <!-- 第一方身份選擇 -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-4 text-blue-700">選擇第一方身份</h3>
+                <div class="grid grid-cols-3 gap-3">
                     <label class="flex items-center">
                         <input type="checkbox" name="player1" value="1" class="mr-2 option">女性
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="2" class="mr-2 option">跨性別者
+                        <input type="checkbox" name="player1" value="2" class="mr-2 option">LGBTQIAPK+
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" name="player1" value="1" class="mr-2 option">新住民
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="1" class="mr-2 option">原住民
+                        <input type="checkbox" name="player1" value="1.35" class="mr-2 option">原住民
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" name="player1" value="0.5" class="mr-2 option">新住民子女
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="1" class="mr-2 option">性別不安
+                        <input type="checkbox" name="player1" value="-1" class="mr-2 option">戰鬥直升機
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="1" class="mr-2 option">同性戀
+                        <input type="checkbox" name="player1" value="1" class="mr-2 option">左派
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" name="player1" value="0" class="mr-2 none-option" onclick="handleNoneOption('player1')">以上皆無
@@ -53,29 +96,30 @@
                 </div>
             </div>
 
-            <div class="mb-4">
-                <label class="block mb-2 font-semibold">選擇第二方身份（可多選）</label>
-                <div class="grid grid-cols-3 gap-2">
+            <!-- 第二方身份選擇 -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-4 text-blue-700">選擇第二方身份</h3>
+                <div class="grid grid-cols-3 gap-3">
                     <label class="flex items-center">
                         <input type="checkbox" name="player2" value="1" class="mr-2 option">女性
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="2" class="mr-2 option">跨性別者
+                        <input type="checkbox" name="player2" value="2" class="mr-2 option">LGBTQIAPK+
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" name="player2" value="1" class="mr-2 option">新住民
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="1" class="mr-2 option">原住民
+                        <input type="checkbox" name="player2" value="1.35" class="mr-2 option">原住民
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" name="player2" value="0.5" class="mr-2 option">新住民子女
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="1" class="mr-2 option">性別不安
+                        <input type="checkbox" name="player2" value="-1" class="mr-2 option">戰鬥直升機
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="1" class="mr-2 option">同性戀
+                        <input type="checkbox" name="player2" value="1" class="mr-2 option">左派
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" name="player2" value="0" class="mr-2 none-option" onclick="handleNoneOption('player2')">以上皆無
@@ -83,20 +127,42 @@
                 </div>
             </div>
 
-            <button onclick="determineWinner()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
-                判斷輸贏
+            <button onclick="determineWinner()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition transform active:scale-[0.98] shadow-md">
+                公平裁決
             </button>
-
-            <div id="result" class="mt-4 text-center font-bold"></div>
-            <h3>聯絡信箱:bananaminpo@gmail.com</h3>
-        </div>
-            
         </div>
     </main>
 
+    <!-- 結果展示區 -->
+    <section id="resultSection" class="hidden bg-gray-100 py-8">
+        <div class="container mx-auto max-w-xl">
+            <div class="bg-white rounded-2xl shadow-md p-6">
+                <h3 class="text-2xl font-bold mb-4 text-center text-blue-600">裁決結果</h3>
+                
+                <!-- 第一方詳情 -->
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold text-blue-700">第一方詳情</h4>
+                    <div id="player1Details" class="text-gray-700"></div>
+                </div>
+
+                <!-- 第二方詳情 -->
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold text-blue-700">第二方詳情</h4>
+                    <div id="player2Details" class="text-gray-700"></div>
+                </div>
+
+                <!-- 最終結果 -->
+                <div id="finalResult" class="text-center text-2xl font-bold mt-4"></div>
+            </div>
+        </div>
+    </section>
+
     <!-- 頁腳 -->
     <footer class="bg-gray-800 text-white py-4 text-center">
-       作者:Janswoler. © 2024 諭示裁定樞機. 保留所有權利.
+        <div class="container mx-auto">
+            <p>© 2024 諭示裁定樞機 | 作者: Janswoler</p>
+            <p class="text-sm text-gray-400 mt-2">聯絡信箱：bananaminpo@gmail.com</p>
+        </div>
     </footer>
 
     <script>
@@ -120,29 +186,61 @@
         }
 
         function determineWinner() {
-            const player1Choices = Array.from(document.querySelectorAll('input[name="player1"]:checked')).map(el => parseInt(el.value));
-            const player2Choices = Array.from(document.querySelectorAll('input[name="player2"]:checked')).map(el => parseInt(el.value));
-            const resultDiv = document.getElementById('result');
+            const player1Choices = Array.from(document.querySelectorAll('input[name="player1"]:checked')).map(el => ({
+                label: el.nextSibling.textContent,
+                value: parseFloat(el.value)
+            }));
+            const player2Choices = Array.from(document.querySelectorAll('input[name="player2"]:checked')).map(el => ({
+                label: el.nextSibling.textContent,
+                value: parseFloat(el.value)
+            }));
 
+            const resultSection = document.getElementById('resultSection');
+            const player1DetailsDiv = document.getElementById('player1Details');
+            const player2DetailsDiv = document.getElementById('player2Details');
+            const finalResultDiv = document.getElementById('finalResult');
+
+            // 驗證是否選擇身份
             if (player1Choices.length === 0 || player2Choices.length === 0) {
-                resultDiv.innerHTML = '請至少選擇每方一個身份';
-                resultDiv.className = 'mt-4 text-center font-bold text-red-500';
+                alert('請至少選擇每方一個身份');
                 return;
             }
 
-            let player1Score = player1Choices.reduce((acc, val) => acc + val, 0);
-            let player2Score = player2Choices.reduce((acc, val) => acc + val, 0);
+            // 獲取玩家名稱
+            const player1Name = document.getElementById('player1Name').value.trim() || '第一方';
+            const player2Name = document.getElementById('player2Name').value.trim() || '第二方';
 
+            // 計算分數
+            const player1Score = player1Choices.reduce((acc, choice) => acc + choice.value, 0);
+            const player2Score = player2Choices.reduce((acc, choice) => acc + choice.value, 0);
+
+            // 顯示雙方詳情
+            player1DetailsDiv.innerHTML = `
+                <p>姓名：${player1Name}</p>
+                <p>身份：${player1Choices.map(c => c.label).join('、')}</p>
+                <p>總得分：${player1Score.toFixed(1)}</p>
+            `;
+
+            player2DetailsDiv.innerHTML = `
+                <p>姓名：${player2Name}</p>
+                <p>身份：${player2Choices.map(c => c.label).join('、')}</p>
+                <p>總得分：${player2Score.toFixed(1)}</p>
+            `;
+
+            // 判斷勝負
             if (player1Score > player2Score) {
-                resultDiv.innerHTML = '第一方勝利';
-                resultDiv.className = 'mt-4 text-center font-bold text-green-500';
+                finalResultDiv.innerHTML = `🏆 ${player1Name}勝利`;
+                finalResultDiv.className = 'text-center text-2xl font-bold mt-4 text-green-600';
             } else if (player2Score > player1Score) {
-                resultDiv.innerHTML = '第二方勝利';
-                resultDiv.className = 'mt-4 text-center font-bold text-green-500';
+                finalResultDiv.innerHTML = `🏆 ${player2Name}勝利`;
+                finalResultDiv.className = 'text-center text-2xl font-bold mt-4 text-green-600';
             } else {
-                resultDiv.innerHTML = '平手';
-                resultDiv.className = 'mt-4 text-center font-bold text-gray-500';
+                finalResultDiv.innerHTML = '平手';
+                finalResultDiv.className = 'text-center text-2xl font-bold mt-4 text-gray-600';
             }
+
+            // 顯示結果區塊
+            resultSection.classList.remove('hidden');
         }
     </script>
 </body>
