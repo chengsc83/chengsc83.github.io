@@ -2,246 +2,1573 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>諭示裁定樞機</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辯時計 (含全螢幕)</title> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background: linear-gradient(135deg, #e6f2ff 0%, #f0f9ff 100%);
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --font-primary: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            /* Light Mode (Default) */
+            --color-bg-page: #F3F4F6; 
+            --color-bg-container: #FFFFFF;
+            --color-bg-alt: #F9FAFB; 
+            --color-bg-info: #E0F2FE; 
+            --color-bg-modal-overlay: rgba(0,0,0,0.6);
+
+            --color-text-primary: #1F2937; 
+            --color-text-secondary: #374151; 
+            --color-text-muted: #6B7280; 
+            --color-text-on-primary: #FFFFFF;
+            --color-text-on-warning: #1F2937; 
+
+            --color-primary: #3B82F6; 
+            --color-primary-dark: #2563EB; 
+            --color-primary-light: #BFDBFE; 
+            
+            --color-secondary: #6B7280; 
+            --color-secondary-dark: #4B5563; 
+
+            --color-success: #10B981; 
+            --color-success-dark: #059669; 
+
+            --color-warning: #F59E0B; 
+            --color-warning-dark: #D97706; 
+            
+            --color-danger: #EF4444; 
+            --color-danger-dark: #DC2626; 
+
+            --color-orange-accent: #F97316; 
+            --color-orange-accent-dark: #EA580C; 
+
+            --color-border: #D1D5DB; 
+            --color-border-light: #E5E7EB; 
+            --color-border-input-focus: var(--color-primary);
+
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+
+            --border-radius-sm: 4px;
+            --border-radius-md: 6px;
+            --border-radius-lg: 8px;
+
+            --transition-fast: all 0.2s ease-in-out;
+            --transition-base: all 0.3s ease-in-out;
+
+            --color-input-bg: #FFFFFF;
+            --color-input-text: #1F2937;
+            --color-input-border: var(--color-border);
         }
-        .checkbox-custom:checked + label {
-            background-color: #3b82f6;
-            color: white;
+
+        body.dark-mode {
+            --color-bg-page: #1A202C; 
+            --color-bg-container: #2D3748; 
+            --color-bg-alt: #1F2937; 
+            --color-bg-info: #2C5282; 
+            --color-bg-modal-overlay: rgba(0,0,0,0.75);
+
+            --color-text-primary: #F7FAFC; 
+            --color-text-secondary: #E2E8F0; 
+            --color-text-muted: #A0AEC0; 
+            
+            --color-primary-light: #63B3ED; 
+
+            --color-border: #4A5568; 
+            --color-border-light: #2D3748; 
+
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.15); 
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.18), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.18);
+            
+            --color-input-bg: #1F2937; 
+            --color-input-text: #F7FAFC; 
+            --color-input-border: #4A5568; 
         }
-        .shadow-subtle {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+
+        body { 
+            font-family: var(--font-primary); 
+            margin: 0; 
+            padding: 20px 0 40px 0; 
+            background-color: var(--color-bg-page); 
+            color: var(--color-text-primary); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            box-sizing: border-box; 
+            transition: background-color var(--transition-base), color var(--transition-base); 
         }
+
+        .container { 
+            background-color: var(--color-bg-container); 
+            padding: 25px 35px 35px 35px; 
+            border-radius: var(--border-radius-lg); 
+            box-shadow: var(--shadow-lg); 
+            width: 90%; 
+            max-width: 800px; 
+            text-align: center; 
+            transition: var(--transition-base); 
+            margin-bottom: 20px; 
+        }
+
+        #themeToggleButton {
+            background-color: var(--color-secondary);
+            color: var(--color-text-on-primary);
+            border: 1px solid var(--color-secondary-dark);
+            padding: 8px 15px;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-bottom: 20px;
+            transition: var(--transition-fast);
+        }
+        #themeToggleButton:hover {
+            background-color: var(--color-secondary-dark);
+        }
+        body.dark-mode #themeToggleButton {
+             background-color: var(--color-primary-light); 
+             color: var(--color-text-primary); 
+             border-color: var(--color-primary);
+        }
+         body.dark-mode #themeToggleButton:hover {
+             background-color: var(--color-primary);
+             color: var(--color-text-on-primary);
+        }
+
+
+        h1 { 
+            color: var(--color-primary); 
+            margin-bottom: 20px; 
+            font-size: 2em; 
+            font-weight: 600;
+        }
+        h2 {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+        h3 {
+            font-weight: 600;
+            color: var(--color-text-secondary);
+        }
+         h4 {
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+
+
+        .debate-info { 
+            background-color: var(--color-bg-info); 
+            padding: 12px 18px; 
+            border-radius: var(--border-radius-md); 
+            margin-bottom: 20px; 
+            font-size: 0.95em; 
+            border: 1px solid var(--color-primary-light); 
+            text-align: left; 
+            transition: var(--transition-base); 
+        }
+        .debate-info p { margin: 6px 0; } 
+        .debate-info strong { color: var(--color-primary-dark); font-weight: 600; }
+        body.dark-mode .debate-info strong { color: var(--color-primary-light); }
+
+
+        #moderatorScript { 
+            font-size: 1.2em; 
+            color: var(--color-text-secondary); 
+            margin-bottom: 20px; 
+            padding: 18px; 
+            border: 1px solid var(--color-border-light); 
+            border-radius: var(--border-radius-md); 
+            background-color: var(--color-bg-alt); 
+            min-height: 70px; 
+            line-height: 1.6; 
+            text-align: left; 
+            transition: var(--transition-base); 
+        }
+
+        #timerDisplay { 
+            font-size: 3em; 
+            font-weight: 700; 
+            color: var(--color-primary); 
+            margin-bottom: 10px; 
+            padding: 12px 15px; 
+            border: 2px dashed var(--color-primary-light); 
+            border-radius: var(--border-radius-lg); 
+            background-color: var(--color-bg-alt); 
+            transition: var(--transition-base); 
+        }
+        
+        #timerProgressBarContainer {
+            width: 100%;
+            height: 20px; 
+            background-color: var(--color-border-light); 
+            border-radius: var(--border-radius-sm);
+            margin-top: 5px; 
+            margin-bottom: 15px; 
+            overflow: hidden; 
+        }
+        #timerProgressBar {
+            width: 0%; 
+            height: 100%;
+            background-color: var(--color-primary); 
+            border-radius: var(--border-radius-sm);
+            transition: width 0.5s ease-out, background-color var(--transition-fast); 
+        }
+        
+        #timerStatus, #drawResultDisplay, #fileImportStatus { 
+            font-size: 0.9em; 
+            color: var(--color-text-muted); 
+            margin-bottom: 10px; 
+            min-height: 1.2em; 
+            font-weight: 500; 
+            transition: color var(--transition-base); 
+        }
+        
+        #nextSegmentPreview {
+            font-size: 1em;
+            color: var(--color-text-secondary);
+            margin-top: 10px;
+            margin-bottom: 15px;
+            padding: 8px 12px;
+            border: 1px dashed var(--color-border-light);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg-alt);
+            min-height: 1.5em; 
+            transition: var(--transition-base);
+        }
+
+        button, .controls button, .setup-controls button, .draw-controls button, .timer-actions button, .flow-io button, .editor-controls button { 
+            background-color: var(--color-primary); 
+            color: var(--color-text-on-primary); 
+            border: none; 
+            padding: 10px 18px; 
+            text-align: center; 
+            text-decoration: none; 
+            display: inline-block; 
+            font-size: 0.9em; 
+            font-weight: 500; 
+            margin: 5px 4px; 
+            cursor: pointer; 
+            border-radius: var(--border-radius-md); 
+            transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+            box-shadow: var(--shadow-sm);
+        }
+        button:hover, .controls button:hover, .setup-controls button:hover, .draw-controls button:hover, .timer-actions button:hover, .flow-io button:hover, .editor-controls button:hover { 
+            background-color: var(--color-primary-dark); 
+            box-shadow: var(--shadow-md);
+        }
+        button:active, .controls button:active, .setup-controls button:active, .draw-controls button:active, .timer-actions button:active, .flow-io button:active, .editor-controls button:active { 
+            transform: scale(0.97); 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:disabled, .controls button:disabled, .setup-controls button:disabled, .draw-controls button:disabled, .timer-actions button:disabled, .flow-io button:disabled, .editor-controls button:disabled { 
+            background-color: #B0B0B0; 
+            color: #F0F0F0;
+            cursor: not-allowed; 
+            box-shadow: none;
+            transform: scale(1);
+        }
+        body.dark-mode button:disabled, body.dark-mode .controls button:disabled, 
+        body.dark-mode .setup-controls button:disabled, body.dark-mode .draw-controls button:disabled, 
+        body.dark-mode .timer-actions button:disabled, body.dark-mode .flow-io button:disabled, 
+        body.dark-mode .editor-controls button:disabled {
+            background-color: #4A5568; 
+            color: #718096; 
+        }
+
+
+        .manual-override-button, .skip-button, .editor-controls button.edit, .editor-controls button.insert-before { 
+            background-color: var(--color-warning) !important; 
+            color: var(--color-text-on-warning) !important; 
+        }
+        .manual-override-button:hover, .skip-button:hover, .editor-controls button.edit:hover, .editor-controls button.insert-before:hover { 
+            background-color: var(--color-warning-dark) !important; 
+        }
+
+        .pause-resume-button { 
+            background-color: var(--color-orange-accent) !important; 
+            color: var(--color-text-on-primary) !important;
+        }
+        .pause-resume-button:hover { 
+            background-color: var(--color-orange-accent-dark) !important; 
+        }
+
+        .draw-controls button, #finishEditingButton, .editor-controls button.duplicate { 
+            background-color: var(--color-success) !important; 
+        } 
+        .draw-controls button:hover, #finishEditingButton:hover, .editor-controls button.duplicate:hover { 
+            background-color: var(--color-success-dark) !important; 
+        }
+
+        .flow-io button, .editor-controls button.move, #cancelEditingButton { 
+            background-color: var(--color-secondary) !important; 
+        } 
+        .flow-io button:hover, .editor-controls button.move:hover, #cancelEditingButton:hover { 
+            background-color: var(--color-secondary-dark) !important; 
+        }
+        
+        .editor-controls button.delete { 
+            background-color: var(--color-danger) !important; 
+        } 
+        .editor-controls button.delete:hover { 
+            background-color: var(--color-danger-dark) !important; 
+        }
+        
+        .info { 
+            margin-top: 20px; 
+            font-size: 0.85em; 
+            color: var(--color-text-muted); 
+            transition: color var(--transition-base); 
+        }
+        #currentStageInfo { 
+            font-size: 1.1em; 
+            font-weight: 600; 
+            color: var(--color-text-secondary); 
+            margin-bottom: 12px; 
+            transition: var(--transition-base); 
+        }
+        .hidden { display: none !important; }
+
+        #speechRecognitionStatus { 
+            margin-top: 8px; 
+            font-style: italic; 
+            color: var(--color-text-muted); 
+            font-size: 0.85em; 
+            min-height: 1.1em; 
+            transition: color var(--transition-base); 
+        }
+
+        .setup-section, .draw-section, .flow-io-section, #flowEditorSection { 
+            margin-bottom: 20px; 
+            padding: 18px; 
+            border: 1px solid var(--color-border-light); 
+            border-radius: var(--border-radius-lg); 
+            background-color: var(--color-bg-alt);
+            transition: background-color var(--transition-base), border-color var(--transition-base); 
+        }
+        .setup-section label { 
+            display: block; 
+            margin-top: 10px; 
+            margin-bottom: 5px; 
+            font-weight: 500; 
+            text-align: left; 
+            color: var(--color-text-secondary);
+            transition: color var(--transition-base); 
+        }
+        .setup-section input[type="text"], .setup-section select,
+        .modal-content input[type="text"], .modal-content input[type="number"], 
+        .modal-content select, .modal-content textarea { 
+            width: calc(100% - 24px); 
+            padding: 10px 12px; 
+            border: 1px solid var(--color-input-border); 
+            border-radius: var(--border-radius-md); 
+            box-sizing: border-box; 
+            margin-bottom: 8px; 
+            font-family: var(--font-primary);
+            font-size: 0.95em;
+            color: var(--color-input-text);
+            background-color: var(--color-input-bg);
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-base), color var(--transition-base);
+        }
+        .setup-section input[type="text"]:focus, .setup-section select:focus,
+        .modal-content input[type="text"]:focus, .modal-content input[type="number"]:focus, 
+        .modal-content select:focus, .modal-content textarea:focus {
+            border-color: var(--color-border-input-focus);
+            box-shadow: 0 0 0 2px var(--color-primary-light);
+            outline: none;
+        }
+
+        .flow-io-section input[type="file"] { 
+            margin-top: 8px; 
+            display: block; 
+            margin-left: auto; 
+            margin-right: auto; 
+            padding: 5px;
+            border: 1px solid var(--color-input-border);
+            background-color: var(--color-input-bg); 
+            color: var(--color-input-text);
+            border-radius: var(--border-radius-md);
+            font-size: 0.9em;
+        }
+         body.dark-mode .flow-io-section input[type="file"]::file-selector-button {
+            background-color: var(--color-secondary);
+            color: var(--color-text-on-primary);
+            border: none;
+            padding: 5px 10px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+        }
+
+
+        .timer-actions { 
+            margin-top: 10px; 
+            margin-bottom: 10px; 
+            min-height: 40px; 
+            transition: margin var(--transition-base); 
+        }
+
+        #flowEditorList { 
+            list-style: none; 
+            padding: 0; 
+            margin-top: 15px; 
+        }
+        #flowEditorList li { 
+            background-color: var(--color-bg-container); 
+            border: 1px solid var(--color-border-light); 
+            border-radius: var(--border-radius-md); 
+            padding: 12px 15px; 
+            margin-bottom: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: grab; 
+            box-shadow: var(--shadow-sm);
+            transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+        }
+        body.dark-mode #flowEditorList li {
+            background-color: var(--color-input-bg); 
+            border-color: var(--color-border);
+        }
+        #flowEditorList li:hover {
+            background-color: #f0f0f0; 
+            box-shadow: var(--shadow-md);
+        }
+        body.dark-mode #flowEditorList li:hover {
+            background-color: #374151; 
+        }
+
+        #flowEditorList li:active { 
+            cursor: grabbing; 
+            background-color: #e9e9e9; 
+            box-shadow: var(--shadow-md);
+        } 
+        body.dark-mode #flowEditorList li:active {
+            background-color: #4A5568; 
+        }
+        #flowEditorList .stage-info { 
+            text-align: left; 
+            flex-grow: 1; 
+            margin-right: 15px; 
+        }
+        #flowEditorList .stage-info strong {
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+        #flowEditorList .stage-info span { 
+            display: block; 
+            font-size: 0.85em; 
+            color: var(--color-text-muted); 
+            margin-top: 3px;
+        }
+        #flowEditorList .editor-controls { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 6px; 
+            flex-shrink: 0; 
+        }
+        #flowEditorList .editor-controls button { 
+            padding: 6px 10px; 
+            font-size: 0.8em; 
+        }
+
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: var(--color-bg-modal-overlay); 
+            padding-top: 5vh; 
+        }
+        .modal-content { 
+            background-color: var(--color-bg-container); 
+            margin: 5% auto; 
+            padding: 25px 30px; 
+            border: 1px solid var(--color-border); 
+            width: 85%; 
+            max-width: 600px; 
+            border-radius: var(--border-radius-lg); 
+            box-shadow: var(--shadow-lg);
+            text-align: left; 
+        }
+        .modal-content h3 { 
+            margin-top: 0; 
+            margin-bottom: 20px;
+            color: var(--color-primary); 
+            font-weight: 600;
+            font-size: 1.5em;
+            text-align: center; 
+        }
+        .modal-content label { 
+            display: block; 
+            margin-top: 12px; 
+            margin-bottom: 4px;
+            font-weight: 500; 
+            text-align: left;
+            color: var(--color-text-secondary);
+        }
+        .modal-content textarea { 
+            resize: vertical; 
+            min-height: 80px; 
+        }
+        .modal-buttons { 
+            text-align: right; 
+            margin-top: 25px; 
+        }
+        .modal-buttons button {
+            margin-left: 8px;
+        }
+        .modal-buttons button[onclick="closeModal()"],
+        .modal-buttons button[onclick="closeShortcutHelpModal()"] 
+         {
+            background-color: var(--color-secondary);
+        }
+        .modal-buttons button[onclick="closeModal()"]:hover,
+        .modal-buttons button[onclick="closeShortcutHelpModal()"]:hover {
+            background-color: var(--color-secondary-dark);
+        }
+        #shortcutHelpList {
+            list-style: none;
+            padding-left: 0;
+        }
+        #shortcutHelpList li {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        #shortcutHelpList li strong {
+            display: inline-block;
+            width: 130px; 
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        body.dark-mode #shortcutHelpList li strong {
+            color: var(--color-primary-light);
+        }
+
+
+        .close-button { 
+            color: var(--color-text-muted); 
+            float: right; 
+            font-size: 28px; 
+            font-weight: bold; 
+            line-height: 1;
+        }
+        .close-button:hover, .close-button:focus { 
+            color: var(--color-text-primary); 
+            text-decoration: none; 
+            cursor: pointer; 
+        }
+
+        #fullscreenButton { 
+            position: fixed; 
+            top: 15px; 
+            right: 15px; 
+            z-index: 1001; 
+            padding: 8px 14px; 
+            font-size: 0.85em; 
+            background-color: var(--color-primary); 
+            color: var(--color-text-on-primary); 
+            border: none; 
+            border-radius: var(--border-radius-md); 
+            cursor: pointer; 
+            transition: background-color var(--transition-fast); 
+            box-shadow: var(--shadow-md);
+        }
+        #fullscreenButton:hover {
+             background-color: var(--color-primary-dark);
+        }
+        body.fullscreen-active #fullscreenButton { 
+            background-color: var(--color-danger); 
+        } 
+        body.fullscreen-active #fullscreenButton:hover { 
+            background-color: var(--color-danger-dark);
+        }
+
+        body.fullscreen-active { 
+            background-color: #111; 
+            color: #eee; 
+            overflow: hidden; 
+            font-family: var(--font-primary); 
+            padding-bottom: 0; 
+        }
+        body.fullscreen-active .container { 
+            width: 100vw; height: 100vh; 
+            max-width: none; max-height: none; 
+            border-radius: 0; 
+            box-shadow: none; 
+            background-color: #111; 
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            padding: 1vh 1vw; 
+            box-sizing: border-box; 
+            margin-bottom: 0; 
+        }
+        body.fullscreen-active #debatePhase { 
+            display: flex; flex-direction: column; 
+            justify-content: space-between; align-items: center; 
+            height: 100%; width: 100%; 
+            padding: 0; 
+        }
+        
+        body.fullscreen-active #setupPhase,
+        body.fullscreen-active #flowEditorSection,
+        body.fullscreen-active #drawRebuttalOrderSection,
+        body.fullscreen-active .flow-io-section,
+        body.fullscreen-active .info,
+        body.fullscreen-active #resetButton,
+        body.fullscreen-active #manualStartTimerButton,
+        body.fullscreen-active #forceStartMainTimerButton,
+        body.fullscreen-active #editFlowButton, 
+        body.fullscreen-active h1,
+        body.fullscreen-active #themeToggleButton 
+         { display: none !important; }
+
+        #fullscreenRealTimeClock {
+            position: fixed;
+            top: 10px; 
+            left: 10px; 
+            font-size: clamp(14px, 1.8vw, 20px); 
+            color: #bbb; 
+            z-index: 1002; 
+            padding: 5px 8px;
+            background-color: rgba(0,0,0,0.4); 
+            border-radius: var(--border-radius-sm);
+        }
+        body:not(.fullscreen-active) #fullscreenRealTimeClock {
+            display: none !important;
+        }
+
+
+        body.fullscreen-active #debateInfoDisplay { 
+            order: 1; 
+            background-color: transparent; 
+            border: none; 
+            font-size: clamp(14px, 2.2vw, 26px); 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 1vh; 
+        }
+        body.fullscreen-active #debateInfoDisplay p { margin: 0.3vh 0; }
+        body.fullscreen-active #currentStageInfo { 
+            order: 2; 
+            font-size: clamp(26px, 6vw, 70px); 
+            font-weight: 700; 
+            color: #f0f0f0; 
+            margin-bottom: 2vh; 
+            line-height: 1.2;
+        }
+        body.fullscreen-active #timerDisplay { 
+            order: 3; 
+            font-size: clamp(70px, 18vw, 200px); 
+            font-weight: 700; 
+            color: #259DFA; 
+            border: none; 
+            background-color: transparent; 
+            line-height: 1; 
+            margin-bottom: 1vh; 
+            padding: 0; 
+        }
+        body.fullscreen-active #timerProgressBarContainer {
+            order: 4; 
+            width: 80%; 
+            max-width: 600px;
+            height: 25px; 
+            background-color: #444; 
+            margin-bottom: 1.5vh;
+        }
+        body.fullscreen-active #timerProgressBar {
+            background-color: #259DFA; 
+        }
+        body.fullscreen-active #timerDisplay[style*="color: rgb(255, 165, 0)"], 
+        body.fullscreen-active #timerDisplay[style*="color: #ffa500"] { color: #FFB84D !important; }
+        body.fullscreen-active #timerDisplay[style*="color: rgb(255, 69, 0)"], 
+        body.fullscreen-active #timerDisplay[style*="color: #ff4500"] { color: #FF6B4D !important; }
+        body.fullscreen-active #timerDisplay[style*="color: rgb(220, 53, 69)"], 
+        body.fullscreen-active #timerDisplay[style*="color: #dc3545"] { color: #F87171 !important; }
+        
+        body.fullscreen-active #timerProgressBar[data-color-state="warning1min"] { background-color: #FFB84D !important; }
+        body.fullscreen-active #timerProgressBar[data-color-state="warning30sec"] { background-color: #FF6B4D !important; }
+        body.fullscreen-active #timerProgressBar[data-color-state="timesup"] { background-color: #F87171 !important; }
+
+
+        body.fullscreen-active #timerStatus { 
+            order: 5; 
+            font-size: clamp(14px, 2.5vw, 24px); 
+            color: #bbb; 
+            margin-bottom: 1vh; 
+        }
+        body.fullscreen-active #nextSegmentPreview {
+            order: 6; 
+            font-size: clamp(16px, 2.8vw, 28px); 
+            color: #ddd;
+            border-color: #555;
+            background-color: transparent; 
+            margin-top: 1vh;
+            margin-bottom: 1vh;
+        }
+        body.fullscreen-active #moderatorScript { display: none; } 
+        body.fullscreen-active #speechRecognitionStatus { 
+            order: 8; 
+            font-size: clamp(12px, 1.6vw, 18px); 
+            color: #999; 
+        }
+        body.fullscreen-active .timer-actions { 
+            order: 9; 
+            margin-top: 1.5vh; 
+            margin-bottom: 1vh; 
+        }
+        body.fullscreen-active .controls { 
+            order: 10; 
+            display: flex; 
+            justify-content: center; 
+            width: 100%; 
+            padding-bottom: 1.5vh; 
+        }
+        body.fullscreen-active .timer-actions button,
+        body.fullscreen-active .controls #nextStageButton { 
+            display: inline-block !important; 
+            padding: max(1.5vh, 10px) max(3vw, 20px); 
+            font-size: clamp(14px, 2vw, 22px); 
+            margin: 0 max(1vw, 6px);
+            border-radius: var(--border-radius-lg); 
+        }
+        body.fullscreen-active .controls #manualStartTimerButton,
+        body.fullscreen-active .controls #forceStartMainTimerButton,
+        body.fullscreen-active .controls #resetButton { display: none !important; }
+
+        #creditFooter {
+            position: fixed;
+            bottom: 8px;
+            right: 15px;
+            /* MODIFIED: Increased font size */
+            font-size: 1.0em; 
+            color: var(--color-text-muted);
+            z-index: 999; 
+            opacity: 0.7;
+            transition: opacity var(--transition-fast);
+        }
+        #creditFooter:hover {
+            opacity: 1;
+        }
+        #creditFooter a {
+            color: inherit; 
+            text-decoration: none;
+        }
+        #creditFooter a:hover {
+            text-decoration: underline;
+        }
+        body.fullscreen-active #creditFooter {
+             color: #aaa; 
+             background-color: rgba(0,0,0,0.3); 
+             padding: 2px 5px;
+             border-radius: var(--border-radius-sm);
+        }
+
+
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
+    <button id="fullscreenButton">進入全螢幕</button>
 
-    <!-- 網頁標題列 -->
-    <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center px-4">
-            <h1 class="text-3xl font-bold tracking-wide flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                諭示裁定樞機
-            </h1>
-            <button onclick="showContentDisclaimer()" class="bg-white text-blue-600 px-4 py-2 rounded-full hover:bg-blue-50 transition transform hover:scale-105">
-                內容聲明
-            </button>
-        </div>
-    </header>
+    <div class="container">
+        <h1>辯時計</h1> 
+        <button id="themeToggleButton">切換深色模式</button>
 
-    <!-- 主體內容 -->
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xl rounded-2xl shadow-subtle border border-gray-100 p-8 transform transition hover:scale-[1.02]">
-            <h2 class="text-3xl font-bold mb-4 text-center text-blue-600">公平裁決</h2>
-
-            <!-- 名稱輸入 -->
-            <div class="mb-6 grid grid-cols-2 gap-4">
+        <div id="setupPhase" class="setup-section">
+            <h2>賽前設定</h2>
+            <div><label for="formatSelect">選擇比賽流程範本：</label><select id="formatSelect"></select></div>
+            <div><label for="positiveTeamNameInput">正方隊名：</label><input type="text" id="positiveTeamNameInput" value="正方"></div>
+            <div><label for="negativeTeamNameInput">反方隊名：</label><input type="text" id="negativeTeamNameInput" value="反方"></div>
+            <div><label for="debateTopicInput">辯題：</label><input type="text" id="debateTopicInput" value="（在此輸入辯題）"></div>
+            <div class="setup-controls" style="margin-top:15px;">
+                <button id="editFlowButton">編輯目前選定流程</button>
+                <button id="confirmSetupButton">確認設定，進行下一步</button>
+            </div>
+            <div class="flow-io-section" style="margin-top: 20px; padding-top:15px; border-top: 1px solid var(--color-border-light);">
+                <h4>流程匯入/匯出 (JSON)</h4>
+                <div class="flow-io"><button id="exportFlowButton">匯出流程定義</button></div>
                 <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-700">第一方名稱</label>
-                    <input 
-                        type="text" 
-                        id="player1Name" 
-                        placeholder="請輸入第一方名稱(非必須)" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+                    <label for="importFlowInput" style="margin-top:10px; text-align:center;">匯入流程檔案：</label>
+                    <input type="file" id="importFlowInput" accept=".json" style="margin-bottom: 10px;">
+                    <div id="fileImportStatus"></div>
+                    <button id="loadImportedFlowButton" class="hidden">載入此匯入流程</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="flowEditorSection" class="hidden">
+            <h2>比賽流程編輯器</h2>
+            <p style="color: var(--color-text-muted); font-size: 0.9em;">您可以拖曳項目來排序，或使用按鈕編輯/刪除/移動階段。</p>
+            <ul id="flowEditorList"></ul>
+            <div class="editor-controls" style="margin-top:15px;">
+                <button id="addStageButton">＋ 新增階段 (末尾)</button>
+                <button id="finishEditingButton">完成編輯</button>
+                <button id="cancelEditingButton">取消編輯</button>
+            </div>
+        </div>
+
+        <div id="stageEditModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal()">&times;</span>
+                <h3 id="modalTitle">編輯階段</h3>
+                <input type="hidden" id="editingStageIndex">
+                <div><label for="stageNameInput">階段名稱:</label><input type="text" id="stageNameInput"></div>
                 <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-700">第二方名稱</label>
-                    <input 
-                        type="text" 
-                        id="player2Name" 
-                        placeholder="請輸入第二方名稱(非必須)" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+                    <label for="stageTypeSelect">階段類型:</label>
+                    <select id="stageTypeSelect">
+                        <option value="announcement">宣告/提示</option>
+                        <option value="draw_rebuttal_order">結辯順序抽籤</option>
+                        <option value="manual_prep">手動準備計時</option>
+                        <option value="speech_auto">自動發言計時</option>
+                    </select>
                 </div>
-            </div>
-
-            <p class="text-center text-gray-500 mb-6">只看身份，不論事實。最公平、中立的裁決</p>
-
-            <!-- 第一方身份選擇 -->
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold mb-4 text-blue-700">選擇第一方身份</h3>
-                <div class="grid grid-cols-3 gap-3">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="1" class="mr-2 option">女性
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="2" class="mr-2 option">LGBTQIAPK+
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="1" class="mr-2 option">新住民
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="1.35" class="mr-2 option">原住民
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="0.5" class="mr-2 option">新住民子女
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="-1" class="mr-2 option">戰鬥直升機
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="0.5" class="mr-2 option">非法移民
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player1" value="0" class="mr-2 none-option" onclick="handleNoneOption('player1')">以上皆無
-                    </label>
+                <div id="durationInputContainer" class="hidden"><label for="stageDurationInput">持續時間 (秒):</label><input type="number" id="stageDurationInput" min="1"></div>
+                <div id="timerLabelInputContainer" class="hidden"><label for="stageTimerLabelInput">計時器標籤:</label><input type="text" id="stageTimerLabelInput" placeholder="例如：申論時間"></div>
+                <div><label for="stageScriptInput">主持人稿件:</label><textarea id="stageScriptInput"></textarea></div>
+                <div class="modal-buttons">
+                    <button onclick="saveStageChanges()">儲存變更</button>
+                    <button onclick="closeModal()">取消</button>
                 </div>
-            </div>
-
-            <!-- 第二方身份選擇 -->
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold mb-4 text-blue-700">選擇第二方身份</h3>
-                <div class="grid grid-cols-3 gap-3">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="1" class="mr-2 option">女性
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="2" class="mr-2 option">LGBTQIAPK+
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="1" class="mr-2 option">新住民
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="1.35" class="mr-2 option">原住民
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="0.5" class="mr-2 option">新住民子女
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="-1" class="mr-2 option">戰鬥直升機
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="0.5" class="mr-2 option">非法移民
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="player2" value="0" class="mr-2 none-option" onclick="handleNoneOption('player2')">以上皆無
-                    </label>
-                </div>
-            </div>
-
-            <button onclick="determineWinner()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition transform active:scale-[0.98] shadow-md">
-                開始裁決
-            </button>
-        </div>
-    </main>
-
-    <!-- 結果展示區 -->
-    <section id="resultSection" class="hidden bg-gray-100 py-8">
-        <div class="container mx-auto max-w-xl">
-            <div class="bg-white rounded-2xl shadow-md p-6">
-                <h3 class="text-2xl font-bold mb-4 text-center text-blue-600">裁決結果</h3>
-                
-                <!-- 第一方詳情 -->
-                <div class="mb-4">
-                    <h4 class="text-lg font-semibold text-blue-700">第一方詳情</h4>
-                    <div id="player1Details" class="text-gray-700"></div>
-                </div>
-
-                <!-- 第二方詳情 -->
-                <div class="mb-4">
-                    <h4 class="text-lg font-semibold text-blue-700">第二方詳情</h4>
-                    <div id="player2Details" class="text-gray-700"></div>
-                </div>
-
-                <!-- 最終結果 -->
-                <div id="finalResult" class="text-center text-2xl font-bold mt-4"></div>
             </div>
         </div>
-    </section>
 
-    <!-- 頁腳 -->
-    <footer class="bg-gray-800 text-white py-4 text-center">
-        <div class="container mx-auto">
-            <p>© 2024 諭示裁定樞機 | 作者: SC Cheng</p>
-            <p class="text-sm text-gray-400 mt-2">聯絡信箱：bananaminpo@gmail.com</p>
+        <div id="debatePhase" class="hidden">
+            <div id="fullscreenRealTimeClock" class="hidden">00:00:00</div> 
+            <div id="debateInfoDisplay" class="debate-info"></div>
+            <div id="drawRebuttalOrderSection" class="draw-section hidden"><h3>結辯順序抽籤</h3><div id="drawResultDisplay"></div><div class="draw-controls"><button id="startDrawButton">開始抽籤</button></div></div>
+            <div id="currentStageInfo"></div><div id="moderatorScript"></div>
+            <div id="timerStatus"></div>
+            <div id="timerDisplay" class="hidden">00:00</div>
+            <div id="timerProgressBarContainer" class="hidden">
+                <div id="timerProgressBar"></div>
+            </div>
+            <div id="nextSegmentPreview" class="hidden"></div>
+            <div class="timer-actions"><button id="pauseResumeTimerButton" class="hidden pause-resume-button">暫停計時</button><button id="skipStageButton" class="hidden skip-button">跳過</button></div>
+            <div id="speechRecognitionStatus" class="hidden"></div>
+            <div class="controls"><button id="nextStageButton" class="hidden">下一階段</button><button id="manualStartTimerButton" class="hidden">開始計時</button><button id="forceStartMainTimerButton" class="hidden manual-override-button">手動計時</button><button id="resetButton" class="hidden">重置</button></div>
         </div>
-    </footer>
+        <div class="info">提示：建議使用最新版 Chrome / Edge 瀏覽器。請確保音效檔案路徑正確。按 "/" 顯示快捷鍵。</div>
+    </div>
+
+    <audio id="warningSound1min" src="warning_1min.ogg" preload="auto"></audio>
+    <audio id="warningSound30sec" src="warning_30sec.ogg" preload="auto"></audio>
+    <audio id="timesUpSound" src="times_up.ogg" preload="auto"></audio>
+    <audio id="stageAdvanceSound" src="stage_advance.ogg" preload="auto"></audio>
+    <audio id="speechDetectedSound" src="speech_detected.ogg" preload="auto"></audio>
+    <audio id="drawSound" src="draw_sound.ogg" preload="auto"></audio>
+
+    <div id="shortcutHelpModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeShortcutHelpModal()">&times;</span>
+            <h3>鍵盤快捷鍵</h3>
+            <ul id="shortcutHelpList">
+                <li><strong>N / →</strong> : 下一階段</li>
+                <li><strong>P / 空白鍵</strong> : 暫停/繼續計時</li>
+                <li><strong>S</strong> : 開始手動計時 / 強制開始發言計時</li>
+                <li><strong>R</strong> : 重置</li>
+                <li><strong>F</strong> : 全螢幕切換</li>
+                <li><strong>T</strong> : 主題切換 (淺色/深色)</li>
+                <li><strong>/</strong> : 顯示/隱藏此快捷鍵說明</li>
+                <li><strong>Esc</strong> : 關閉此快捷鍵說明 / 關閉編輯彈窗</li>
+            </ul>
+        </div>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            alert('本網站的內容僅供娛樂用途，所提供的資訊不代表任何立場，也不應被視為對任何個人的攻擊或歧視。我們絕不支持任何形式的種族、性別、宗教、性取向、身心障礙、年齡、國籍或任何其他群體的歧視。本網站旨在提供輕鬆和愉快的娛樂內容，請謹慎解讀，並在使用時保持包容和尊重的態度。如有任何內容引起您的不適，敬請理解這並非我們的本意，並且我們會盡力改進。');
-        });
+        // --- DOM Elements ---
+        const fullscreenButton = document.getElementById('fullscreenButton');
+        const setupPhaseDiv = document.getElementById('setupPhase');
+        const debatePhaseDiv = document.getElementById('debatePhase');
+        const formatSelect = document.getElementById('formatSelect');
+        const confirmSetupButton = document.getElementById('confirmSetupButton');
+        const positiveTeamNameInput = document.getElementById('positiveTeamNameInput');
+        const negativeTeamNameInput = document.getElementById('negativeTeamNameInput');
+        const debateTopicInput = document.getElementById('debateTopicInput');
+        const debateInfoDisplay = document.getElementById('debateInfoDisplay');
+        const drawRebuttalOrderSection = document.getElementById('drawRebuttalOrderSection');
+        const startDrawButton = document.getElementById('startDrawButton');
+        const drawResultDisplay = document.getElementById('drawResultDisplay');
+        const moderatorScriptDisplay = document.getElementById('moderatorScript');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerStatusDisplay = document.getElementById('timerStatus');
+        const currentStageInfoDisplay = document.getElementById('currentStageInfo');
+        const speechRecognitionStatusDisplay = document.getElementById('speechRecognitionStatus');
+        const nextStageButton = document.getElementById('nextStageButton');
+        const manualStartTimerButton = document.getElementById('manualStartTimerButton');
+        const forceStartMainTimerButton = document.getElementById('forceStartMainTimerButton');
+        const resetButton = document.getElementById('resetButton');
+        const pauseResumeTimerButton = document.getElementById('pauseResumeTimerButton');
+        const skipStageButton = document.getElementById('skipStageButton');
+        const exportFlowButton = document.getElementById('exportFlowButton');
+        const importFlowInput = document.getElementById('importFlowInput');
+        const loadImportedFlowButton = document.getElementById('loadImportedFlowButton');
+        const fileImportStatus = document.getElementById('fileImportStatus');
+        const audioElements = { warningSound1min: document.getElementById('warningSound1min'), warningSound30sec: document.getElementById('warningSound30sec'), timesUpSound: document.getElementById('timesUpSound'), stageAdvanceSound: document.getElementById('stageAdvanceSound'), speechDetectedSound: document.getElementById('speechDetectedSound'), drawSound: document.getElementById('drawSound') };
+        const editFlowButton = document.getElementById('editFlowButton');
+        const flowEditorSection = document.getElementById('flowEditorSection');
+        const flowEditorList = document.getElementById('flowEditorList');
+        const addStageButton = document.getElementById('addStageButton');
+        const finishEditingButton = document.getElementById('finishEditingButton');
+        const cancelEditingButton = document.getElementById('cancelEditingButton');
+        const stageEditModal = document.getElementById('stageEditModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const editingStageIndexInput = document.getElementById('editingStageIndex');
+        const stageNameInput = document.getElementById('stageNameInput');
+        const stageTypeSelect = document.getElementById('stageTypeSelect');
+        const durationInputContainer = document.getElementById('durationInputContainer');
+        const stageDurationInput = document.getElementById('stageDurationInput');
+        const timerLabelInputContainer = document.getElementById('timerLabelInputContainer');
+        const stageTimerLabelInput = document.getElementById('stageTimerLabelInput');
+        const stageScriptInput = document.getElementById('stageScriptInput');
+        const timerProgressBarContainer = document.getElementById('timerProgressBarContainer');
+        const timerProgressBar = document.getElementById('timerProgressBar');
+        const nextSegmentPreview = document.getElementById('nextSegmentPreview');
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        const bodyElement = document.body;
+        const shortcutHelpModal = document.getElementById('shortcutHelpModal');
+        const shortcutHelpCloseButton = shortcutHelpModal.querySelector('.close-button');
+        const fullscreenRealTimeClock = document.getElementById('fullscreenRealTimeClock');
 
-        function showContentDisclaimer() {
-            alert('本網站的內容僅供娛樂用途，所提供的資訊不代表任何立場，也不應被視為對任何個人的攻擊或歧視。我們絕不支持任何形式的種族、性別、宗教、性取向、身心障礙、年齡、國籍或任何其他群體的歧視。本網站旨在提供輕鬆和愉快的娛樂內容，請謹慎解讀，並在使用時保持包容和尊重的態度。如有任何內容引起您的不適，敬請理解這並非我們的本意，並且我們會盡力改進。');
-        }
 
-        function handleNoneOption(player) {
-            const noneOption = document.querySelector(`input[name="${player}"][value="0"]`);
-            const otherOptions = document.querySelectorAll(`input[name="${player}"].option`);
+        // --- State Variables ---
+        let positiveTeamName = "正方"; let negativeTeamName = "反方"; let debateTopic = "（在此輸入辯題）"; let rebuttalOrder = null; let currentStageIndex = -1; let timerInterval; let graceTimerInterval; let timeLeft; let isTimerPaused = false; let currentTimerType = null; let synth = window.speechSynthesis; let voices = []; const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; let recognition; let isRecognizing = false; let recognitionManuallyStopped = false; let mainSpeechTimerStartedByGrace = false; const GRACE_PERIOD_DURATION = 60; let importedDebateStages = null; let currentFlowDefinition = []; let originalFlowBeforeEdit = null; let initialTimerDuration = 0; 
+        let currentInsertBeforeIndex = null; 
+        let realTimeClockInterval = null; 
 
-            if (noneOption.checked) {
-                otherOptions.forEach(option => option.disabled = true);
-            } else {
-                otherOptions.forEach(option => option.disabled = false);
-            }
-        }
 
-        function determineWinner() {
-            const player1Choices = Array.from(document.querySelectorAll('input[name="player1"]:checked')).map(el => ({
-                label: el.nextSibling.textContent,
-                value: parseFloat(el.value)
-            }));
-            const player2Choices = Array.from(document.querySelectorAll('input[name="player2"]:checked')).map(el => ({
-                label: el.nextSibling.textContent,
-                value: parseFloat(el.value)
-            }));
-
-            const resultSection = document.getElementById('resultSection');
-            const player1DetailsDiv = document.getElementById('player1Details');
-            const player2DetailsDiv = document.getElementById('player2Details');
-            const finalResultDiv = document.getElementById('finalResult');
-
-            // 驗證是否選擇身份
-            if (player1Choices.length === 0 || player2Choices.length === 0) {
-                alert('請至少選擇每方一個身份');
+        const debateFormatDefinitions = { "菁英盃 (新式奧瑞岡五五四制)": [ { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null }, { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null }, { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。{{positive_team_name}}一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" }, { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請{{positive_team_name}}一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言，否則將自動開始計時。", timerLabel: "申論時間" }, { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}一辯。接著請{{negative_team_name}}二辯上臺質詢{{positive_team_name}}一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}一辯。接著請{{positive_team_name}}三辯上臺質詢{{negative_team_name}}一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{positive_team_name}}二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}二辯。接著請{{negative_team_name}}三辯上臺質詢{{positive_team_name}}二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}二辯。接著請{{positive_team_name}}一辯上臺質詢{{negative_team_name}}二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{positive_team_name}}三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}三辯。接著請{{negative_team_name}}一辯上臺質詢{{positive_team_name}}三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}三辯。接著請{{positive_team_name}}二辯上臺質詢{{negative_team_name}}三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" }, { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間" }, { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間" }, { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。感謝 {{positive_team_name}} 與 {{negative_team_name}} 各位辯士的精彩表現。", timerLabel: null }, { name: "抗議提出時間", type: "manual_prep", duration: 600, script: "若有抗議事項，請於十分鐘內以書面方式向主席提出。計時開始。", timerLabel: "抗議提出時間" }, { name: "正式結束", type: "announcement", duration: null, script: "抗議提出時間結束。感謝各位的參與。", timerLabel: null } ], "簡易三對三奧瑞岡 (3-3-2制 示例)": [ { name: "賽前準備", type: "announcement", duration: null, script: "簡易三對三奧瑞岡開始。辯題：{{debate_topic}}。正方：{{positive_team_name}}，反方：{{negative_team_name}}。", timerLabel: null }, { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "進行結辯順序抽籤。", timerLabel: null }, { name: "開賽預備", type: "manual_prep", duration: 30, script: "抽籤完畢。{{positive_team_name}}一辯準備，計時30秒。", timerLabel: "準備" }, { name: "正一申論", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}一辯申論，3分鐘。", timerLabel: "申論" }, { name: "反二質詢正一", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}二辯質詢{{positive_team_name}}一辯，3分鐘。", timerLabel: "質詢" }, { name: "反一申論", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}一辯申論，3分鐘。", timerLabel: "申論" }, { name: "正二質詢反一", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}二辯質詢{{negative_team_name}}一辯，3分鐘。", timerLabel: "質詢" }, { name: "正三申論", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}三辯申論，3分鐘。", timerLabel: "申論" }, { name: "反一質詢正三", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}一辯質詢{{positive_team_name}}三辯，3分鐘。", timerLabel: "質詢" }, { name: "反三申論", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}三辯申論，3分鐘。", timerLabel: "申論" }, { name: "正一質詢反三", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}一辯質詢{{negative_team_name}}三辯，3分鐘。", timerLabel: "質詢" }, { name: "結辯準備", type: "manual_prep", duration: 60, script: "申論質詢完畢。先前抽籤為 {{first_rebuttal_team_name}} 先結辯。準備結辯，1分鐘。", timerLabel: "結辯準備" }, { name: "先結辯方結辯", type: "speech_auto", duration: 120, script: "請 {{first_rebuttal_team_name}} 結辯，2分鐘。", timerLabel: "結辯" }, { name: "後結辯方結辯", type: "speech_auto", duration: 120, script: "請 {{second_rebuttal_team_name}} 結辯，2分鐘。", timerLabel: "結辯" }, { name: "比賽結束", type: "announcement", duration: null, script: "比賽結束。感謝各位。", timerLabel: null } ] };
+        
+        function playSound(soundName) { const audio = audioElements[soundName]; if (audio) { audio.currentTime = 0; audio.play().catch(error => console.warn(`Error playing sound "${soundName}":`, error.message)); } }
+        function populateVoiceList() { voices = synth.getVoices().filter(voice => voice.lang.startsWith('zh')); if (voices.length === 0) voices = synth.getVoices(); }
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = populateVoiceList;
+        function speak(text, callback) { if (synth.speaking) synth.cancel(); const u = new SpeechSynthesisUtterance(text); u.onend = () => { if (callback) callback(); }; u.onerror = (event) => { console.warn('SpeechSynErr:', event.error); if (callback) callback(); }; let v = voices.find(vo => vo.lang === 'zh-TW' || vo.lang === 'zh-CN') || voices.find(vo => vo.lang.startsWith('zh')); if(v) u.voice = v; else if(voices.length > 0) u.voice = voices[0]; synth.speak(u); }
+        function interpolateScript(script) { let firstTeam = "", secondTeam = ""; if(rebuttalOrder){ firstTeam = rebuttalOrder === 'positive_first' ? positiveTeamName : negativeTeamName; secondTeam = rebuttalOrder === 'positive_first' ? negativeTeamName : positiveTeamName; } return script.replace(/\{\{positive_team_name\}\}/g, positiveTeamName).replace(/\{\{negative_team_name\}\}/g, negativeTeamName).replace(/\{\{debate_topic\}\}/g, debateTopic).replace(/\{\{first_rebuttal_team_name\}\}/g, firstTeam).replace(/\{\{second_rebuttal_team_name\}\}/g, secondTeam); }
+        function formatTime(seconds) { const m = Math.floor(seconds / 60); const s = seconds % 60; return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; }
+        function updateTimerDisplayDOM(currentTime) { timerDisplay.textContent = formatTime(currentTime); }
+        
+        function updateProgressBar(currentTime, totalDuration) {
+            if (totalDuration <= 0) {
+                timerProgressBar.style.width = '0%';
                 return;
             }
+            const percentageElapsed = ((totalDuration - currentTime) / totalDuration) * 100;
+            timerProgressBar.style.width = `${Math.min(100, Math.max(0, percentageElapsed))}%`;
 
-            // 獲取玩家名稱
-            const player1Name = document.getElementById('player1Name').value.trim() || '第一方';
-            const player2Name = document.getElementById('player2Name').value.trim() || '第二方';
+            const isFullscreen = document.body.classList.contains('fullscreen-active');
+            let progressBarColorState = ""; 
 
-            // 計算分數
-            const player1Score = player1Choices.reduce((acc, choice) => acc + choice.value, 0);
-            const player2Score = player2Choices.reduce((acc, choice) => acc + choice.value, 0);
+            let colorWarning = getComputedStyle(document.documentElement).getPropertyValue('--color-warning').trim();
+            let colorOrangeAccent = getComputedStyle(document.documentElement).getPropertyValue('--color-orange-accent').trim();
+            let colorDanger = getComputedStyle(document.documentElement).getPropertyValue('--color-danger').trim();
+            let colorPrimary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
 
-            // 顯示雙方詳情
-            player1DetailsDiv.innerHTML = `
-                <p>姓名：${player1Name}</p>
-                <p>身份：${player1Choices.map(c => c.label).join('、')}</p>
-                <p>總得分：${player1Score.toFixed(1)}</p>
-            `;
+            if (isFullscreen) {
+                colorWarning = '#FFB84D';
+                colorOrangeAccent = '#FF6B4D';
+                colorDanger = '#F87171';
+                colorPrimary = '#259DFA';
+            }
+            
 
-            player2DetailsDiv.innerHTML = `
-                <p>姓名：${player2Name}</p>
-                <p>身份：${player2Choices.map(c => c.label).join('、')}</p>
-                <p>總得分：${player2Score.toFixed(1)}</p>
-            `;
-
-            // 判斷勝負
-            if (player1Score > player2Score) {
-                finalResultDiv.innerHTML = `🏆 ${player1Name}勝利`;
-                finalResultDiv.className = 'text-center text-2xl font-bold mt-4 text-green-600';
-            } else if (player2Score > player1Score) {
-                finalResultDiv.innerHTML = `🏆 ${player2Name}勝利`;
-                finalResultDiv.className = 'text-center text-2xl font-bold mt-4 text-green-600';
+            if (currentTime <= 0) {
+                timerProgressBar.style.backgroundColor = colorDanger;
+                 progressBarColorState = "timesup";
+            } else if (currentTime <= 30 && totalDuration > 30) {
+                timerProgressBar.style.backgroundColor = colorOrangeAccent;
+                progressBarColorState = "warning30sec";
+            } else if (currentTime <= 60 && totalDuration > 60) {
+                timerProgressBar.style.backgroundColor = colorWarning;
+                 progressBarColorState = "warning1min";
             } else {
-                finalResultDiv.innerHTML = '平手';
-                finalResultDiv.className = 'text-center text-2xl font-bold mt-4 text-gray-600';
+                timerProgressBar.style.backgroundColor = colorPrimary;
+                 progressBarColorState = "";
+            }
+            if (isFullscreen) {
+                timerProgressBar.dataset.colorState = progressBarColorState;
+            } else {
+                 timerProgressBar.removeAttribute('data-color-state');
+            }
+        }
+
+        function startRecognitionConditionally() { if (SpeechRecognition && recognition && !isRecognizing && currentTimerType === 'grace' && !isTimerPaused) { recognitionManuallyStopped = false; try { recognition.start(); } catch(e) { console.error("SR start err:", e); speechRecognitionStatusDisplay.textContent = "啟動識別失敗。";}} }
+        function stopRecognitionForce() { recognitionManuallyStopped = true; if (SpeechRecognition && recognition && isRecognizing) { try { recognition.stop(); } catch (e) { if (e.name !== 'InvalidStateError'){console.error("SR stop err:", e);}}} isRecognizing = false; }
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition(); recognition.continuous = true; recognition.interimResults = false; recognition.lang = 'zh-TW';
+            recognition.onstart = () => { isRecognizing = true; recognitionManuallyStopped = false; speechRecognitionStatusDisplay.textContent = "語音識別已啟動...";};
+            recognition.onresult = (event) => { if (currentTimerType === 'grace' && graceTimerInterval && !mainSpeechTimerStartedByGrace && !isTimerPaused) { clearTimeout(graceTimerInterval); graceTimerInterval = null; forceStartMainTimerButton.classList.add('hidden'); skipStageButton.classList.add('hidden'); timerStatusDisplay.textContent = "偵測到發言..."; speak("偵測到發言，計時開始。", () => startMainSpeechTimer(currentFlowDefinition[currentStageIndex].duration)); playSound('speechDetectedSound'); mainSpeechTimerStartedByGrace = true;}};
+            recognition.onerror = (event) => {isRecognizing = false; console.warn("SR.onerror:", event.error, event.message); let msg=`SR Err: ${event.error}`; let restart = false; if(event.error==='no-speech'){msg="未偵測到語音。"; restart=true;} else if(event.error==='audio-capture')msg="麥克風錯誤。"; else if(event.error==='not-allowed'){msg="麥克風權限未授予。"; alert(msg); if(currentFlowDefinition[currentStageIndex] && currentFlowDefinition[currentStageIndex].type === 'speech_auto' && currentTimerType === 'grace')forceStartMainTimerButton.classList.remove('hidden');} else if(event.error === 'aborted'){msg="語音識別被中止。";} else if (event.error === 'network' || event.error === 'service-not-allowed'){msg=`服務錯誤(${event.error})。`; restart=true;} if(event.error !== 'aborted')speechRecognitionStatusDisplay.textContent=msg; if (currentTimerType === 'grace' && !isTimerPaused && graceTimerInterval && restart && !recognitionManuallyStopped){console.log(`SR err (${event.error}), restarting...`); setTimeout(startRecognitionConditionally, 250);}};
+            recognition.onend = () => { const wasRec = isRecognizing; isRecognizing = false; if (currentTimerType === 'grace' && !isTimerPaused && graceTimerInterval && !recognitionManuallyStopped && wasRec){console.log("SR ended early, restarting..."); setTimeout(startRecognitionConditionally, 250);} else {const cs=speechRecognitionStatusDisplay.textContent; if(!cs.includes("錯誤")&&!cs.includes("未授予")&&cs!=="語音識別已啟動..." && (!cs.includes("中止") || !recognitionManuallyStopped) ){}}};
+        } else { speechRecognitionStatusDisplay.textContent = "瀏覽器不支援語音識別。"; }
+
+        function clearAllTimersAndIntervals() { clearInterval(timerInterval); clearInterval(graceTimerInterval); timerInterval = null; graceTimerInterval = null; isTimerPaused = false; currentTimerType = null; pauseResumeTimerButton.textContent = "暫停計時"; pauseResumeTimerButton.classList.add('hidden'); skipStageButton.classList.add('hidden'); forceStartMainTimerButton.classList.add('hidden'); timerProgressBar.style.width = '0%'; timerProgressBarContainer.classList.add('hidden');}
+        function runActiveTimerInterval() { 
+            if (isTimerPaused) return; 
+            timeLeft--; 
+            updateTimerDisplayDOM(timeLeft); 
+            if (currentTimerType === 'main' || currentTimerType === 'manual_prep' || currentTimerType === 'grace') {
+                 updateProgressBar(timeLeft, initialTimerDuration); 
+            }
+            
+            const isFullscreen = document.body.classList.contains('fullscreen-active');
+            let defaultTimerColor = getComputedStyle(timerDisplay).color; 
+            let warning1MinColor = isFullscreen ? '#FFB84D' : getComputedStyle(document.documentElement).getPropertyValue('--color-warning').trim();
+            let warning30SecColor = isFullscreen ? '#FF6B4D' : getComputedStyle(document.documentElement).getPropertyValue('--color-orange-accent').trim(); 
+            let timesUpColor = isFullscreen ? '#F87171' : getComputedStyle(document.documentElement).getPropertyValue('--color-danger').trim();
+
+            if (isFullscreen) {
+                defaultTimerColor = '#259DFA'; 
             }
 
-            // 顯示結果區塊
-            resultSection.classList.remove('hidden');
+
+            if (currentTimerType === 'grace') { 
+                 if (timeLeft <= 0) { 
+                    clearTimeout(graceTimerInterval); 
+                    graceTimerInterval = null; 
+                    stopRecognitionForce(); 
+                    forceStartMainTimerButton.classList.add('hidden'); 
+                    if (!mainSpeechTimerStartedByGrace) { 
+                        timerStatusDisplay.textContent = "發言準備時間已到..."; 
+                        speak("準備時間到，計時開始。", () => { 
+                            startMainSpeechTimer(currentFlowDefinition[currentStageIndex].duration); 
+                            pauseResumeTimerButton.classList.remove('hidden'); 
+                            pauseResumeTimerButton.textContent = "暫停計時"; 
+                            skipStageButton.classList.add('hidden'); 
+                        }); 
+                        mainSpeechTimerStartedByGrace = true;
+                    }
+                }
+            } else if (currentTimerType === 'main' || currentTimerType === 'manual_prep') { 
+                const d = initialTimerDuration; 
+                if (timeLeft === 60 && d > 60) { 
+                    speak("時間剩餘一分鐘"); 
+                    timerDisplay.style.color = warning1MinColor; 
+                    playSound('warningSound1min'); 
+                } else if (timeLeft === 30 && d > 30) { 
+                    speak("時間剩餘三十秒"); 
+                    timerDisplay.style.color = warning30SecColor;
+                    playSound('warningSound30sec'); 
+                } else if (timeLeft <= 0) { 
+                    clearInterval(timerInterval); 
+                    timerInterval = null; 
+                    speak("時間到"); 
+                    timerDisplay.textContent = "時間到"; 
+                    timerDisplay.style.color = timesUpColor; 
+                    playSound('timesUpSound'); 
+                    nextStageButton.disabled = false; 
+                    currentTimerType = null; 
+                    if (currentFlowDefinition[currentStageIndex]?.type === "manual_prep" && currentStageIndex < currentFlowDefinition.length - 2) {
+                        loadNextStage();
+                    }
+                } else if (timeLeft > 60 || (timeLeft > 30 && d <=60) || (d <= 30)) { 
+                    timerDisplay.style.color = defaultTimerColor;
+                }
+            }
         }
+        function startGracePeriodTimer() { 
+            clearAllTimersAndIntervals(); 
+            currentTimerType = 'grace'; 
+            mainSpeechTimerStartedByGrace = false; 
+            timeLeft = GRACE_PERIOD_DURATION; 
+            initialTimerDuration = GRACE_PERIOD_DURATION; 
+            timerStatusDisplay.textContent = "請於1分鐘內開始發言..."; 
+            updateTimerDisplayDOM(timeLeft); 
+            timerDisplay.classList.remove('hidden'); 
+            timerProgressBarContainer.classList.remove('hidden'); 
+            updateProgressBar(timeLeft, initialTimerDuration); 
+            
+            const isFullscreen = document.body.classList.contains('fullscreen-active');
+            timerDisplay.style.color = isFullscreen ? '#259DFA' : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+
+
+            speechRecognitionStatusDisplay.classList.remove('hidden'); 
+            forceStartMainTimerButton.classList.remove('hidden'); 
+            pauseResumeTimerButton.textContent = "暫停計時"; 
+            pauseResumeTimerButton.classList.remove('hidden'); 
+            skipStageButton.classList.add('hidden'); 
+            startRecognitionConditionally(); 
+            graceTimerInterval = setInterval(runActiveTimerInterval, 1000); 
+        }
+        function startMainSpeechTimer(duration) { 
+            stopRecognitionForce(); 
+            if (currentTimerType !== 'grace') { 
+                clearAllTimersAndIntervals();
+            }
+            currentTimerType = 'main'; 
+            timeLeft = duration; 
+            initialTimerDuration = duration; 
+            timerStatusDisplay.textContent = (currentFlowDefinition[currentStageIndex]?.timerLabel || "計時") + "進行中..."; 
+            updateTimerDisplayDOM(timeLeft); 
+            timerDisplay.classList.remove('hidden'); 
+            timerProgressBarContainer.classList.remove('hidden'); 
+            updateProgressBar(timeLeft, initialTimerDuration); 
+            
+            const isFullscreen = document.body.classList.contains('fullscreen-active');
+            timerDisplay.style.color = isFullscreen ? '#259DFA' : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+
+            nextStageButton.disabled = true; 
+            pauseResumeTimerButton.textContent = "暫停計時"; 
+            pauseResumeTimerButton.classList.remove('hidden'); 
+            skipStageButton.classList.add('hidden'); 
+            if (timerInterval) clearInterval(timerInterval); 
+            if (graceTimerInterval) { clearInterval(graceTimerInterval); graceTimerInterval = null; } 
+            timerInterval = setInterval(runActiveTimerInterval, 1000); 
+        }
+        function startManualPrepTimer(duration) { 
+            stopRecognitionForce(); 
+            clearAllTimersAndIntervals(); 
+            currentTimerType = 'manual_prep'; 
+            timeLeft = duration; 
+            initialTimerDuration = duration; 
+            timerStatusDisplay.textContent = (currentFlowDefinition[currentStageIndex]?.timerLabel || "準備計時") + "進行中..."; 
+            updateTimerDisplayDOM(timeLeft); 
+            timerDisplay.classList.remove('hidden'); 
+            timerProgressBarContainer.classList.remove('hidden'); 
+            updateProgressBar(timeLeft, initialTimerDuration); 
+            
+            const isFullscreen = document.body.classList.contains('fullscreen-active');
+            timerDisplay.style.color = isFullscreen ? '#259DFA' : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+
+            nextStageButton.disabled = true; 
+            manualStartTimerButton.disabled = true; 
+            pauseResumeTimerButton.textContent = "暫停計時"; 
+            pauseResumeTimerButton.classList.remove('hidden'); 
+            skipStageButton.classList.add('hidden'); 
+            timerInterval = setInterval(runActiveTimerInterval, 1000); 
+        }
+
+        pauseResumeTimerButton.addEventListener('click', () => { isTimerPaused = !isTimerPaused; if (isTimerPaused) { recognitionManuallyStopped = true; if(currentTimerType === 'grace' && graceTimerInterval) { clearInterval(graceTimerInterval); stopRecognitionForce(); } else if ((currentTimerType === 'main' || currentTimerType === 'manual_prep') && timerInterval) { clearInterval(timerInterval); } pauseResumeTimerButton.textContent = "繼續計時"; timerStatusDisplay.textContent += " (已暫停)"; skipStageButton.classList.remove('hidden'); nextStageButton.disabled = true; } else { pauseResumeTimerButton.textContent = "暫停計時"; timerStatusDisplay.textContent = timerStatusDisplay.textContent.replace(" (已暫停)", ""); skipStageButton.classList.add('hidden'); if (currentTimerType === 'grace') { startRecognitionConditionally(); graceTimerInterval = setInterval(runActiveTimerInterval, 1000); } else if (currentTimerType === 'main' || currentTimerType === 'manual_prep') { timerInterval = setInterval(runActiveTimerInterval, 1000);}}});
+        skipStageButton.addEventListener('click', () => { if (isTimerPaused) { stopRecognitionForce(); clearAllTimersAndIntervals(); loadNextStage(); }});
+
+        let sortableInstance = null;
+        function renderEditorList() { 
+            flowEditorList.innerHTML = ''; 
+            currentFlowDefinition.forEach((stage, index) => { 
+                const li = document.createElement('li'); 
+                li.dataset.index = index; 
+                const infoDiv = document.createElement('div'); 
+                infoDiv.classList.add('stage-info'); 
+                infoDiv.innerHTML = `<strong>${index + 1}. ${stage.name || '(未命名)'}</strong><span>類型: ${stage.type || '(未知)'}${stage.duration ? `, 時間: ${stage.duration}s` : ''}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">稿件: ${stage.script ? stage.script.substring(0, 50) + (stage.script.length > 50 ? '...' : '') : '(無)'}</span>`; 
+                const controlsDiv = document.createElement('div'); 
+                controlsDiv.classList.add('editor-controls'); 
+                controlsDiv.innerHTML = 
+                    `<button class="insert-before" onclick="openEditModal(-1, ${index})" title="在此階段之前插入新階段">＋前</button>` + 
+                    `<button class="edit" onclick="openEditModal(${index})" title="編輯此階段">編輯</button>` +
+                    `<button class="duplicate" onclick="duplicateStage(${index})" title="複製此階段">複製</button>` + 
+                    `<button class="move" onclick="moveStage(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="上移此階段">↑</button>` +
+                    `<button class="move" onclick="moveStage(${index}, 1)" ${index === currentFlowDefinition.length - 1 ? 'disabled' : ''} title="下移此階段">↓</button>` +
+                    `<button class="delete" onclick="deleteStage(${index})" title="刪除此階段">刪除</button>`; 
+                li.appendChild(infoDiv); 
+                li.appendChild(controlsDiv); 
+                flowEditorList.appendChild(li); 
+            }); 
+            if (sortableInstance) sortableInstance.destroy(); 
+            sortableInstance = new Sortable(flowEditorList, { animation: 150, ghostClass: 'sortable-ghost', handle: 'li', onEnd: function (evt) { const oldIndex=parseInt(evt.oldDraggableIndex), newIndex=parseInt(evt.newDraggableIndex); if(oldIndex!==newIndex){ const [movedItem]=currentFlowDefinition.splice(oldIndex, 1); currentFlowDefinition.splice(newIndex, 0, movedItem); renderEditorList();} } }); 
+        }
+        
+        function openEditModal(index, insertBeforeIndexOpt = null) { 
+            const isNew = index === -1; 
+            currentInsertBeforeIndex = isNew ? insertBeforeIndexOpt : null; 
+            modalTitle.textContent = isNew ? (currentInsertBeforeIndex !== null ? `在階段 ${currentInsertBeforeIndex + 1} 之前新增` : "新增階段 (末尾)") : `編輯階段 ${index + 1}`; 
+            editingStageIndexInput.value = index; 
+            if (isNew) { 
+                stageNameInput.value = ""; 
+                stageTypeSelect.value = "announcement"; 
+                stageDurationInput.value = ""; 
+                stageTimerLabelInput.value = ""; 
+                stageScriptInput.value = ""; 
+            } else { 
+                const stage = currentFlowDefinition[index]; 
+                stageNameInput.value = stage.name || ""; 
+                stageTypeSelect.value = stage.type || "announcement"; 
+                stageDurationInput.value = stage.duration || ""; 
+                stageTimerLabelInput.value = stage.timerLabel || ""; 
+                stageScriptInput.value = stage.script || ""; 
+            } 
+            handleModalFieldVisibility(); 
+            stageEditModal.style.display = "block"; 
+            stageNameInput.focus(); 
+        }
+
+        function closeModal() { stageEditModal.style.display = "none"; currentInsertBeforeIndex = null; }
+        function handleModalFieldVisibility() { const selectedType = stageTypeSelect.value; const needsDuration = ["manual_prep", "speech_auto"].includes(selectedType); durationInputContainer.style.display = needsDuration ? "block" : "none"; timerLabelInputContainer.style.display = needsDuration ? "block" : "none"; }
+        stageTypeSelect.addEventListener('change', handleModalFieldVisibility); 
+        
+        function saveStageChanges() { 
+            const index = parseInt(editingStageIndexInput.value); 
+            const isNew = index === -1; 
+            const stageData = { name: stageNameInput.value.trim() || (isNew ? "新階段" : `階段 ${index + 1}`), type: stageTypeSelect.value, script: stageScriptInput.value.trim(), duration: null, timerLabel: null }; 
+            if (["manual_prep", "speech_auto"].includes(stageData.type)) { 
+                const duration = parseInt(stageDurationInput.value); 
+                stageData.duration = isNaN(duration) || duration < 1 ? 60 : duration; 
+                stageData.timerLabel = stageTimerLabelInput.value.trim() || null; 
+            } 
+            if (isNew) {
+                if (currentInsertBeforeIndex !== null) {
+                    currentFlowDefinition.splice(currentInsertBeforeIndex, 0, stageData);
+                } else {
+                    currentFlowDefinition.push(stageData); 
+                }
+            } else { 
+                currentFlowDefinition[index] = stageData; 
+            } 
+            renderEditorList(); 
+            closeModal(); 
+        }
+        
+        function duplicateStage(index) {
+            if (index < 0 || index >= currentFlowDefinition.length) return;
+            const originalStage = currentFlowDefinition[index];
+            const duplicatedStage = JSON.parse(JSON.stringify(originalStage)); 
+            duplicatedStage.name = (duplicatedStage.name || "複製的階段") + " (副本)";
+            currentFlowDefinition.splice(index + 1, 0, duplicatedStage);
+            renderEditorList();
+        }
+
+        function deleteStage(index) { if (confirm(`確定要刪除階段 ${index + 1} (${currentFlowDefinition[index].name}) 嗎？`)) { currentFlowDefinition.splice(index, 1); renderEditorList(); } }
+        function moveStage(index, direction) { if (direction === -1 && index > 0) { [currentFlowDefinition[index], currentFlowDefinition[index - 1]] = [currentFlowDefinition[index - 1], currentFlowDefinition[index]]; } else if (direction === 1 && index < currentFlowDefinition.length - 1) { [currentFlowDefinition[index], currentFlowDefinition[index + 1]] = [currentFlowDefinition[index + 1], currentFlowDefinition[index]]; } renderEditorList(); }
+
+        function loadStage(index) { const stage = currentFlowDefinition[index]; if (!stage) return; 
+            currentStageInfoDisplay.textContent = `目前階段：${interpolateScript(stage.name)}`; 
+            moderatorScriptDisplay.textContent = interpolateScript(stage.script); 
+            clearAllTimersAndIntervals(); 
+            manualStartTimerButton.classList.add('hidden'); 
+            speechRecognitionStatusDisplay.textContent = ""; 
+            speechRecognitionStatusDisplay.classList.add('hidden'); 
+            drawRebuttalOrderSection.classList.add('hidden'); 
+            timerDisplay.classList.add('hidden'); 
+            timerProgressBarContainer.classList.add('hidden'); 
+            timerStatusDisplay.textContent = ""; 
+            nextStageButton.disabled = false; 
+            
+            if (currentStageIndex + 1 < currentFlowDefinition.length) {
+                const nextStageDetails = currentFlowDefinition[currentStageIndex + 1];
+                nextSegmentPreview.textContent = `下一環節：${interpolateScript(nextStageDetails.name)}`;
+                nextSegmentPreview.classList.remove('hidden');
+            } else {
+                nextSegmentPreview.textContent = "最後環節"; 
+                nextSegmentPreview.classList.remove('hidden'); 
+            }
+            
+            const isFullscreen = document.body.classList.contains('fullscreen-active');
+            let defaultTimerColor = isFullscreen ? '#259DFA' : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+            timerDisplay.style.color = defaultTimerColor; 
+            timerProgressBar.style.backgroundColor = defaultTimerColor; 
+            if (isFullscreen) timerProgressBar.removeAttribute('data-color-state');
+
+
+            speak(interpolateScript(stage.script), () => { 
+                if (stage.type === "speech_auto") { 
+                    startGracePeriodTimer(); 
+                } else if (stage.type === "manual_prep") { 
+                    manualStartTimerButton.classList.remove('hidden'); 
+                    manualStartTimerButton.disabled = false; 
+                    manualStartTimerButton.textContent = `開始${stage.timerLabel || '計時'}`; 
+                    timerDisplay.classList.remove('hidden'); 
+                    timerProgressBarContainer.classList.remove('hidden'); 
+                    initialTimerDuration = stage.duration; 
+                    updateProgressBar(stage.duration, stage.duration); 
+                    timerStatusDisplay.textContent = (stage.timerLabel || "計時") + "準備開始..."; 
+                    updateTimerDisplayDOM(stage.duration); 
+                } else if (stage.type === "draw_rebuttal_order") { 
+                    drawRebuttalOrderSection.classList.remove('hidden'); 
+                    drawResultDisplay.textContent = "待抽籤..."; 
+                    startDrawButton.disabled = false; 
+                    nextStageButton.disabled = true; 
+                } else { 
+                    timerDisplay.classList.add('hidden'); 
+                    timerProgressBarContainer.classList.add('hidden');
+                    timerStatusDisplay.textContent = ""; 
+                    if (index >= currentFlowDefinition.length -1) {
+                        nextStageButton.disabled = true;
+                        nextSegmentPreview.textContent = "辯論已結束"; 
+                    }
+                } 
+            }); 
+        }
+        function loadNextStage() { currentStageIndex++; stopRecognitionForce(); clearAllTimersAndIntervals(); 
+            if (currentStageIndex < currentFlowDefinition.length) { 
+                playSound('stageAdvanceSound'); 
+                loadStage(currentStageIndex); 
+                const nextStageData = currentFlowDefinition[currentStageIndex]; 
+                const isFullscreen = document.body.classList.contains('fullscreen-active');
+                let defaultTimerColor = isFullscreen ? '#259DFA' : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+
+
+                if (nextStageData?.type === 'speech_auto') { 
+                    timerDisplay.textContent = formatTime(GRACE_PERIOD_DURATION); 
+                    timerDisplay.style.color = defaultTimerColor;
+                } else if (nextStageData?.duration && nextStageData?.type === 'manual_prep') { 
+                    timerDisplay.textContent = formatTime(nextStageData.duration); 
+                    timerDisplay.style.color = defaultTimerColor;
+                } else {
+                     timerProgressBarContainer.classList.add('hidden'); 
+                }
+            } else { 
+                currentStageInfoDisplay.textContent = "所有流程已結束。"; 
+                nextStageButton.disabled = true; 
+                clearAllTimersAndIntervals(); 
+                nextSegmentPreview.textContent = "辯論已結束";
+                nextSegmentPreview.classList.remove('hidden');
+            } 
+        }
+        
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                bodyElement.classList.add('dark-mode');
+                themeToggleButton.textContent = '切換淺色模式';
+            } else {
+                bodyElement.classList.remove('dark-mode');
+                themeToggleButton.textContent = '切換深色模式';
+            }
+             handleFullscreenChange(); 
+        }
+
+        function toggleTheme() {
+            let newTheme;
+            if (bodyElement.classList.contains('dark-mode')) {
+                newTheme = 'light';
+            } else {
+                newTheme = 'dark';
+            }
+            applyTheme(newTheme);
+            localStorage.setItem('debateTimerTheme', newTheme);
+        }
+
+        function showShortcutHelpModal() {
+            shortcutHelpModal.style.display = "block";
+        }
+        function closeShortcutHelpModal() {
+            shortcutHelpModal.style.display = "none";
+        }
+
+        function updateRealTimeClock() {
+            if (fullscreenRealTimeClock) {
+                const now = new Date();
+                fullscreenRealTimeClock.textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+            }
+        }
+
+
+        function populateFormatSelector() { for (const formatName in debateFormatDefinitions) { const option = document.createElement('option'); option.value = formatName; option.textContent = formatName; formatSelect.appendChild(option); } }
+        window.addEventListener('DOMContentLoaded', () => { 
+            populateFormatSelector(); 
+            if (!SpeechRecognition) { 
+                alert("瀏覽器不支援 SpeechRecognition API"); 
+            } 
+            nextSegmentPreview.classList.add('hidden'); 
+            timerProgressBarContainer.classList.add('hidden'); 
+            fullscreenRealTimeClock.classList.add('hidden'); 
+            
+            const savedTheme = localStorage.getItem('debateTimerTheme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    applyTheme('dark');
+                } else {
+                    applyTheme('light'); 
+                }
+            }
+            if(themeToggleButton) { 
+                 themeToggleButton.addEventListener('click', toggleTheme);
+            }
+            if(shortcutHelpCloseButton) { 
+                shortcutHelpCloseButton.addEventListener('click', closeShortcutHelpModal);
+            }
+            addStageButton.addEventListener('click', () => openEditModal(-1)); 
+        });
+
+        editFlowButton.addEventListener('click', () => { const selectedFormatName = formatSelect.value; let flowToEdit; if (debateFormatDefinitions[selectedFormatName]) { flowToEdit = JSON.parse(JSON.stringify(debateFormatDefinitions[selectedFormatName])); } else { alert("請先選擇一個有效的流程範本！"); return; } originalFlowBeforeEdit = JSON.parse(JSON.stringify(flowToEdit)); currentFlowDefinition = flowToEdit; setupPhaseDiv.classList.add('hidden'); flowEditorSection.classList.remove('hidden'); renderEditorList(); });
+        cancelEditingButton.addEventListener('click', () => { if (confirm("取消編輯？所有未儲存的變更將會遺失。")) { flowEditorSection.classList.add('hidden'); setupPhaseDiv.classList.remove('hidden'); currentFlowDefinition = originalFlowBeforeEdit ? JSON.parse(JSON.stringify(originalFlowBeforeEdit)) : []; originalFlowBeforeEdit = null; formatSelect.value = formatSelect.options[0].value; } });
+        finishEditingButton.addEventListener('click', () => { const baseName = formatSelect.value.replace(" (自訂)", "").replace(/\(匯入\)\s*/, ""); const editedFlowName = baseName + " (自訂)"; debateFormatDefinitions[editedFlowName] = JSON.parse(JSON.stringify(currentFlowDefinition)); let existingOption = false; for(let i=0; i < formatSelect.options.length; i++) { if(formatSelect.options[i].value === editedFlowName) { existingOption = true; break; } } if (!existingOption) { const option = document.createElement('option'); option.value = editedFlowName; option.textContent = editedFlowName; formatSelect.appendChild(option); } formatSelect.value = editedFlowName; flowEditorSection.classList.add('hidden'); setupPhaseDiv.classList.remove('hidden'); alert(`流程 "${editedFlowName}" 已儲存並選取。`); originalFlowBeforeEdit = null; });
+        
+        confirmSetupButton.addEventListener('click', () => { 
+            const selectedFormatName = formatSelect.value; 
+            if (currentFlowDefinition && currentFlowDefinition.length > 0 && (formatSelect.value.includes("(自訂)") || formatSelect.value.startsWith("(匯入)"))) {
+                 console.log("Using pre-loaded/edited flow for:", selectedFormatName);
+            } else if (debateFormatDefinitions[selectedFormatName]) { 
+                currentFlowDefinition = JSON.parse(JSON.stringify(debateFormatDefinitions[selectedFormatName])); 
+            } else { 
+                alert("無法載入所選流程！請確認選擇或匯入流程。"); 
+                return; 
+            }
+
+            positiveTeamName = positiveTeamNameInput.value.trim() || "正方"; 
+            negativeTeamName = negativeTeamNameInput.value.trim() || "反方"; 
+            debateTopic = debateTopicInput.value.trim() || "（未設定辯題）"; 
+            debateInfoDisplay.innerHTML = `<p><strong>流程：</strong>${selectedFormatName.replace("(自訂)","").replace("(匯入) ","")}</p><p><strong>辯題：</strong>${debateTopic}</p><p><strong>正方：</strong>${positiveTeamName} vs <strong>反方：</strong>${negativeTeamName}</p>`; 
+            setupPhaseDiv.classList.add('hidden'); 
+            flowEditorSection.classList.add('hidden'); 
+            debatePhaseDiv.classList.remove('hidden'); 
+            nextStageButton.classList.remove('hidden'); 
+            resetButton.classList.remove('hidden'); 
+            currentStageIndex = -1; 
+            rebuttalOrder = null; 
+            loadNextStage(); 
+        });
+        startDrawButton.addEventListener('click', () => { playSound('drawSound'); rebuttalOrder = Math.random() < 0.5 ? 'positive_first' : 'negative_first'; const resultText = `抽籤結果：${rebuttalOrder === 'positive_first' ? positiveTeamName : negativeTeamName} 先結辯。`; drawResultDisplay.textContent = resultText; speak(resultText, () => nextStageButton.disabled = false); startDrawButton.disabled = true; });
+        nextStageButton.addEventListener('click', () => { if (synth.speaking) synth.cancel(); loadNextStage(); });
+        manualStartTimerButton.addEventListener('click', () => { const stage = currentFlowDefinition[currentStageIndex]; if (stage && stage.type === "manual_prep") startManualPrepTimer(stage.duration); });
+        forceStartMainTimerButton.addEventListener('click', () => { if (currentTimerType==='grace' && graceTimerInterval) { clearTimeout(graceTimerInterval); graceTimerInterval = null; stopRecognitionForce(); timerStatusDisplay.textContent = "手動啟動..."; speak("手動啟動，計時開始。", () => { startMainSpeechTimer(currentFlowDefinition[currentStageIndex].duration); pauseResumeTimerButton.classList.remove('hidden'); pauseResumeTimerButton.textContent = "暫停計時"; skipStageButton.classList.add('hidden');}); mainSpeechTimerStartedByGrace = true; }});
+        exportFlowButton.addEventListener('click', () => { const selectedFormatName = formatSelect.value; let flowToExport = null; let flowName = selectedFormatName; if(currentFlowDefinition && currentFlowDefinition.length > 0 && (selectedFormatName.includes("(自訂)") || selectedFormatName.startsWith("(匯入)"))) { flowToExport = currentFlowDefinition; flowName = selectedFormatName; console.log("Exporting currentFlowDefinition for custom/imported flow"); } else if (debateFormatDefinitions[selectedFormatName]) { flowToExport = debateFormatDefinitions[selectedFormatName]; flowName = selectedFormatName; console.log("Exporting from debateFormatDefinitions"); } if (!flowToExport || flowToExport.length === 0) { alert("沒有可匯出的流程！請先選擇或編輯一個有效的流程。"); return; } const jsonString = JSON.stringify(flowToExport, null, 2); const blob = new Blob([jsonString], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const fileName = flowName.replace(/[\s()]/g, '_').replace('(匯入)_', 'Imported_').replace('_(自訂)','_Custom') + ".json"; a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); fileImportStatus.textContent = `流程 "${flowName}" 已匯出為 ${fileName}`; });
+        importFlowInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) { fileImportStatus.textContent = "未選擇檔案。"; loadImportedFlowButton.classList.add('hidden'); return; } if (file.type !== "application/json") { fileImportStatus.textContent = "錯誤：請選擇 .json 檔案。"; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; importFlowInput.value = ""; return; } const reader = new FileReader(); reader.onload = (e) => { try { const parsedFlow = JSON.parse(e.target.result); if (Array.isArray(parsedFlow) && parsedFlow.length > 0 && parsedFlow.every(stage => stage.name && stage.type)) { importedDebateStages = parsedFlow; importedDebateStages.fileName = file.name.replace(/\.json$/i, ""); fileImportStatus.textContent = `檔案 "${file.name}" 已成功讀取。`; loadImportedFlowButton.classList.remove('hidden'); loadImportedFlowButton.textContent = `載入 "${importedDebateStages.fileName}" 並設為目前流程`; } else { throw new Error("JSON 結構不符或內容不完整。"); } } catch (error) { console.error("Error parsing JSON:", error); fileImportStatus.textContent = `錯誤：無法解析檔案。${error.message}`; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; } }; reader.onerror = () => { fileImportStatus.textContent = "讀取檔案錯誤。"; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; }; reader.readAsText(file); });
+        loadImportedFlowButton.addEventListener('click', () => { if (importedDebateStages) { const importName = `(匯入) ${importedDebateStages.fileName || "自訂流程"}`; debateFormatDefinitions[importName] = JSON.parse(JSON.stringify(importedDebateStages)); 
+            currentFlowDefinition = JSON.parse(JSON.stringify(importedDebateStages)); 
+            let existingOption = false; for(let i=0; i < formatSelect.options.length; i++) { if(formatSelect.options[i].value === importName) { existingOption = true; break; } } if (!existingOption) { const option = document.createElement('option'); option.value = importName; option.textContent = importName; formatSelect.appendChild(option); } formatSelect.value = importName; fileImportStatus.textContent = `流程 "${importName}" 已新增至選單、選取並載入為目前流程。`; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; 
+            originalFlowBeforeEdit = JSON.parse(JSON.stringify(currentFlowDefinition)); 
+        } else { fileImportStatus.textContent = "沒有可載入的匯入流程。"; }});
+        resetButton.addEventListener('click', () => { if(!confirm("確定要重置所有設定並返回初始畫面嗎？")) return; stopRecognitionForce(); if (synth.speaking) synth.cancel(); clearAllTimersAndIntervals(); currentStageIndex = -1; rebuttalOrder = null; currentFlowDefinition = []; originalFlowBeforeEdit = null; moderatorScriptDisplay.textContent = "請按「確認設定」開始。"; currentStageInfoDisplay.textContent = ""; timerDisplay.classList.add('hidden'); timerStatusDisplay.textContent = ""; drawResultDisplay.textContent = ""; timerDisplay.textContent = "00:00"; 
+            const isFullscreen = bodyElement.classList.contains('fullscreen-active');
+            const isDarkMode = bodyElement.classList.contains('dark-mode');
+            let defaultTimerColorVal = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(); 
+            if (isFullscreen) defaultTimerColorVal = '#259DFA';
+            else if (isDarkMode) defaultTimerColorVal = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(); 
+            timerDisplay.style.color = defaultTimerColorVal; 
+
+            debatePhaseDiv.classList.add('hidden'); drawRebuttalOrderSection.classList.add('hidden'); flowEditorSection.classList.add('hidden'); setupPhaseDiv.classList.remove('hidden'); nextStageButton.classList.add('hidden'); resetButton.classList.add('hidden'); manualStartTimerButton.classList.add('hidden'); forceStartMainTimerButton.classList.add('hidden'); speechRecognitionStatusDisplay.textContent = ""; speechRecognitionStatusDisplay.classList.add('hidden'); pauseResumeTimerButton.classList.add('hidden'); skipStageButton.classList.add('hidden'); nextStageButton.disabled = false; manualStartTimerButton.disabled = false; startDrawButton.disabled = false; debateInfoDisplay.innerHTML = ""; fileImportStatus.textContent = ""; importFlowInput.value=""; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; positiveTeamNameInput.value = "正方"; negativeTeamNameInput.value = "反方"; debateTopicInput.value = "（在此輸入辯題）"; if (formatSelect.options.length > 0) formatSelect.selectedIndex = 0; timerProgressBarContainer.classList.add('hidden'); nextSegmentPreview.classList.add('hidden'); nextSegmentPreview.textContent = ""; });
+
+        function toggleFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { alert(`無法進入全螢幕模式: ${err.message} (${err.name})`); }); } else { if (document.exitFullscreen) { document.exitFullscreen(); } } }
+        
+        function handleFullscreenChange() { 
+            const isCurrentlyFullscreen = !!document.fullscreenElement;
+            bodyElement.classList.toggle('fullscreen-active', isCurrentlyFullscreen); 
+            fullscreenButton.textContent = isCurrentlyFullscreen ? '退出全螢幕' : '進入全螢幕'; 
+            
+            const stage = currentFlowDefinition[currentStageIndex];
+            let timerColorToSet;
+
+            if (isCurrentlyFullscreen) {
+                fullscreenRealTimeClock.classList.remove('hidden');
+                updateRealTimeClock(); 
+                if (!realTimeClockInterval) { 
+                    realTimeClockInterval = setInterval(updateRealTimeClock, 1000);
+                }
+                timerColorToSet = '#259DFA'; 
+                if (timerDisplay.style.color.startsWith('rgb(255, 165, 0)') || timerDisplay.style.color === 'var(--color-warning)') timerColorToSet = '#FFB84D';
+                else if (timerDisplay.style.color.startsWith('rgb(255, 69, 0)') || timerDisplay.style.color === 'var(--color-orange-accent)') timerColorToSet = '#FF6B4D';
+                else if (timerDisplay.style.color.startsWith('rgb(220, 53, 69)') || timerDisplay.style.color === 'var(--color-danger)' || timerDisplay.textContent === "時間到") timerColorToSet = '#F87171';
+            } else {
+                fullscreenRealTimeClock.classList.add('hidden');
+                if (realTimeClockInterval) { 
+                    clearInterval(realTimeClockInterval);
+                    realTimeClockInterval = null;
+                }
+                timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(); 
+                 if (timerDisplay.style.color.includes('255, 165, 0') || timerDisplay.style.color.includes('FFB84D')) timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-warning').trim();
+                else if (timerDisplay.style.color.includes('255, 69, 0') || timerDisplay.style.color.includes('FF6B4D')) timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-orange-accent').trim();
+                else if (timerDisplay.style.color.includes('220, 53, 69') || timerDisplay.style.color.includes('F87171') || timerDisplay.textContent === "時間到") timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-danger').trim();
+            }
+            timerDisplay.style.color = timerColorToSet;
+
+            if (initialTimerDuration > 0 && timeLeft !== undefined) { 
+                updateProgressBar(timeLeft, initialTimerDuration);
+            } else { 
+                timerProgressBar.style.backgroundColor = isCurrentlyFullscreen ? '#259DFA' : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+                if (isCurrentlyFullscreen) timerProgressBar.removeAttribute('data-color-state');
+            }
+        }
+        fullscreenButton.addEventListener('click', toggleFullscreen);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        window.addEventListener('keydown', (event) => {
+            const activeElement = document.activeElement;
+            const isTyping = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT');
+
+            if (event.key === 'Escape') {
+                if (shortcutHelpModal.style.display === "block") {
+                    closeShortcutHelpModal();
+                    event.preventDefault();
+                } else if (stageEditModal.style.display === "block") {
+                    closeModal(); 
+                    event.preventDefault();
+                }
+                return; 
+            }
+
+            if (event.key === '/') {
+                if (!isTyping) {
+                    if (shortcutHelpModal.style.display === "block") {
+                        closeShortcutHelpModal();
+                    } else {
+                        showShortcutHelpModal();
+                    }
+                    event.preventDefault();
+                }
+                return; 
+            }
+            
+            if (isTyping && event.key !== 'Enter' && event.key !== 'Escape' ) return; 
+
+            switch (event.key.toLowerCase()) {
+                case 'n':
+                case 'arrowright':
+                    if (nextStageButton && !nextStageButton.classList.contains('hidden') && !nextStageButton.disabled) {
+                        nextStageButton.click();
+                        event.preventDefault();
+                    }
+                    break;
+                case 'p':
+                case ' ': 
+                    if (pauseResumeTimerButton && !pauseResumeTimerButton.classList.contains('hidden')) {
+                        pauseResumeTimerButton.click();
+                        event.preventDefault();
+                    }
+                    break;
+                case 's':
+                    if (manualStartTimerButton && !manualStartTimerButton.classList.contains('hidden') && !manualStartTimerButton.disabled) {
+                        manualStartTimerButton.click();
+                    } else if (forceStartMainTimerButton && !forceStartMainTimerButton.classList.contains('hidden')) {
+                        forceStartMainTimerButton.click();
+                    }
+                    event.preventDefault();
+                    break;
+                case 'r':
+                    if (resetButton && !resetButton.classList.contains('hidden')) {
+                        resetButton.click();
+                        event.preventDefault();
+                    }
+                    break;
+                case 'f':
+                    if (fullscreenButton) {
+                        fullscreenButton.click();
+                        event.preventDefault();
+                    }
+                    break;
+                case 't':
+                     if (themeToggleButton) {
+                        themeToggleButton.click();
+                        event.preventDefault();
+                    }
+                    break;
+            }
+        });
+
+
+        window.onclick = function(event) { 
+            if (event.target == stageEditModal) {
+                closeModal(); 
+            } else if (event.target == shortcutHelpModal) { 
+                closeShortcutHelpModal();
+            }
+        }
+
     </script>
+    <div id="creditFooter">
+        <a href="https://chengsc.pythonanywhere.com/" target="_blank" rel="noopener noreferrer">由台灣辯論彩券製作</a>
+    </div>
 </body>
 </html>
