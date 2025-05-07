@@ -456,6 +456,7 @@
             text-align: left; 
             flex-grow: 1; 
             margin-right: 15px; 
+            overflow: hidden; /* Prevent long text from breaking layout */
         }
         #flowEditorList .stage-info strong {
             font-weight: 600;
@@ -466,6 +467,9 @@
             font-size: 0.85em; 
             color: var(--color-text-muted); 
             margin-top: 3px;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
         }
         #flowEditorList .editor-controls { 
             display: flex; 
@@ -750,8 +754,7 @@
             position: fixed;
             bottom: 8px;
             right: 15px;
-            /* MODIFIED: Increased font size */
-            font-size: 1.0em; 
+            font-size: 0.9em; 
             color: var(--color-text-muted);
             z-index: 999; 
             opacity: 0.7;
@@ -772,6 +775,65 @@
              background-color: rgba(0,0,0,0.3); 
              padding: 2px 5px;
              border-radius: var(--border-radius-sm);
+        }
+
+        /* --- ADDED: Mobile Optimization Media Queries --- */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            h1 { font-size: 1.8em; }
+            h2 { font-size: 1.3em; }
+            #timerDisplay { font-size: 2.5em; }
+            #moderatorScript { font-size: 1.1em; }
+            .debate-info { font-size: 0.9em; padding: 10px 15px; }
+            #flowEditorList li { padding: 10px 12px; }
+            #flowEditorList .editor-controls { gap: 4px; } /* Slightly reduce gap */
+             #flowEditorList .stage-info span { font-size: 0.8em; } /* Slightly smaller stage info text */
+
+        }
+
+        @media (max-width: 480px) {
+            body { padding-top: 10px; padding-bottom: 30px; } /* Adjust body padding */
+            .container {
+                padding: 15px; /* Further reduce padding */
+                width: 95%; /* Allow slightly more width */
+            }
+            h1 { font-size: 1.6em; }
+            h2 { font-size: 1.2em; }
+            #timerDisplay { font-size: 2.2em; }
+            #currentStageInfo { font-size: 1em; }
+            #moderatorScript { font-size: 1em; padding: 12px; }
+            .debate-info { font-size: 0.85em; padding: 8px 12px; }
+            
+            /* Stack buttons vertically */
+            #debatePhase .controls, 
+            #flowEditorList .editor-controls {
+                flex-direction: column;
+                align-items: stretch; /* Make buttons full width */
+            }
+             #debatePhase .controls button {
+                width: 100%;
+                margin: 4px 0; /* Adjust margin for vertical stacking */
+                box-sizing: border-box; /* Ensure padding is included in width */
+            }
+             #flowEditorList .editor-controls {
+                 margin-top: 8px; /* Add some space above stacked controls */
+             }
+             #flowEditorList .editor-controls button {
+                 width: auto; /* Allow button width to adjust to content */
+                 align-self: flex-end; /* Align buttons to the right */
+             }
+            
+            .modal-content {
+                 width: 90%; /* Modal width */
+                 padding: 20px 15px;
+            }
+            .modal-content h3 { font-size: 1.3em; }
+            #shortcutHelpList li strong { width: 100px; } /* Adjust shortcut key width */
+
+            #creditFooter { font-size: 0.8em; right: 10px; bottom: 5px;}
         }
 
 
@@ -1355,7 +1417,35 @@
         function updateRealTimeClock() {
             if (fullscreenRealTimeClock) {
                 const now = new Date();
-                fullscreenRealTimeClock.textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+                // Force 24-hour format for consistency
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                fullscreenRealTimeClock.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // --- ADDED: Orientation Change Handling ---
+        function handleOrientationChange() {
+            // Check if screen orientation API is supported
+            if (screen.orientation && screen.orientation.type) {
+                const isLandscape = screen.orientation.type.includes('landscape');
+                const isLikelyMobile = window.innerWidth < 800; // Simple check, adjust as needed
+                const isCurrentlyFullscreen = !!document.fullscreenElement;
+
+                if (isLandscape && isLikelyMobile && !isCurrentlyFullscreen) {
+                    console.log("Attempting auto-fullscreen on landscape...");
+                    // IMPORTANT: This might fail if there was no prior user interaction
+                    document.documentElement.requestFullscreen().catch(err => { 
+                        console.warn(`Auto-fullscreen failed: ${err.message}. User interaction might be required first.`); 
+                    });
+                } else if (!isLandscape && isCurrentlyFullscreen) {
+                    // Exit fullscreen when returning to portrait IF currently fullscreen
+                     console.log("Attempting to exit fullscreen on portrait...");
+                     if (document.exitFullscreen) {
+                         document.exitFullscreen().catch(err => console.warn(`Exiting fullscreen failed: ${err.message}`));
+                     }
+                }
             }
         }
 
@@ -1387,6 +1477,14 @@
                 shortcutHelpCloseButton.addEventListener('click', closeShortcutHelpModal);
             }
             addStageButton.addEventListener('click', () => openEditModal(-1)); 
+            
+            // Add orientation change listener if supported
+            if (screen.orientation && typeof screen.orientation.addEventListener === 'function') {
+                 screen.orientation.addEventListener('change', handleOrientationChange);
+            } else {
+                console.warn("Screen Orientation API not fully supported, landscape auto-fullscreen might not work.");
+                // Could add a fallback using 'resize' event here if needed, but it's less reliable for orientation
+            }
         });
 
         editFlowButton.addEventListener('click', () => { const selectedFormatName = formatSelect.value; let flowToEdit; if (debateFormatDefinitions[selectedFormatName]) { flowToEdit = JSON.parse(JSON.stringify(debateFormatDefinitions[selectedFormatName])); } else { alert("請先選擇一個有效的流程範本！"); return; } originalFlowBeforeEdit = JSON.parse(JSON.stringify(flowToEdit)); currentFlowDefinition = flowToEdit; setupPhaseDiv.classList.add('hidden'); flowEditorSection.classList.remove('hidden'); renderEditorList(); });
@@ -1469,7 +1567,10 @@
                 else if (timerDisplay.style.color.includes('255, 69, 0') || timerDisplay.style.color.includes('FF6B4D')) timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-orange-accent').trim();
                 else if (timerDisplay.style.color.includes('220, 53, 69') || timerDisplay.style.color.includes('F87171') || timerDisplay.textContent === "時間到") timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-danger').trim();
             }
-            timerDisplay.style.color = timerColorToSet;
+            // Apply color only if timerDisplay is actually visible
+             if (!timerDisplay.classList.contains('hidden')) {
+                timerDisplay.style.color = timerColorToSet;
+            }
 
             if (initialTimerDuration > 0 && timeLeft !== undefined) { 
                 updateProgressBar(timeLeft, initialTimerDuration);
