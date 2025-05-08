@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>辯時計</title> 
+    <title>辯時計</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -284,13 +284,22 @@
         }
 
 
-        .manual-override-button, .skip-button, .editor-controls button.edit, .editor-controls button.insert-before { 
+        .manual-override-button, .skip-button { 
             background-color: var(--color-warning) !important; 
             color: var(--color-text-on-warning) !important; 
         }
-        .manual-override-button:hover, .skip-button:hover, .editor-controls button.edit:hover, .editor-controls button.insert-before:hover { 
+        .manual-override-button:hover, .skip-button:hover { 
             background-color: var(--color-warning-dark) !important; 
         }
+        /* Specific button styling for editor actions */
+        .editor-controls button.edit, .editor-controls .more-actions-dropdown button.insert-before {
+            background-color: var(--color-warning) !important; 
+            color: var(--color-text-on-warning) !important; 
+        }
+        .editor-controls button.edit:hover, .editor-controls .more-actions-dropdown button.insert-before:hover {
+            background-color: var(--color-warning-dark) !important; 
+        }
+
 
         .pause-resume-button { 
             background-color: var(--color-orange-accent) !important; 
@@ -300,17 +309,17 @@
             background-color: var(--color-orange-accent-dark) !important; 
         }
 
-        .draw-controls button, #finishEditingButton, .editor-controls button.duplicate { 
+        .draw-controls button, #finishEditingButton, .editor-controls .more-actions-dropdown button.duplicate { 
             background-color: var(--color-success) !important; 
         } 
-        .draw-controls button:hover, #finishEditingButton:hover, .editor-controls button.duplicate:hover { 
+        .draw-controls button:hover, #finishEditingButton:hover, .editor-controls .more-actions-dropdown button.duplicate:hover { 
             background-color: var(--color-success-dark) !important; 
         }
 
-        .flow-io button, .editor-controls button.move, #cancelEditingButton { 
+        .flow-io button, #cancelEditingButton, .editor-controls .more-actions-btn, .editor-controls .more-actions-dropdown button.move {
             background-color: var(--color-secondary) !important; 
         } 
-        .flow-io button:hover, .editor-controls button.move:hover, #cancelEditingButton:hover { 
+        .flow-io button:hover, #cancelEditingButton:hover, .editor-controls .more-actions-btn:hover, .editor-controls .more-actions-dropdown button.move:hover {
             background-color: var(--color-secondary-dark) !important; 
         }
         
@@ -353,7 +362,7 @@
             background-color: var(--color-bg-alt);
             transition: background-color var(--transition-base), border-color var(--transition-base); 
         }
-        .setup-section label { 
+        .setup-section label, .modal-content fieldset legend { 
             display: block; 
             margin-top: 10px; 
             margin-bottom: 5px; 
@@ -362,6 +371,22 @@
             color: var(--color-text-secondary);
             transition: color var(--transition-base); 
         }
+        .modal-content fieldset {
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--border-radius-md);
+            padding: 10px 15px 15px 15px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        body.dark-mode .modal-content fieldset {
+             border-color: var(--color-border);
+        }
+        .modal-content fieldset legend {
+            padding: 0 5px;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
         .setup-section input[type="text"], .setup-section select,
         .modal-content input[type="text"], .modal-content input[type="number"], 
         .modal-content select, .modal-content textarea { 
@@ -413,6 +438,28 @@
             min-height: 40px; 
             transition: margin var(--transition-base); 
         }
+        .debate-controls-wrapper { /* For auto mode toggle positioning */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            margin-top: 10px;
+        }
+        .debate-controls-wrapper .main-controls {
+            display: flex;
+            gap: 8px; /* Space between main control buttons */
+            flex-wrap: wrap;
+        }
+        .debate-controls-wrapper .auto-mode-control {
+            margin-top: 5px; /* Space above if it wraps */
+            font-size: 0.9em;
+            color: var(--color-text-secondary);
+        }
+        .debate-controls-wrapper .auto-mode-control input {
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
 
         #flowEditorList { 
             list-style: none; 
@@ -431,6 +478,7 @@
             cursor: grab; 
             box-shadow: var(--shadow-sm);
             transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+            position: relative; 
         }
         body.dark-mode #flowEditorList li {
             background-color: var(--color-input-bg); 
@@ -456,7 +504,14 @@
             text-align: left; 
             flex-grow: 1; 
             margin-right: 15px; 
-            overflow: hidden; /* Prevent long text from breaking layout */
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+        }
+        #flowEditorList .stage-info .stage-icon {
+            margin-right: 8px;
+            font-size: 1.1em;
+            flex-shrink: 0; 
         }
         #flowEditorList .stage-info strong {
             font-weight: 600;
@@ -473,14 +528,65 @@
         }
         #flowEditorList .editor-controls { 
             display: flex; 
-            flex-wrap: wrap; 
+            flex-wrap: nowrap; 
             gap: 6px; 
             flex-shrink: 0; 
+            align-items: center;
         }
         #flowEditorList .editor-controls button { 
             padding: 6px 10px; 
             font-size: 0.8em; 
         }
+        .editor-controls .more-actions-container {
+            position: relative;
+            display: inline-block;
+        }
+        .editor-controls .more-actions-btn {
+            padding: 6px 8px; 
+        }
+
+        .editor-controls .more-actions-dropdown {
+            display: none; 
+            position: absolute;
+            right: 0;
+            top: calc(100% + 5px); 
+            background-color: var(--color-bg-container);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-md);
+            z-index: 10;
+            min-width: 130px; 
+            padding: 5px 0;
+        }
+        body.dark-mode .editor-controls .more-actions-dropdown {
+            background-color: var(--color-bg-alt); 
+            border-color: var(--color-input-border);
+        }
+        .editor-controls .more-actions-dropdown.active {
+            display: block;
+        }
+        .editor-controls .more-actions-dropdown button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            background-color: transparent;
+            color: var(--color-text-primary);
+            font-size: 0.85em;
+        }
+        .editor-controls .more-actions-dropdown button:hover {
+            background-color: var(--color-bg-alt); 
+        }
+        body.dark-mode .editor-controls .more-actions-dropdown button {
+             color: var(--color-text-primary); 
+        }
+        body.dark-mode .editor-controls .more-actions-dropdown button:hover {
+            background-color: var(--color-secondary-dark); 
+        }
+
 
         .modal { 
             display: none; 
@@ -731,30 +837,39 @@
             margin-top: 1.5vh; 
             margin-bottom: 1vh; 
         }
-        body.fullscreen-active .controls { 
+        body.fullscreen-active .debate-controls-wrapper .main-controls { 
             order: 10; 
             display: flex; 
             justify-content: center; 
             width: 100%; 
             padding-bottom: 1.5vh; 
         }
+        body.fullscreen-active .debate-controls-wrapper .auto-mode-control {
+            order: 11; /* Ensure it's after main controls */
+            width: 100%;
+            text-align: center;
+            margin-top: 1vh;
+            color: #ccc; /* Fullscreen color for auto mode text */
+        }
+
         body.fullscreen-active .timer-actions button,
-        body.fullscreen-active .controls #nextStageButton { 
+        body.fullscreen-active .debate-controls-wrapper .main-controls #nextStageButton { 
             display: inline-block !important; 
             padding: max(1.5vh, 10px) max(3vw, 20px); 
             font-size: clamp(14px, 2vw, 22px); 
             margin: 0 max(1vw, 6px);
             border-radius: var(--border-radius-lg); 
         }
-        body.fullscreen-active .controls #manualStartTimerButton,
-        body.fullscreen-active .controls #forceStartMainTimerButton,
-        body.fullscreen-active .controls #resetButton { display: none !important; }
+        body.fullscreen-active .debate-controls-wrapper .main-controls #manualStartTimerButton,
+        body.fullscreen-active .debate-controls-wrapper .main-controls #forceStartMainTimerButton,
+        body.fullscreen-active .debate-controls-wrapper .main-controls #resetButton { display: none !important; }
+
 
         #creditFooter {
             position: fixed;
             bottom: 8px;
             right: 15px;
-            font-size: 1.2em; 
+            font-size: 1.0em; 
             color: var(--color-text-muted);
             z-index: 999; 
             opacity: 0.7;
@@ -777,7 +892,6 @@
              border-radius: var(--border-radius-sm);
         }
 
-        /* --- ADDED: Mobile Optimization Media Queries --- */
         @media (max-width: 768px) {
             .container {
                 padding-left: 20px;
@@ -789,16 +903,15 @@
             #moderatorScript { font-size: 1.1em; }
             .debate-info { font-size: 0.9em; padding: 10px 15px; }
             #flowEditorList li { padding: 10px 12px; }
-            #flowEditorList .editor-controls { gap: 4px; } /* Slightly reduce gap */
-             #flowEditorList .stage-info span { font-size: 0.8em; } /* Slightly smaller stage info text */
-
+            #flowEditorList .editor-controls { gap: 4px; } 
+             #flowEditorList .stage-info span { font-size: 0.8em; } 
         }
 
         @media (max-width: 480px) {
-            body { padding-top: 10px; padding-bottom: 30px; } /* Adjust body padding */
+            body { padding-top: 10px; padding-bottom: 30px; } 
             .container {
-                padding: 15px; /* Further reduce padding */
-                width: 95%; /* Allow slightly more width */
+                padding: 15px; 
+                width: 95%; 
             }
             h1 { font-size: 1.6em; }
             h2 { font-size: 1.2em; }
@@ -807,35 +920,46 @@
             #moderatorScript { font-size: 1em; padding: 12px; }
             .debate-info { font-size: 0.85em; padding: 8px 12px; }
             
-            /* Stack buttons vertically */
-            #debatePhase .controls, 
-            #flowEditorList .editor-controls {
-                flex-direction: column;
-                align-items: stretch; /* Make buttons full width */
+            .debate-controls-wrapper,
+            .debate-controls-wrapper .main-controls { 
+                flex-direction: column; 
+                align-items: stretch;
             }
-             #debatePhase .controls button {
-                width: 100%;
-                margin: 4px 0; /* Adjust margin for vertical stacking */
-                box-sizing: border-box; /* Ensure padding is included in width */
+             .debate-controls-wrapper .main-controls button {
+                width: 100%; 
+                margin: 4px 0; 
+                box-sizing: border-box; 
             }
+            .debate-controls-wrapper .auto-mode-control {
+                text-align: center; /* Center auto mode toggle on small screens */
+                margin-top: 10px;
+            }
+
              #flowEditorList .editor-controls {
-                 margin-top: 8px; /* Add some space above stacked controls */
+                 flex-direction: column;
+                 align-items: flex-end; 
+                 gap: 5px; 
+                 margin-top: 8px;
              }
-             #flowEditorList .editor-controls button {
-                 width: auto; /* Allow button width to adjust to content */
-                 align-self: flex-end; /* Align buttons to the right */
+             #flowEditorList .editor-controls > button, 
+             #flowEditorList .editor-controls .more-actions-container { 
+                 width: auto; 
+                 margin-left: 0; 
+             }
+             .editor-controls .more-actions-dropdown { 
+                left: auto;
+                right: 0;
              }
             
             .modal-content {
-                 width: 90%; /* Modal width */
+                 width: 90%; 
                  padding: 20px 15px;
             }
             .modal-content h3 { font-size: 1.3em; }
-            #shortcutHelpList li strong { width: 100px; } /* Adjust shortcut key width */
+            #shortcutHelpList li strong { width: 100px; } 
 
             #creditFooter { font-size: 0.8em; right: 10px; bottom: 5px;}
         }
-
 
     </style>
 </head>
@@ -884,19 +1008,49 @@
                 <span class="close-button" onclick="closeModal()">&times;</span>
                 <h3 id="modalTitle">編輯階段</h3>
                 <input type="hidden" id="editingStageIndex">
-                <div><label for="stageNameInput">階段名稱:</label><input type="text" id="stageNameInput"></div>
-                <div>
-                    <label for="stageTypeSelect">階段類型:</label>
-                    <select id="stageTypeSelect">
-                        <option value="announcement">宣告/提示</option>
-                        <option value="draw_rebuttal_order">結辯順序抽籤</option>
-                        <option value="manual_prep">手動準備計時</option>
-                        <option value="speech_auto">自動發言計時</option>
-                    </select>
-                </div>
-                <div id="durationInputContainer" class="hidden"><label for="stageDurationInput">持續時間 (秒):</label><input type="number" id="stageDurationInput" min="1"></div>
-                <div id="timerLabelInputContainer" class="hidden"><label for="stageTimerLabelInput">計時器標籤:</label><input type="text" id="stageTimerLabelInput" placeholder="例如：申論時間"></div>
-                <div><label for="stageScriptInput">主持人稿件:</label><textarea id="stageScriptInput"></textarea></div>
+                
+                <fieldset>
+                    <legend>基本資訊</legend>
+                    <div><label for="stageNameInput">階段名稱:</label><input type="text" id="stageNameInput"></div>
+                    <div>
+                        <label for="stageTypeSelect">階段類型:</label>
+                        <select id="stageTypeSelect">
+                            <option value="announcement">📢 宣告/提示</option>
+                            <option value="draw_rebuttal_order">🎲 結辯順序抽籤</option>
+                            <option value="manual_prep">⏱️ 手動準備計時</option>
+                            <option value="speech_auto">🎤 自動發言計時</option>
+                        </select>
+                    </div>
+                </fieldset>
+
+                <fieldset id="timingSettingsFieldset"> 
+                    <legend>計時設定</legend>
+                    <div id="durationInputContainer" class="hidden"><label for="stageDurationInput">主要持續時間 (秒):</label><input type="number" id="stageDurationInput" min="1"></div>
+                    <div id="timerLabelInputContainer" class="hidden"><label for="stageTimerLabelInput">計時器標籤:</label><input type="text" id="stageTimerLabelInput" placeholder="例如：申論時間"></div>
+                    
+                    <div id="graceDurationInputContainer" class="hidden">
+                        <label for="stageGraceDurationInput">發言準備緩衝時間 (秒):</label>
+                        <input type="number" id="stageGraceDurationInput" min="0" placeholder="預設 60">
+                    </div>
+                </fieldset>
+                
+                <fieldset id="speechAutoSettingsFieldset" class="hidden">
+                    <legend>🎤 自動發言專屬設定</legend>
+                    <div id="graceEndActionContainer">
+                        <label for="stageGraceEndActionSelect">緩衝時間結束後動作:</label>
+                        <select id="stageGraceEndActionSelect">
+                            <option value="auto_start">自動開始主要計時</option>
+                            <option value="manual_start">提示並等待手動開始</option>
+                            <option value="auto_skip">自動跳過此階段</option>
+                        </select>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>稿件內容</legend>
+                    <div><label for="stageScriptInput">主持人稿件:</label><textarea id="stageScriptInput"></textarea></div>
+                </fieldset>
+                
                 <div class="modal-buttons">
                     <button onclick="saveStageChanges()">儲存變更</button>
                     <button onclick="closeModal()">取消</button>
@@ -917,9 +1071,17 @@
             <div id="nextSegmentPreview" class="hidden"></div>
             <div class="timer-actions"><button id="pauseResumeTimerButton" class="hidden pause-resume-button">暫停計時</button><button id="skipStageButton" class="hidden skip-button">跳過</button></div>
             <div id="speechRecognitionStatus" class="hidden"></div>
-            <div class="controls"><button id="nextStageButton" class="hidden">下一階段</button><button id="manualStartTimerButton" class="hidden">開始計時</button><button id="forceStartMainTimerButton" class="hidden manual-override-button">手動計時</button><button id="resetButton" class="hidden">重置</button></div>
+            
+            <div class="debate-controls-wrapper controls"> <div class="main-controls"> <button id="nextStageButton" class="hidden">下一階段</button>
+                    <button id="manualStartTimerButton" class="hidden">開始計時</button>
+                    <button id="forceStartMainTimerButton" class="hidden manual-override-button">手動計時</button>
+                    <button id="resetButton" class="hidden">重置</button>
+                </div>
+                <div class="auto-mode-control"> <label><input type="checkbox" id="autoModeToggle"> 自動模式</label>
+                </div>
+            </div>
         </div>
-        <div class="info">提示：建議使用最新版 Chrome / Edge 瀏覽器。請確保音效檔案路徑正確。按 "/" 顯示快捷鍵。</div>
+        <div class="info">提示：建議使用電腦版 Chrome / Edge 瀏覽器。請確保麥克風權限開啟。按 "/" 顯示快捷鍵。</div>
     </div>
 
     <audio id="warningSound1min" src="warning_1min.ogg" preload="auto"></audio>
@@ -936,7 +1098,7 @@
             <ul id="shortcutHelpList">
                 <li><strong>N / →</strong> : 下一階段</li>
                 <li><strong>P / 空白鍵</strong> : 暫停/繼續計時</li>
-                <li><strong>S</strong> : 開始手動計時 / 強制開始發言計時</li>
+                <li><strong>S</strong> : 開始手動計時 / 強制開始發言計時 / 手動開始(緩衝後)</li>
                 <li><strong>R</strong> : 重置</li>
                 <li><strong>F</strong> : 全螢幕切換</li>
                 <li><strong>T</strong> : 主題切換 (淺色/深色)</li>
@@ -1001,14 +1163,73 @@
         const shortcutHelpCloseButton = shortcutHelpModal.querySelector('.close-button');
         const fullscreenRealTimeClock = document.getElementById('fullscreenRealTimeClock');
 
+        const timingSettingsFieldset = document.getElementById('timingSettingsFieldset');
+        const speechAutoSettingsFieldset = document.getElementById('speechAutoSettingsFieldset');
+        const graceDurationInputContainer = document.getElementById('graceDurationInputContainer');
+        const stageGraceDurationInput = document.getElementById('stageGraceDurationInput');
+        const graceEndActionContainer = document.getElementById('graceEndActionContainer'); 
+        const stageGraceEndActionSelect = document.getElementById('stageGraceEndActionSelect');
+        const autoModeToggle = document.getElementById('autoModeToggle'); // New: Auto mode toggle
+
 
         // --- State Variables ---
-        let positiveTeamName = "正方"; let negativeTeamName = "反方"; let debateTopic = "（在此輸入辯題）"; let rebuttalOrder = null; let currentStageIndex = -1; let timerInterval; let graceTimerInterval; let timeLeft; let isTimerPaused = false; let currentTimerType = null; let synth = window.speechSynthesis; let voices = []; const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; let recognition; let isRecognizing = false; let recognitionManuallyStopped = false; let mainSpeechTimerStartedByGrace = false; const GRACE_PERIOD_DURATION = 60; let importedDebateStages = null; let currentFlowDefinition = []; let originalFlowBeforeEdit = null; let initialTimerDuration = 0; 
+        let positiveTeamName = "正方"; let negativeTeamName = "反方"; let debateTopic = "（在此輸入辯題）"; let rebuttalOrder = null; let currentStageIndex = -1; let timerInterval; let graceTimerInterval; let timeLeft; let isTimerPaused = false; let currentTimerType = null; let synth = window.speechSynthesis; let voices = []; const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; let recognition; let isRecognizing = false; let recognitionManuallyStopped = false; let mainSpeechTimerStartedByGrace = false; 
+        const DEFAULT_GRACE_PERIOD_DURATION = 60; 
+        let importedDebateStages = null; let currentFlowDefinition = []; let originalFlowBeforeEdit = null; let initialTimerDuration = 0; 
         let currentInsertBeforeIndex = null; 
         let realTimeClockInterval = null; 
+        let isAutoModeEnabled = false; // New: Auto mode state
+
+        const stageIcons = {
+            announcement: '📢',
+            draw_rebuttal_order: '🎲',
+            manual_prep: '⏱️',
+            speech_auto: '🎤'
+        };
 
 
-        const debateFormatDefinitions = { "菁英盃 (新式奧瑞岡五五四制)": [ { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null }, { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null }, { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。{{positive_team_name}}一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" }, { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請{{positive_team_name}}一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言，否則將自動開始計時。", timerLabel: "申論時間" }, { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}一辯。接著請{{negative_team_name}}二辯上臺質詢{{positive_team_name}}一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}一辯。接著請{{positive_team_name}}三辯上臺質詢{{negative_team_name}}一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{positive_team_name}}二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}二辯。接著請{{negative_team_name}}三辯上臺質詢{{positive_team_name}}二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}二辯。接著請{{positive_team_name}}一辯上臺質詢{{negative_team_name}}二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{positive_team_name}}三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}三辯。接著請{{negative_team_name}}一辯上臺質詢{{positive_team_name}}三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間" }, { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}三辯。接著請{{positive_team_name}}二辯上臺質詢{{negative_team_name}}三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間" }, { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" }, { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間" }, { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間" }, { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。感謝 {{positive_team_name}} 與 {{negative_team_name}} 各位辯士的精彩表現。", timerLabel: null }, { name: "抗議提出時間", type: "manual_prep", duration: 600, script: "若有抗議事項，請於十分鐘內以書面方式向主席提出。計時開始。", timerLabel: "抗議提出時間" }, { name: "正式結束", type: "announcement", duration: null, script: "抗議提出時間結束。感謝各位的參與。", timerLabel: null } ], "簡易三對三奧瑞岡 (3-3-2制 示例)": [ { name: "賽前準備", type: "announcement", duration: null, script: "簡易三對三奧瑞岡開始。辯題：{{debate_topic}}。正方：{{positive_team_name}}，反方：{{negative_team_name}}。", timerLabel: null }, { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "進行結辯順序抽籤。", timerLabel: null }, { name: "開賽預備", type: "manual_prep", duration: 30, script: "抽籤完畢。{{positive_team_name}}一辯準備，計時30秒。", timerLabel: "準備" }, { name: "正一申論", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}一辯申論，3分鐘。", timerLabel: "申論" }, { name: "反二質詢正一", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}二辯質詢{{positive_team_name}}一辯，3分鐘。", timerLabel: "質詢" }, { name: "反一申論", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}一辯申論，3分鐘。", timerLabel: "申論" }, { name: "正二質詢反一", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}二辯質詢{{negative_team_name}}一辯，3分鐘。", timerLabel: "質詢" }, { name: "正三申論", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}三辯申論，3分鐘。", timerLabel: "申論" }, { name: "反一質詢正三", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}一辯質詢{{positive_team_name}}三辯，3分鐘。", timerLabel: "質詢" }, { name: "反三申論", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}三辯申論，3分鐘。", timerLabel: "申論" }, { name: "正一質詢反三", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}一辯質詢{{negative_team_name}}三辯，3分鐘。", timerLabel: "質詢" }, { name: "結辯準備", type: "manual_prep", duration: 60, script: "申論質詢完畢。先前抽籤為 {{first_rebuttal_team_name}} 先結辯。準備結辯，1分鐘。", timerLabel: "結辯準備" }, { name: "先結辯方結辯", type: "speech_auto", duration: 120, script: "請 {{first_rebuttal_team_name}} 結辯，2分鐘。", timerLabel: "結辯" }, { name: "後結辯方結辯", type: "speech_auto", duration: 120, script: "請 {{second_rebuttal_team_name}} 結辯，2分鐘。", timerLabel: "結辯" }, { name: "比賽結束", type: "announcement", duration: null, script: "比賽結束。感謝各位。", timerLabel: null } ] };
+        const debateFormatDefinitions = { 
+            "菁英盃 (新式奧瑞岡五五四制)": [ 
+                { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null }, 
+                { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null }, 
+                { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。{{positive_team_name}}一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" }, 
+                { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請{{positive_team_name}}一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言，否則將自動開始計時。", timerLabel: "申論時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}一辯。接著請{{negative_team_name}}二辯上臺質詢{{positive_team_name}}一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}一辯。接著請{{positive_team_name}}三辯上臺質詢{{negative_team_name}}一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{positive_team_name}}二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}二辯。接著請{{negative_team_name}}三辯上臺質詢{{positive_team_name}}二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}二辯。接著請{{positive_team_name}}一辯上臺質詢{{negative_team_name}}二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{positive_team_name}}三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝{{positive_team_name}}三辯。接著請{{negative_team_name}}一辯上臺質詢{{positive_team_name}}三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請{{negative_team_name}}三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝{{negative_team_name}}三辯。接著請{{positive_team_name}}二辯上臺質詢{{negative_team_name}}三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" }, 
+                { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。感謝 {{positive_team_name}} 與 {{negative_team_name}} 各位辯士的精彩表現。", timerLabel: null }, 
+                { name: "抗議提出時間", type: "manual_prep", duration: 600, script: "若有抗議事項，請於十分鐘內以書面方式向主席提出。計時開始。", timerLabel: "抗議提出時間" }, 
+                { name: "正式結束", type: "announcement", duration: null, script: "抗議提出時間結束。感謝各位的參與。", timerLabel: null } 
+            ], 
+            "簡易三對三奧瑞岡 (3-3-2制 示例)": [ 
+                { name: "賽前準備", type: "announcement", duration: null, script: "簡易三對三奧瑞岡開始。辯題：{{debate_topic}}。正方：{{positive_team_name}}，反方：{{negative_team_name}}。", timerLabel: null }, 
+                { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "進行結辯順序抽籤。", timerLabel: null }, 
+                { name: "開賽預備", type: "manual_prep", duration: 30, script: "抽籤完畢。{{positive_team_name}}一辯準備，計時30秒。", timerLabel: "準備" }, 
+                { name: "正一申論", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}一辯申論，3分鐘。", timerLabel: "申論", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反二質詢正一", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}二辯質詢{{positive_team_name}}一辯，3分鐘。", timerLabel: "質詢", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反一申論", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}一辯申論，3分鐘。", timerLabel: "申論", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正二質詢反一", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}二辯質詢{{negative_team_name}}一辯，3分鐘。", timerLabel: "質詢", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正三申論", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}三辯申論，3分鐘。", timerLabel: "申論", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反一質詢正三", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}一辯質詢{{positive_team_name}}三辯，3分鐘。", timerLabel: "質詢", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "反三申論", type: "speech_auto", duration: 180, script: "請{{negative_team_name}}三辯申論，3分鐘。", timerLabel: "申論", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "正一質詢反三", type: "speech_auto", duration: 180, script: "請{{positive_team_name}}一辯質詢{{negative_team_name}}三辯，3分鐘。", timerLabel: "質詢", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "結辯準備", type: "manual_prep", duration: 60, script: "申論質詢完畢。先前抽籤為 {{first_rebuttal_team_name}} 先結辯。準備結辯，1分鐘。", timerLabel: "結辯準備" }, 
+                { name: "先結辯方結辯", type: "speech_auto", duration: 120, script: "請 {{first_rebuttal_team_name}} 結辯，2分鐘。", timerLabel: "結辯", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "後結辯方結辯", type: "speech_auto", duration: 120, script: "請 {{second_rebuttal_team_name}} 結辯，2分鐘。", timerLabel: "結辯", graceDuration: DEFAULT_GRACE_PERIOD_DURATION, graceEndAction: "auto_start" }, 
+                { name: "比賽結束", type: "announcement", duration: null, script: "比賽結束。感謝各位。", timerLabel: null } 
+            ] 
+        };
         
         function playSound(soundName) { const audio = audioElements[soundName]; if (audio) { audio.currentTime = 0; audio.play().catch(error => console.warn(`Error playing sound "${soundName}":`, error.message)); } }
         function populateVoiceList() { voices = synth.getVoices().filter(voice => voice.lang.startsWith('zh')); if (voices.length === 0) voices = synth.getVoices(); }
@@ -1074,6 +1295,7 @@
         } else { speechRecognitionStatusDisplay.textContent = "瀏覽器不支援語音識別。"; }
 
         function clearAllTimersAndIntervals() { clearInterval(timerInterval); clearInterval(graceTimerInterval); timerInterval = null; graceTimerInterval = null; isTimerPaused = false; currentTimerType = null; pauseResumeTimerButton.textContent = "暫停計時"; pauseResumeTimerButton.classList.add('hidden'); skipStageButton.classList.add('hidden'); forceStartMainTimerButton.classList.add('hidden'); timerProgressBar.style.width = '0%'; timerProgressBarContainer.classList.add('hidden');}
+        
         function runActiveTimerInterval() { 
             if (isTimerPaused) return; 
             timeLeft--; 
@@ -1099,19 +1321,44 @@
                     graceTimerInterval = null; 
                     stopRecognitionForce(); 
                     forceStartMainTimerButton.classList.add('hidden'); 
-                    if (!mainSpeechTimerStartedByGrace) { 
-                        timerStatusDisplay.textContent = "發言準備時間已到..."; 
-                        speak("準備時間到，計時開始。", () => { 
-                            startMainSpeechTimer(currentFlowDefinition[currentStageIndex].duration); 
-                            pauseResumeTimerButton.classList.remove('hidden'); 
-                            pauseResumeTimerButton.textContent = "暫停計時"; 
-                            skipStageButton.classList.add('hidden'); 
-                        }); 
-                        mainSpeechTimerStartedByGrace = true;
+                    if (!mainSpeechTimerStartedByGrace) {
+                        const currentStage = currentFlowDefinition[currentStageIndex];
+                        const graceEndAction = currentStage.graceEndAction || 'auto_start';
+
+                        switch(graceEndAction) {
+                            case 'auto_start':
+                                timerStatusDisplay.textContent = "發言準備時間已到..."; 
+                                speak("準備時間到，計時開始。", () => { 
+                                    startMainSpeechTimer(currentStage.duration); 
+                                    pauseResumeTimerButton.classList.remove('hidden'); 
+                                    pauseResumeTimerButton.textContent = "暫停計時"; 
+                                    skipStageButton.classList.add('hidden'); 
+                                }); 
+                                mainSpeechTimerStartedByGrace = true;
+                                break;
+                            case 'manual_start':
+                                timerStatusDisplay.textContent = "準備時間已到，請手動開始計時。";
+                                speak("準備時間到，請手動開始計時。");
+                                forceStartMainTimerButton.classList.remove('hidden'); 
+                                forceStartMainTimerButton.textContent = "開始主要計時"; 
+                                nextStageButton.disabled = true; 
+                                pauseResumeTimerButton.classList.add('hidden');
+                                break;
+                            case 'auto_skip':
+                                timerStatusDisplay.textContent = "準備時間已到，自動跳過此階段。";
+                                speak("準備時間到，自動跳過此階段。", () => {
+                                    if(isAutoModeEnabled || currentStage.graceEndAction === 'auto_skip') { // Check if still relevant
+                                        loadNextStage();
+                                    }
+                                });
+                                break;
+                        }
                     }
                 }
             } else if (currentTimerType === 'main' || currentTimerType === 'manual_prep') { 
                 const d = initialTimerDuration; 
+                const endedStageIndex = currentStageIndex; // Capture current stage index before it potentially changes
+
                 if (timeLeft === 60 && d > 60) { 
                     speak("時間剩餘一分鐘"); 
                     timerDisplay.style.color = warning1MinColor; 
@@ -1127,10 +1374,26 @@
                     timerDisplay.textContent = "時間到"; 
                     timerDisplay.style.color = timesUpColor; 
                     playSound('timesUpSound'); 
-                    nextStageButton.disabled = false; 
                     currentTimerType = null; 
-                    if (currentFlowDefinition[currentStageIndex]?.type === "manual_prep" && currentStageIndex < currentFlowDefinition.length - 2) {
-                        loadNextStage();
+
+                    if (endedStageIndex >= currentFlowDefinition.length - 1) { 
+                        nextStageButton.disabled = true;
+                    } else {
+                        const wouldOriginalAutoAdvance = currentFlowDefinition[endedStageIndex]?.type === "manual_prep" && endedStageIndex < currentFlowDefinition.length - 2;
+                        if (isAutoModeEnabled) {
+                            timerStatusDisplay.textContent = "時間到，準備進入下一階段...";
+                            setTimeout(() => {
+                                if (currentStageIndex === endedStageIndex && !isTimerPaused && !timerInterval && !graceTimerInterval) {
+                                     loadNextStage();
+                                }
+                            }, 2000); 
+                        } else {
+                            if (wouldOriginalAutoAdvance) {
+                                 loadNextStage(); 
+                            } else {
+                                 nextStageButton.disabled = false; 
+                            }
+                        }
                     }
                 } else if (timeLeft > 60 || (timeLeft > 30 && d <=60) || (d <= 30)) { 
                     timerDisplay.style.color = defaultTimerColor;
@@ -1141,9 +1404,16 @@
             clearAllTimersAndIntervals(); 
             currentTimerType = 'grace'; 
             mainSpeechTimerStartedByGrace = false; 
-            timeLeft = GRACE_PERIOD_DURATION; 
-            initialTimerDuration = GRACE_PERIOD_DURATION; 
-            timerStatusDisplay.textContent = "請於1分鐘內開始發言..."; 
+            
+            const currentStage = currentFlowDefinition[currentStageIndex];
+            const graceDuration = (typeof currentStage.graceDuration === 'number' && currentStage.graceDuration >= 0) 
+                                ? currentStage.graceDuration 
+                                : DEFAULT_GRACE_PERIOD_DURATION;
+
+            timeLeft = graceDuration; 
+            initialTimerDuration = graceDuration; 
+
+            timerStatusDisplay.textContent = `請於${formatTime(graceDuration)}內開始發言...`; 
             updateTimerDisplayDOM(timeLeft); 
             timerDisplay.classList.remove('hidden'); 
             timerProgressBarContainer.classList.remove('hidden'); 
@@ -1154,7 +1424,15 @@
 
 
             speechRecognitionStatusDisplay.classList.remove('hidden'); 
-            forceStartMainTimerButton.classList.remove('hidden'); 
+            
+            const graceEndAction = currentStage.graceEndAction || 'auto_start';
+            if (graceEndAction !== 'auto_skip') { 
+                forceStartMainTimerButton.classList.remove('hidden');
+                forceStartMainTimerButton.textContent = "強制開始發言計時"; 
+            } else {
+                 forceStartMainTimerButton.classList.add('hidden');
+            }
+
             pauseResumeTimerButton.textContent = "暫停計時"; 
             pauseResumeTimerButton.classList.remove('hidden'); 
             skipStageButton.classList.add('hidden'); 
@@ -1182,6 +1460,7 @@
             pauseResumeTimerButton.textContent = "暫停計時"; 
             pauseResumeTimerButton.classList.remove('hidden'); 
             skipStageButton.classList.add('hidden'); 
+            forceStartMainTimerButton.classList.add('hidden'); 
             if (timerInterval) clearInterval(timerInterval); 
             if (graceTimerInterval) { clearInterval(graceTimerInterval); graceTimerInterval = null; } 
             timerInterval = setInterval(runActiveTimerInterval, 1000); 
@@ -1209,28 +1488,127 @@
             timerInterval = setInterval(runActiveTimerInterval, 1000); 
         }
 
-        pauseResumeTimerButton.addEventListener('click', () => { isTimerPaused = !isTimerPaused; if (isTimerPaused) { recognitionManuallyStopped = true; if(currentTimerType === 'grace' && graceTimerInterval) { clearInterval(graceTimerInterval); stopRecognitionForce(); } else if ((currentTimerType === 'main' || currentTimerType === 'manual_prep') && timerInterval) { clearInterval(timerInterval); } pauseResumeTimerButton.textContent = "繼續計時"; timerStatusDisplay.textContent += " (已暫停)"; skipStageButton.classList.remove('hidden'); nextStageButton.disabled = true; } else { pauseResumeTimerButton.textContent = "暫停計時"; timerStatusDisplay.textContent = timerStatusDisplay.textContent.replace(" (已暫停)", ""); skipStageButton.classList.add('hidden'); if (currentTimerType === 'grace') { startRecognitionConditionally(); graceTimerInterval = setInterval(runActiveTimerInterval, 1000); } else if (currentTimerType === 'main' || currentTimerType === 'manual_prep') { timerInterval = setInterval(runActiveTimerInterval, 1000);}}});
+        pauseResumeTimerButton.addEventListener('click', () => { 
+            isTimerPaused = !isTimerPaused; 
+            if (isTimerPaused) { 
+                recognitionManuallyStopped = true; 
+                if(currentTimerType === 'grace' && graceTimerInterval) { 
+                    clearInterval(graceTimerInterval); 
+                    stopRecognitionForce(); 
+                } else if ((currentTimerType === 'main' || currentTimerType === 'manual_prep') && timerInterval) { 
+                    clearInterval(timerInterval); 
+                } 
+                pauseResumeTimerButton.textContent = "繼續計時"; 
+                timerStatusDisplay.textContent += " (已暫停)"; 
+                skipStageButton.classList.remove('hidden'); 
+                nextStageButton.disabled = true; 
+            } else { 
+                pauseResumeTimerButton.textContent = "暫停計時"; 
+                timerStatusDisplay.textContent = timerStatusDisplay.textContent.replace(" (已暫停)", ""); 
+                skipStageButton.classList.add('hidden'); 
+                if (currentTimerType === 'grace') { 
+                    startRecognitionConditionally(); 
+                    graceTimerInterval = setInterval(runActiveTimerInterval, 1000); 
+                } else if (currentTimerType === 'main' || currentTimerType === 'manual_prep') { 
+                    timerInterval = setInterval(runActiveTimerInterval, 1000);
+                }
+            }
+        });
         skipStageButton.addEventListener('click', () => { if (isTimerPaused) { stopRecognitionForce(); clearAllTimersAndIntervals(); loadNextStage(); }});
 
         let sortableInstance = null;
+
+        function toggleMoreActionsDropdown(event) {
+            event.stopPropagation(); 
+            const dropdown = event.currentTarget.nextElementSibling;
+            const isActive = dropdown.classList.contains('active');
+            document.querySelectorAll('#flowEditorList .more-actions-dropdown.active').forEach(openDropdown => {
+                openDropdown.classList.remove('active');
+            });
+            if (!isActive) { 
+                dropdown.classList.add('active');
+            }
+        }
+        
         function renderEditorList() { 
             flowEditorList.innerHTML = ''; 
             currentFlowDefinition.forEach((stage, index) => { 
                 const li = document.createElement('li'); 
                 li.dataset.index = index; 
-                const infoDiv = document.createElement('div'); 
-                infoDiv.classList.add('stage-info'); 
-                infoDiv.innerHTML = `<strong>${index + 1}. ${stage.name || '(未命名)'}</strong><span>類型: ${stage.type || '(未知)'}${stage.duration ? `, 時間: ${stage.duration}s` : ''}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">稿件: ${stage.script ? stage.script.substring(0, 50) + (stage.script.length > 50 ? '...' : '') : '(無)'}</span>`; 
+                
+                const infoOuterDiv = document.createElement('div'); 
+                infoOuterDiv.classList.add('stage-info');
+
+                const stageIconSpan = document.createElement('span');
+                stageIconSpan.classList.add('stage-icon');
+                stageIconSpan.textContent = stageIcons[stage.type] || '⚙️';
+                infoOuterDiv.appendChild(stageIconSpan);
+
+                const infoTextDiv = document.createElement('div'); 
+
+                const nameStrong = document.createElement('strong');
+                nameStrong.textContent = `${index + 1}. ${stage.name || '(未命名)'}`;
+                infoTextDiv.appendChild(nameStrong);
+
+                const detailsSpan = document.createElement('span');
+                let detailsText = `類型: ${stage.type || '(未知)'}`;
+                if (stage.duration) detailsText += `, 時間: ${stage.duration}s`;
+                if (stage.type === 'speech_auto' && typeof stage.graceDuration === 'number') {
+                    detailsText += `, 緩衝: ${stage.graceDuration}s`;
+                }
+                detailsSpan.textContent = detailsText;
+                infoTextDiv.appendChild(detailsSpan);
+                
+                const scriptSpan = document.createElement('span');
+                scriptSpan.style.whiteSpace = 'nowrap';
+                scriptSpan.style.overflow = 'hidden';
+                scriptSpan.style.textOverflow = 'ellipsis';
+                scriptSpan.style.maxWidth = '300px'; 
+                scriptSpan.textContent = `稿件: ${stage.script ? stage.script.substring(0, 50) + (stage.script.length > 50 ? '...' : '') : '(無)'}`;
+                infoTextDiv.appendChild(scriptSpan);
+                
+                infoOuterDiv.appendChild(infoTextDiv);
+
                 const controlsDiv = document.createElement('div'); 
-                controlsDiv.classList.add('editor-controls'); 
-                controlsDiv.innerHTML = 
-                    `<button class="insert-before" onclick="openEditModal(-1, ${index})" title="在此階段之前插入新階段">＋前</button>` + 
-                    `<button class="edit" onclick="openEditModal(${index})" title="編輯此階段">編輯</button>` +
+                controlsDiv.classList.add('editor-controls');
+
+                const editButton = document.createElement('button');
+                editButton.classList.add('edit');
+                editButton.title = '編輯此階段';
+                editButton.innerHTML = '編輯'; 
+                editButton.onclick = () => openEditModal(index);
+                controlsDiv.appendChild(editButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete');
+                deleteButton.title = '刪除此階段';
+                deleteButton.innerHTML = '刪除'; 
+                deleteButton.onclick = () => deleteStage(index);
+                controlsDiv.appendChild(deleteButton);
+
+                const moreActionsContainer = document.createElement('div');
+                moreActionsContainer.classList.add('more-actions-container');
+
+                const moreButton = document.createElement('button');
+                moreButton.classList.add('more-actions-btn');
+                moreButton.innerHTML = '...';
+                moreButton.title = '更多操作';
+                moreButton.onclick = toggleMoreActionsDropdown;
+                moreActionsContainer.appendChild(moreButton);
+
+                const dropdownDiv = document.createElement('div');
+                dropdownDiv.classList.add('more-actions-dropdown');
+                
+                dropdownDiv.innerHTML = 
+                    `<button class="insert-before" onclick="openEditModal(-1, ${index})" title="在此階段之前插入新階段">＋ 前方插入</button>` + 
                     `<button class="duplicate" onclick="duplicateStage(${index})" title="複製此階段">複製</button>` + 
-                    `<button class="move" onclick="moveStage(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="上移此階段">↑</button>` +
-                    `<button class="move" onclick="moveStage(${index}, 1)" ${index === currentFlowDefinition.length - 1 ? 'disabled' : ''} title="下移此階段">↓</button>` +
-                    `<button class="delete" onclick="deleteStage(${index})" title="刪除此階段">刪除</button>`; 
-                li.appendChild(infoDiv); 
+                    `<button class="move move-up" onclick="moveStage(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="上移此階段">↑ 上移</button>` +
+                    `<button class="move move-down" onclick="moveStage(${index}, 1)" ${index === currentFlowDefinition.length - 1 ? 'disabled' : ''} title="下移此階段">↓ 下移</button>`;
+                
+                moreActionsContainer.appendChild(dropdownDiv);
+                controlsDiv.appendChild(moreActionsContainer);
+                                
+                li.appendChild(infoOuterDiv); 
                 li.appendChild(controlsDiv); 
                 flowEditorList.appendChild(li); 
             }); 
@@ -1249,6 +1627,8 @@
                 stageDurationInput.value = ""; 
                 stageTimerLabelInput.value = ""; 
                 stageScriptInput.value = ""; 
+                stageGraceDurationInput.value = ""; 
+                stageGraceEndActionSelect.value = "auto_start"; 
             } else { 
                 const stage = currentFlowDefinition[index]; 
                 stageNameInput.value = stage.name || ""; 
@@ -1256,25 +1636,72 @@
                 stageDurationInput.value = stage.duration || ""; 
                 stageTimerLabelInput.value = stage.timerLabel || ""; 
                 stageScriptInput.value = stage.script || ""; 
+                stageGraceDurationInput.value = typeof stage.graceDuration === 'number' ? stage.graceDuration : "";
+                stageGraceEndActionSelect.value = stage.graceEndAction || "auto_start";
             } 
             handleModalFieldVisibility(); 
             stageEditModal.style.display = "block"; 
             stageNameInput.focus(); 
         }
 
-        function closeModal() { stageEditModal.style.display = "none"; currentInsertBeforeIndex = null; }
-        function handleModalFieldVisibility() { const selectedType = stageTypeSelect.value; const needsDuration = ["manual_prep", "speech_auto"].includes(selectedType); durationInputContainer.style.display = needsDuration ? "block" : "none"; timerLabelInputContainer.style.display = needsDuration ? "block" : "none"; }
+        function closeModal() { 
+            stageEditModal.style.display = "none"; 
+            currentInsertBeforeIndex = null; 
+            document.querySelectorAll('#flowEditorList .more-actions-dropdown.active').forEach(dropdown => {
+                dropdown.classList.remove('active');
+            });
+        }
+        
+        function handleModalFieldVisibility() {
+            const selectedType = stageTypeSelect.value;
+            const needsMainDurationAndLabel = ["manual_prep", "speech_auto"].includes(selectedType);
+            const isSpeechAuto = selectedType === "speech_auto";
+
+            timingSettingsFieldset.classList.toggle('hidden', !needsMainDurationAndLabel && !isSpeechAuto); 
+
+            if (!timingSettingsFieldset.classList.contains('hidden')) {
+                durationInputContainer.classList.toggle('hidden', !needsMainDurationAndLabel);
+                timerLabelInputContainer.classList.toggle('hidden', !needsMainDurationAndLabel);
+                graceDurationInputContainer.classList.toggle('hidden', !isSpeechAuto);
+            } else {
+                durationInputContainer.classList.add('hidden');
+                timerLabelInputContainer.classList.add('hidden');
+                graceDurationInputContainer.classList.add('hidden');
+            }
+            speechAutoSettingsFieldset.classList.toggle('hidden', !isSpeechAuto);
+        }
         stageTypeSelect.addEventListener('change', handleModalFieldVisibility); 
         
         function saveStageChanges() { 
             const index = parseInt(editingStageIndexInput.value); 
             const isNew = index === -1; 
-            const stageData = { name: stageNameInput.value.trim() || (isNew ? "新階段" : `階段 ${index + 1}`), type: stageTypeSelect.value, script: stageScriptInput.value.trim(), duration: null, timerLabel: null }; 
+            const stageData = { 
+                name: stageNameInput.value.trim() || (isNew ? "新階段" : `階段 ${index + 1}`), 
+                type: stageTypeSelect.value, 
+                script: stageScriptInput.value.trim(), 
+                duration: null, 
+                timerLabel: null,
+                graceDuration: null, 
+                graceEndAction: 'auto_start' 
+            }; 
+            
             if (["manual_prep", "speech_auto"].includes(stageData.type)) { 
                 const duration = parseInt(stageDurationInput.value); 
                 stageData.duration = isNaN(duration) || duration < 1 ? 60 : duration; 
                 stageData.timerLabel = stageTimerLabelInput.value.trim() || null; 
             } 
+            
+            if (stageData.type === "speech_auto") {
+                const graceDur = parseInt(stageGraceDurationInput.value);
+                stageData.graceDuration = (stageGraceDurationInput.value.trim() === "" || isNaN(graceDur) || graceDur < 0) 
+                                          ? DEFAULT_GRACE_PERIOD_DURATION 
+                                          : graceDur;
+                stageData.graceEndAction = stageGraceEndActionSelect.value || 'auto_start';
+            } else {
+                stageData.graceDuration = null;
+                stageData.graceEndAction = null;
+            }
+
             if (isNew) {
                 if (currentInsertBeforeIndex !== null) {
                     currentFlowDefinition.splice(currentInsertBeforeIndex, 0, stageData);
@@ -1298,10 +1725,22 @@
         }
 
         function deleteStage(index) { if (confirm(`確定要刪除階段 ${index + 1} (${currentFlowDefinition[index].name}) 嗎？`)) { currentFlowDefinition.splice(index, 1); renderEditorList(); } }
-        function moveStage(index, direction) { if (direction === -1 && index > 0) { [currentFlowDefinition[index], currentFlowDefinition[index - 1]] = [currentFlowDefinition[index - 1], currentFlowDefinition[index]]; } else if (direction === 1 && index < currentFlowDefinition.length - 1) { [currentFlowDefinition[index], currentFlowDefinition[index + 1]] = [currentFlowDefinition[index + 1], currentFlowDefinition[index]]; } renderEditorList(); }
+        function moveStage(index, direction) { 
+            if (direction === -1 && index > 0) { 
+                [currentFlowDefinition[index], currentFlowDefinition[index - 1]] = [currentFlowDefinition[index - 1], currentFlowDefinition[index]]; 
+            } else if (direction === 1 && index < currentFlowDefinition.length - 1) { 
+                [currentFlowDefinition[index], currentFlowDefinition[index + 1]] = [currentFlowDefinition[index + 1], currentFlowDefinition[index]]; 
+            } 
+            renderEditorList(); 
+        }
 
-        function loadStage(index) { const stage = currentFlowDefinition[index]; if (!stage) return; 
-            currentStageInfoDisplay.textContent = `目前階段：${interpolateScript(stage.name)}`; 
+        function loadStage(index) { 
+            const stage = currentFlowDefinition[index]; 
+            if (!stage) return; 
+            const endedStageIndex = currentStageIndex; // Keep track of the stage we are leaving
+            currentStageIndex = index; // Update to the new stage index
+
+            currentStageInfoDisplay.textContent = `${stageIcons[stage.type] || ''} 目前階段：${interpolateScript(stage.name)}`; 
             moderatorScriptDisplay.textContent = interpolateScript(stage.script); 
             clearAllTimersAndIntervals(); 
             manualStartTimerButton.classList.add('hidden'); 
@@ -1312,6 +1751,7 @@
             timerProgressBarContainer.classList.add('hidden'); 
             timerStatusDisplay.textContent = ""; 
             nextStageButton.disabled = false; 
+            forceStartMainTimerButton.textContent = "強制開始發言計時"; 
             
             if (currentStageIndex + 1 < currentFlowDefinition.length) {
                 const nextStageDetails = currentFlowDefinition[currentStageIndex + 1];
@@ -1347,28 +1787,50 @@
                     drawResultDisplay.textContent = "待抽籤..."; 
                     startDrawButton.disabled = false; 
                     nextStageButton.disabled = true; 
-                } else { 
+                } else { // Handles 'announcement' and any other non-timed types
                     timerDisplay.classList.add('hidden'); 
                     timerProgressBarContainer.classList.add('hidden');
                     timerStatusDisplay.textContent = ""; 
-                    if (index >= currentFlowDefinition.length -1) {
+                    if (currentStageIndex >= currentFlowDefinition.length -1) { // Use currentStageIndex
                         nextStageButton.disabled = true;
                         nextSegmentPreview.textContent = "辯論已結束"; 
+                    } else {
+                        if (isAutoModeEnabled) { // Check auto mode for announcements
+                            setTimeout(() => {
+                                // Ensure we are still on this announcement stage and not paused or reset
+                                if (currentStageIndex === index && !isTimerPaused && !timerInterval && !graceTimerInterval) { 
+                                     loadNextStage();
+                                }
+                            }, 2000); // 2-second delay
+                        } else {
+                            nextStageButton.disabled = false; 
+                        }
                     }
                 } 
             }); 
         }
-        function loadNextStage() { currentStageIndex++; stopRecognitionForce(); clearAllTimersAndIntervals(); 
-            if (currentStageIndex < currentFlowDefinition.length) { 
+        function loadNextStage() { 
+            //This function is now only responsible for incrementing and loading the next stage's base state.
+            //It should not call itself recursively or manage timers directly.
+            //The decision to call loadNextStage should be made externally (e.g., button click, timer end + auto mode).
+            
+            const previousStageIndex = currentStageIndex;
+            const nextIndex = previousStageIndex + 1;
+
+            stopRecognitionForce(); 
+            clearAllTimersAndIntervals(); 
+            
+            if (nextIndex < currentFlowDefinition.length) { 
                 playSound('stageAdvanceSound'); 
-                loadStage(currentStageIndex); 
-                const nextStageData = currentFlowDefinition[currentStageIndex]; 
+                loadStage(nextIndex); // Directly load the new stage by its index
+                
+                const nextStageData = currentFlowDefinition[nextIndex]; 
                 const isFullscreen = document.body.classList.contains('fullscreen-active');
                 let defaultTimerColor = isFullscreen ? '#259DFA' : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
 
-
                 if (nextStageData?.type === 'speech_auto') { 
-                    timerDisplay.textContent = formatTime(GRACE_PERIOD_DURATION); 
+                    const graceDur = (typeof nextStageData.graceDuration === 'number' && nextStageData.graceDuration >=0) ? nextStageData.graceDuration : DEFAULT_GRACE_PERIOD_DURATION;
+                    timerDisplay.textContent = formatTime(graceDur); 
                     timerDisplay.style.color = defaultTimerColor;
                 } else if (nextStageData?.duration && nextStageData?.type === 'manual_prep') { 
                     timerDisplay.textContent = formatTime(nextStageData.duration); 
@@ -1377,6 +1839,8 @@
                      timerProgressBarContainer.classList.add('hidden'); 
                 }
             } else { 
+                // This is the end of the flow. Update currentStageIndex to reflect this.
+                currentStageIndex = nextIndex; // currentStageIndex will be >= currentFlowDefinition.length
                 currentStageInfoDisplay.textContent = "所有流程已結束。"; 
                 nextStageButton.disabled = true; 
                 clearAllTimersAndIntervals(); 
@@ -1417,7 +1881,6 @@
         function updateRealTimeClock() {
             if (fullscreenRealTimeClock) {
                 const now = new Date();
-                // Force 24-hour format for consistency
                 const hours = now.getHours().toString().padStart(2, '0');
                 const minutes = now.getMinutes().toString().padStart(2, '0');
                 const seconds = now.getSeconds().toString().padStart(2, '0');
@@ -1425,22 +1888,18 @@
             }
         }
 
-        // --- ADDED: Orientation Change Handling ---
         function handleOrientationChange() {
-            // Check if screen orientation API is supported
             if (screen.orientation && screen.orientation.type) {
                 const isLandscape = screen.orientation.type.includes('landscape');
-                const isLikelyMobile = window.innerWidth < 800; // Simple check, adjust as needed
+                const isLikelyMobile = window.innerWidth < 800; 
                 const isCurrentlyFullscreen = !!document.fullscreenElement;
 
                 if (isLandscape && isLikelyMobile && !isCurrentlyFullscreen) {
                     console.log("Attempting auto-fullscreen on landscape...");
-                    // IMPORTANT: This might fail if there was no prior user interaction
                     document.documentElement.requestFullscreen().catch(err => { 
                         console.warn(`Auto-fullscreen failed: ${err.message}. User interaction might be required first.`); 
                     });
                 } else if (!isLandscape && isCurrentlyFullscreen) {
-                    // Exit fullscreen when returning to portrait IF currently fullscreen
                      console.log("Attempting to exit fullscreen on portrait...");
                      if (document.exitFullscreen) {
                          document.exitFullscreen().catch(err => console.warn(`Exiting fullscreen failed: ${err.message}`));
@@ -1450,7 +1909,14 @@
         }
 
 
-        function populateFormatSelector() { for (const formatName in debateFormatDefinitions) { const option = document.createElement('option'); option.value = formatName; option.textContent = formatName; formatSelect.appendChild(option); } }
+        function populateFormatSelector() { 
+            for (const formatName in debateFormatDefinitions) { 
+                const option = document.createElement('option'); 
+                option.value = formatName; 
+                option.textContent = formatName; 
+                formatSelect.appendChild(option); 
+            } 
+        }
         window.addEventListener('DOMContentLoaded', () => { 
             populateFormatSelector(); 
             if (!SpeechRecognition) { 
@@ -1470,6 +1936,22 @@
                     applyTheme('light'); 
                 }
             }
+
+            // Initialize Auto Mode
+            const savedAutoMode = localStorage.getItem('debateAutoMode');
+            if (savedAutoMode === 'true') {
+                isAutoModeEnabled = true;
+                autoModeToggle.checked = true;
+            } else {
+                isAutoModeEnabled = false;
+                autoModeToggle.checked = false;
+            }
+            autoModeToggle.addEventListener('change', (event) => {
+                isAutoModeEnabled = event.target.checked;
+                localStorage.setItem('debateAutoMode', isAutoModeEnabled);
+            });
+
+
             if(themeToggleButton) { 
                  themeToggleButton.addEventListener('click', toggleTheme);
             }
@@ -1478,13 +1960,27 @@
             }
             addStageButton.addEventListener('click', () => openEditModal(-1)); 
             
-            // Add orientation change listener if supported
             if (screen.orientation && typeof screen.orientation.addEventListener === 'function') {
                  screen.orientation.addEventListener('change', handleOrientationChange);
             } else {
                 console.warn("Screen Orientation API not fully supported, landscape auto-fullscreen might not work.");
-                // Could add a fallback using 'resize' event here if needed, but it's less reliable for orientation
             }
+
+            document.body.addEventListener('click', function(event) {
+                let isMoreActionsButton = event.target.classList.contains('more-actions-btn') || (event.target.parentElement && event.target.parentElement.classList.contains('more-actions-btn'));
+                let targetIsInsideDropdown = false;
+                document.querySelectorAll('#flowEditorList .more-actions-dropdown').forEach(dropdown => {
+                    if (dropdown.contains(event.target)) {
+                        targetIsInsideDropdown = true;
+                    }
+                });
+
+                if (!isMoreActionsButton && !targetIsInsideDropdown) {
+                    document.querySelectorAll('#flowEditorList .more-actions-dropdown.active').forEach(openDropdown => {
+                        openDropdown.classList.remove('active');
+                    });
+                }
+            });
         });
 
         editFlowButton.addEventListener('click', () => { const selectedFormatName = formatSelect.value; let flowToEdit; if (debateFormatDefinitions[selectedFormatName]) { flowToEdit = JSON.parse(JSON.stringify(debateFormatDefinitions[selectedFormatName])); } else { alert("請先選擇一個有效的流程範本！"); return; } originalFlowBeforeEdit = JSON.parse(JSON.stringify(flowToEdit)); currentFlowDefinition = flowToEdit; setupPhaseDiv.classList.add('hidden'); flowEditorSection.classList.remove('hidden'); renderEditorList(); });
@@ -1515,10 +2011,56 @@
             rebuttalOrder = null; 
             loadNextStage(); 
         });
-        startDrawButton.addEventListener('click', () => { playSound('drawSound'); rebuttalOrder = Math.random() < 0.5 ? 'positive_first' : 'negative_first'; const resultText = `抽籤結果：${rebuttalOrder === 'positive_first' ? positiveTeamName : negativeTeamName} 先結辯。`; drawResultDisplay.textContent = resultText; speak(resultText, () => nextStageButton.disabled = false); startDrawButton.disabled = true; });
+        startDrawButton.addEventListener('click', () => { 
+            playSound('drawSound'); 
+            rebuttalOrder = Math.random() < 0.5 ? 'positive_first' : 'negative_first'; 
+            const resultText = `抽籤結果：${rebuttalOrder === 'positive_first' ? positiveTeamName : negativeTeamName} 先結辯。`; 
+            drawResultDisplay.textContent = resultText; 
+            speak(resultText, () => {
+                if (isAutoModeEnabled && currentStageIndex < currentFlowDefinition.length - 1) {
+                    setTimeout(() => {
+                        if (currentStageIndex === currentFlowDefinition.findIndex(s => s.type === 'draw_rebuttal_order') && !isTimerPaused ) { // Check if still on draw stage
+                            loadNextStage();
+                        }
+                    }, 2000);
+                } else {
+                    nextStageButton.disabled = false;
+                }
+            }); 
+            startDrawButton.disabled = true; 
+        });
         nextStageButton.addEventListener('click', () => { if (synth.speaking) synth.cancel(); loadNextStage(); });
         manualStartTimerButton.addEventListener('click', () => { const stage = currentFlowDefinition[currentStageIndex]; if (stage && stage.type === "manual_prep") startManualPrepTimer(stage.duration); });
-        forceStartMainTimerButton.addEventListener('click', () => { if (currentTimerType==='grace' && graceTimerInterval) { clearTimeout(graceTimerInterval); graceTimerInterval = null; stopRecognitionForce(); timerStatusDisplay.textContent = "手動啟動..."; speak("手動啟動，計時開始。", () => { startMainSpeechTimer(currentFlowDefinition[currentStageIndex].duration); pauseResumeTimerButton.classList.remove('hidden'); pauseResumeTimerButton.textContent = "暫停計時"; skipStageButton.classList.add('hidden');}); mainSpeechTimerStartedByGrace = true; }});
+        
+        forceStartMainTimerButton.addEventListener('click', () => { 
+            const currentStage = currentFlowDefinition[currentStageIndex];
+            if (currentTimerType === 'grace' && timeLeft > 0) { 
+                if (graceTimerInterval) {
+                    clearTimeout(graceTimerInterval); 
+                    graceTimerInterval = null; 
+                }
+                stopRecognitionForce(); 
+                timerStatusDisplay.textContent = "手動啟動..."; 
+                speak("手動啟動，計時開始。", () => { 
+                    startMainSpeechTimer(currentStage.duration); 
+                    pauseResumeTimerButton.classList.remove('hidden'); 
+                    pauseResumeTimerButton.textContent = "暫停計時"; 
+                    skipStageButton.classList.add('hidden');
+                }); 
+                mainSpeechTimerStartedByGrace = true; 
+            } else if (currentStage && currentStage.type === 'speech_auto' && currentStage.graceEndAction === 'manual_start' && (currentTimerType === 'grace' || !currentTimerType) && timeLeft <= 0 && !mainSpeechTimerStartedByGrace) {
+                timerStatusDisplay.textContent = "手動啟動主要計時...";
+                speak("手動啟動，計時開始。", () => {
+                    startMainSpeechTimer(currentStage.duration);
+                    pauseResumeTimerButton.classList.remove('hidden');
+                    pauseResumeTimerButton.textContent = "暫停計時";
+                    skipStageButton.classList.add('hidden'); 
+                    forceStartMainTimerButton.classList.add('hidden'); 
+                });
+                mainSpeechTimerStartedByGrace = true; 
+            }
+        });
+
         exportFlowButton.addEventListener('click', () => { const selectedFormatName = formatSelect.value; let flowToExport = null; let flowName = selectedFormatName; if(currentFlowDefinition && currentFlowDefinition.length > 0 && (selectedFormatName.includes("(自訂)") || selectedFormatName.startsWith("(匯入)"))) { flowToExport = currentFlowDefinition; flowName = selectedFormatName; console.log("Exporting currentFlowDefinition for custom/imported flow"); } else if (debateFormatDefinitions[selectedFormatName]) { flowToExport = debateFormatDefinitions[selectedFormatName]; flowName = selectedFormatName; console.log("Exporting from debateFormatDefinitions"); } if (!flowToExport || flowToExport.length === 0) { alert("沒有可匯出的流程！請先選擇或編輯一個有效的流程。"); return; } const jsonString = JSON.stringify(flowToExport, null, 2); const blob = new Blob([jsonString], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const fileName = flowName.replace(/[\s()]/g, '_').replace('(匯入)_', 'Imported_').replace('_(自訂)','_Custom') + ".json"; a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); fileImportStatus.textContent = `流程 "${flowName}" 已匯出為 ${fileName}`; });
         importFlowInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) { fileImportStatus.textContent = "未選擇檔案。"; loadImportedFlowButton.classList.add('hidden'); return; } if (file.type !== "application/json") { fileImportStatus.textContent = "錯誤：請選擇 .json 檔案。"; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; importFlowInput.value = ""; return; } const reader = new FileReader(); reader.onload = (e) => { try { const parsedFlow = JSON.parse(e.target.result); if (Array.isArray(parsedFlow) && parsedFlow.length > 0 && parsedFlow.every(stage => stage.name && stage.type)) { importedDebateStages = parsedFlow; importedDebateStages.fileName = file.name.replace(/\.json$/i, ""); fileImportStatus.textContent = `檔案 "${file.name}" 已成功讀取。`; loadImportedFlowButton.classList.remove('hidden'); loadImportedFlowButton.textContent = `載入 "${importedDebateStages.fileName}" 並設為目前流程`; } else { throw new Error("JSON 結構不符或內容不完整。"); } } catch (error) { console.error("Error parsing JSON:", error); fileImportStatus.textContent = `錯誤：無法解析檔案。${error.message}`; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; } }; reader.onerror = () => { fileImportStatus.textContent = "讀取檔案錯誤。"; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; }; reader.readAsText(file); });
         loadImportedFlowButton.addEventListener('click', () => { if (importedDebateStages) { const importName = `(匯入) ${importedDebateStages.fileName || "自訂流程"}`; debateFormatDefinitions[importName] = JSON.parse(JSON.stringify(importedDebateStages)); 
@@ -1526,7 +2068,26 @@
             let existingOption = false; for(let i=0; i < formatSelect.options.length; i++) { if(formatSelect.options[i].value === importName) { existingOption = true; break; } } if (!existingOption) { const option = document.createElement('option'); option.value = importName; option.textContent = importName; formatSelect.appendChild(option); } formatSelect.value = importName; fileImportStatus.textContent = `流程 "${importName}" 已新增至選單、選取並載入為目前流程。`; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; 
             originalFlowBeforeEdit = JSON.parse(JSON.stringify(currentFlowDefinition)); 
         } else { fileImportStatus.textContent = "沒有可載入的匯入流程。"; }});
-        resetButton.addEventListener('click', () => { if(!confirm("確定要重置所有設定並返回初始畫面嗎？")) return; stopRecognitionForce(); if (synth.speaking) synth.cancel(); clearAllTimersAndIntervals(); currentStageIndex = -1; rebuttalOrder = null; currentFlowDefinition = []; originalFlowBeforeEdit = null; moderatorScriptDisplay.textContent = "請按「確認設定」開始。"; currentStageInfoDisplay.textContent = ""; timerDisplay.classList.add('hidden'); timerStatusDisplay.textContent = ""; drawResultDisplay.textContent = ""; timerDisplay.textContent = "00:00"; 
+        resetButton.addEventListener('click', () => { 
+            if(!confirm("確定要重置所有設定並返回初始畫面嗎？")) return; 
+            stopRecognitionForce(); 
+            if (synth.speaking) synth.cancel(); 
+            clearAllTimersAndIntervals(); 
+            currentStageIndex = -1; 
+            rebuttalOrder = null; 
+            currentFlowDefinition = []; 
+            originalFlowBeforeEdit = null; 
+            moderatorScriptDisplay.textContent = "請按「確認設定」開始。"; 
+            currentStageInfoDisplay.textContent = ""; 
+            timerDisplay.classList.add('hidden'); 
+            timerStatusDisplay.textContent = ""; 
+            drawResultDisplay.textContent = ""; 
+            timerDisplay.textContent = "00:00"; 
+            
+            isAutoModeEnabled = false; // Reset auto mode
+            autoModeToggle.checked = false;
+            localStorage.setItem('debateAutoMode', 'false');
+
             const isFullscreen = bodyElement.classList.contains('fullscreen-active');
             const isDarkMode = bodyElement.classList.contains('dark-mode');
             let defaultTimerColorVal = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(); 
@@ -1534,7 +2095,34 @@
             else if (isDarkMode) defaultTimerColorVal = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(); 
             timerDisplay.style.color = defaultTimerColorVal; 
 
-            debatePhaseDiv.classList.add('hidden'); drawRebuttalOrderSection.classList.add('hidden'); flowEditorSection.classList.add('hidden'); setupPhaseDiv.classList.remove('hidden'); nextStageButton.classList.add('hidden'); resetButton.classList.add('hidden'); manualStartTimerButton.classList.add('hidden'); forceStartMainTimerButton.classList.add('hidden'); speechRecognitionStatusDisplay.textContent = ""; speechRecognitionStatusDisplay.classList.add('hidden'); pauseResumeTimerButton.classList.add('hidden'); skipStageButton.classList.add('hidden'); nextStageButton.disabled = false; manualStartTimerButton.disabled = false; startDrawButton.disabled = false; debateInfoDisplay.innerHTML = ""; fileImportStatus.textContent = ""; importFlowInput.value=""; loadImportedFlowButton.classList.add('hidden'); importedDebateStages = null; positiveTeamNameInput.value = "正方"; negativeTeamNameInput.value = "反方"; debateTopicInput.value = "（在此輸入辯題）"; if (formatSelect.options.length > 0) formatSelect.selectedIndex = 0; timerProgressBarContainer.classList.add('hidden'); nextSegmentPreview.classList.add('hidden'); nextSegmentPreview.textContent = ""; });
+            debatePhaseDiv.classList.add('hidden'); 
+            drawRebuttalOrderSection.classList.add('hidden'); 
+            flowEditorSection.classList.add('hidden'); 
+            setupPhaseDiv.classList.remove('hidden'); 
+            nextStageButton.classList.add('hidden'); 
+            resetButton.classList.add('hidden'); 
+            manualStartTimerButton.classList.add('hidden'); 
+            forceStartMainTimerButton.classList.add('hidden'); 
+            speechRecognitionStatusDisplay.textContent = ""; 
+            speechRecognitionStatusDisplay.classList.add('hidden'); 
+            pauseResumeTimerButton.classList.add('hidden'); 
+            skipStageButton.classList.add('hidden'); 
+            nextStageButton.disabled = false; 
+            manualStartTimerButton.disabled = false; 
+            startDrawButton.disabled = false; 
+            debateInfoDisplay.innerHTML = ""; 
+            fileImportStatus.textContent = ""; 
+            importFlowInput.value=""; 
+            loadImportedFlowButton.classList.add('hidden'); 
+            importedDebateStages = null; 
+            positiveTeamNameInput.value = "正方"; 
+            negativeTeamNameInput.value = "反方"; 
+            debateTopicInput.value = "（在此輸入辯題）"; 
+            if (formatSelect.options.length > 0) formatSelect.selectedIndex = 0; 
+            timerProgressBarContainer.classList.add('hidden'); 
+            nextSegmentPreview.classList.add('hidden'); 
+            nextSegmentPreview.textContent = ""; 
+        });
 
         function toggleFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { alert(`無法進入全螢幕模式: ${err.message} (${err.name})`); }); } else { if (document.exitFullscreen) { document.exitFullscreen(); } } }
         
@@ -1567,7 +2155,6 @@
                 else if (timerDisplay.style.color.includes('255, 69, 0') || timerDisplay.style.color.includes('FF6B4D')) timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-orange-accent').trim();
                 else if (timerDisplay.style.color.includes('220, 53, 69') || timerDisplay.style.color.includes('F87171') || timerDisplay.textContent === "時間到") timerColorToSet = getComputedStyle(document.documentElement).getPropertyValue('--color-danger').trim();
             }
-            // Apply color only if timerDisplay is actually visible
              if (!timerDisplay.classList.contains('hidden')) {
                 timerDisplay.style.color = timerColorToSet;
             }
@@ -1658,12 +2245,15 @@
             }
         });
 
-
         window.onclick = function(event) { 
-            if (event.target == stageEditModal) {
-                closeModal(); 
+            if (event.target == stageEditModal) { 
+                 if (event.target.classList.contains('modal')) { 
+                    closeModal(); 
+                 }
             } else if (event.target == shortcutHelpModal) { 
-                closeShortcutHelpModal();
+                if (event.target.classList.contains('modal')) {
+                    closeShortcutHelpModal();
+                }
             }
         }
 
