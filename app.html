@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辯時計 Pro - 專業辯論計時系統</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="enhanced-ui.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" defer></script>
+    <script src="remote-control.js" defer></script>
+    <script src="remote-control-integration.js" defer></script>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm1-13h-2v6h2V7zm0 8h-2v2h2v-2z'/></svg>">
+</head>
+<body class="app-body">
+    <!-- 載入動畫 -->
+    <div id="appLoader" class="app-loader">
+        <div class="loader-content">
+            <div class="loader-icon">
+                <svg class="loader-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm1-13h-2v6h2V7zm0 8h-2v2h2v-2z"/>
+                </svg>
+            </div>
+            <div class="loader-text">辯時計正在啟動...</div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- 頁首 -->
+        <header class="app-header enhanced-header">
+            <div class="header-content">
+                <div class="header-brand">
+                    <div class="brand-icon">
+                        <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="brand-content">
+                        <h1 class="brand-title">辯時計 Pro</h1>
+                        <span class="brand-subtitle">專業辯論計時系統</span>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="desktop-only header-tools">
+ 
+                        
+                        <button class="btn btn-primary btn-upgrade" id="upgradeButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
+                            </svg>
+                            <span class="upgrade-text">
+                                升級到 
+                                <span class="upgrade-badge">Pro Max</span>
+                            </span>
+                        </button>
+                    </div>
+                    
+                    <button class="btn btn-primary btn-upgrade-mobile mobile-only" id="upgradeButtonMobile">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
+                        </svg>
+                    </button>
+                    
+                    <button class="btn btn-ghost btn-icon hamburger-btn" id="hamburgerButton">
+                        <div class="hamburger-icon">
+                            <span class="hamburger-line"></span>
+                            <span class="hamburger-line"></span>
+                            <span class="hamburger-line"></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 側邊選單 -->
+        <nav class="hamburger-menu" id="hamburgerMenu">
+            <div class="menu-overlay"></div>
+            <div class="menu-sidebar">
+                <div class="menu-header">
+                    <h3 class="menu-title">設定選單</h3>
+                    <button class="btn btn-ghost btn-icon" id="closeMenuButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="menu-content">
+                    <div class="menu-section">
+                        <h4 class="section-title">系統狀態</h4>
+                        <div class="menu-item static">
+                            <div class="status-indicator online">
+                                <div class="status-dot"></div>
+                            </div>
+                            <span>系統運行中</span>
+                        </div>
+                    </div>
+                    
+                    <div class="menu-section">
+                        <h4 class="section-title">介面設定</h4>
+                        
+                        <button class="menu-item" id="menuThemeToggle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636a9 9 0 1 0 12.728 0l-1.591 1.591M12 6.75a5.25 5.25 0 1 0 0 10.5 5.25 5.25 0 0 0 0-10.5z"/>
+                            </svg>
+                            <span>切換主題</span>
+                            <div class="menu-badge" id="themeStatusBadge">明亮</div>
+                        </button>
+                        
+                        <div class="menu-item toggle-item">
+                            <div class="toggle-info">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span>自動模式</span>
+                            </div>
+                            <label class="enhanced-toggle mini">
+                                <input type="checkbox" id="menuAutoModeInput">
+                                <span class="toggle-slider">
+                                    <span class="toggle-thumb"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="menu-section">
+                        <h4 class="section-title">控制</h4>
+                        
+                        <button class="menu-item" id="menuFullscreen">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                            </svg>
+                            <span>全螢幕模式</span>
+                        </button>
+                        
+                        <button class="menu-item" id="menuHelp">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                            </svg>
+                            <span>快捷鍵說明</span>
+                        </button>
+                    </div>
+                    
+                    <div class="menu-section">
+                        <h4 class="section-title">關於</h4>
+                        <div class="menu-item static app-info">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+                            </svg>
+                            <div class="app-version">
+                                <span class="version-main">辯時計 Pro v2.0</span>
+                                <small class="version-sub">專業辯論計時系統</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主要內容 -->
+        <main class="main-container enhanced-main">
+            <!-- 設定階段 -->
+            <section id="setupPhase" class="setup-section">
+                <div class="section-hero">
+                    <h2 class="hero-title">
+                        <span class="hero-icon">🚀</span>
+                        設置您的辯論
+                    </h2>
+                    <p class="hero-description">
+                        配置辯論參數，選擇格式並設定隊伍，開始專業的計時體驗
+                    </p>
+                </div>
+
+                <div class="setup-grid">
+                    <!-- 主要設定 -->
+                    <div class="setup-main">
+                        <div class="glass-card setup-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="card-icon">⚙️</span>
+                                    基本設定
+                                </h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="form-grid">
+                                    <div class="input-group enhanced">
+                                        <label class="input-label">
+                                            <span class="label-icon">🎯</span>
+                                            辯論題目
+                                        </label>
+                                        <input id="debateTopicInput" type="text" class="form-input" 
+                                               placeholder="請輸入辯論題目...">
+                                    </div>
+
+                                    <div class="input-group enhanced">
+                                        <label class="input-label">
+                                            <span class="label-icon">🏛️</span>
+                                            辯論格式
+                                        </label>
+                                        <div class="select-wrapper">
+                                            <select id="formatSelect" class="form-select">
+                                                <!-- 選項將動態載入 -->
+                                            </select>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="team-inputs">
+                                        <div class="input-group enhanced">
+                                            <label class="input-label positive">
+                                                <span class="label-icon">🟢</span>
+                                                正方隊名
+                                            </label>
+                                            <input id="positiveTeamNameInput" type="text" class="form-input" 
+                                                   placeholder="正方">
+                                        </div>
+
+                                        <div class="input-group enhanced">
+                                            <label class="input-label negative">
+                                                <span class="label-icon">🔴</span>
+                                                反方隊名
+                                            </label>
+                                            <input id="negativeTeamNameInput" type="text" class="form-input" 
+                                                   placeholder="反方">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 選手設定 -->
+                        <div id="playersSection" class="glass-card setup-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="card-icon">👥</span>
+                                    選手設定
+                                </h3>
+                                <p class="card-subtitle">為辯革盃格式設定選手名單</p>
+                            </div>
+                            <div class="card-content">
+                                <div class="players-grid">
+                                    <div class="team-section positive">
+                                        <h4 class="team-title">
+                                            <span class="team-icon">🟢</span>
+                                            正方選手
+                                        </h4>
+                                        <div class="players-list">
+                                            <input type="text" class="form-input player-input" placeholder="正方一辯" data-team="positive" data-position="0">
+                                            <input type="text" class="form-input player-input" placeholder="正方二辯" data-team="positive" data-position="1">
+                                            <input type="text" class="form-input player-input" placeholder="正方三辯" data-team="positive" data-position="2">
+                                        </div>
+                                    </div>
+                                    <div class="team-section negative">
+                                        <h4 class="team-title">
+                                            <span class="team-icon">🔴</span>
+                                            反方選手
+                                        </h4>
+                                        <div class="players-list">
+                                            <input type="text" class="form-input player-input" placeholder="反方一辯" data-team="negative" data-position="0">
+                                            <input type="text" class="form-input player-input" placeholder="反方二辯" data-team="negative" data-position="1">
+                                            <input type="text" class="form-input player-input" placeholder="反方三辯" data-team="negative" data-position="2">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 側邊控制 -->
+                    <div class="setup-sidebar">
+                        <div class="glass-card control-card">
+                            <div class="action-buttons">
+                                <button id="confirmSetupButton" class="btn btn-primary btn-lg btn-block glow-effect">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
+                                    </svg>
+                                    開始辯論
+                                </button>
+
+                                <button id="editFlowButton" class="btn btn-secondary btn-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/>
+                                    </svg>
+                                    自定義流程
+                                </button>
+                            </div>
+
+                            <div class="file-section">
+                                <h4 class="section-header">
+                                    <span class="header-icon">📁</span>
+                                    匯入流程
+                                </h4>
+                                <div class="file-upload-area">
+                                    <label for="importFlowInput" class="file-upload-label">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                                        </svg>
+                                        <span class="upload-text">選擇檔案</span>
+                                        <span class="upload-hint">支援 JSON 格式</span>
+                                    </label>
+                                    <input type="file" id="importFlowInput" accept=".json" class="file-input">
+                                </div>
+                                <button id="loadImportedFlowButton" class="btn btn-outline btn-block" style="display: none;">
+                                    載入選擇的流程
+                                </button>
+                                <div id="fileImportStatus" class="import-status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 流程編輯器 -->
+            <section id="flowEditorSectionV2" class="flow-editor-section hidden">
+                <div class="editor-hero">
+                    <h2 class="editor-title">
+                        <span class="editor-icon">⚡</span>
+                        流程編輯器
+                    </h2>
+                    <p class="editor-description">拖拽排序、點擊編輯，打造完美的辯論流程</p>
+                </div>
+
+                <div class="editor-layout">
+                    <div class="editor-main">
+                        <div class="editor-list-container">
+                            <div id="flowEditorListV2" class="flow-editor-list">
+                                <!-- 流程項目將動態載入 -->
+                            </div>
+                        </div>
+
+                        <div class="editor-controls">
+                            <button id="finishEditingButtonV2" class="btn btn-primary btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                                </svg>
+                                完成編輯
+                            </button>
+                            <button id="cancelEditingButtonV2" class="btn btn-secondary btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                取消
+                            </button>
+                            <button id="exportFlowButton" class="btn btn-outline btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                                </svg>
+                                匯出流程
+                            </button>
+                        </div>
+                    </div>
+
+                    <aside id="stageEditSidebar" class="stage-edit-sidebar">
+                        <div class="sidebar-header">
+                            <h3 id="sidebarTitle" class="sidebar-title">編輯階段</h3>
+                            <button id="closeSidebarBtn" class="btn btn-ghost btn-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div id="sidebarContent" class="sidebar-content">
+                            <!-- 編輯表單內容將動態載入 -->
+                        </div>
+                        
+                        <div class="sidebar-footer">
+                            <button id="saveSidebarBtn" class="btn btn-primary btn-block">儲存</button>
+                            <button id="cancelSidebarBtn" class="btn btn-secondary btn-block">取消</button>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            <!-- 辯論階段 -->
+            <section id="debatePhase" class="debate-section hidden">
+                <div id="fullscreenRealTimeClock" class="fullscreen-clock hidden">00:00:00</div>
+
+                <!-- 辯論信息 -->
+                <div class="debate-header">
+                    <div id="debateInfoDisplay" class="debate-info">
+                        <!-- 辯論資訊將動態載入 -->
+                    </div>
+                </div>
+
+                <!-- 抽籤區域 -->
+                <div id="drawRebuttalOrderSection" class="draw-section glass-card hidden">
+                    <div class="draw-header">
+                        <h3 class="draw-title">
+                            <span class="draw-icon">🎲</span>
+                            抽籤決定結辯順序
+                        </h3>
+                    </div>
+                    <div id="drawResultDisplay" class="draw-result"></div>
+                    <div class="draw-controls">
+                        <button id="startDrawButton" class="btn btn-primary btn-lg glow-effect">
+                            開始抽籤
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 計時器區域 -->
+                <div class="timer-section">
+                    <!-- 階段信息 -->
+                    <div class="stage-panel">
+                        <div id="currentStageInfo" class="stage-info">
+                            <!-- 當前階段資訊將動態載入 -->
+                        </div>
+                        <div id="moderatorScript" class="moderator-script">
+                            <!-- 主持稿將動態載入 -->
+                        </div>
+                    </div>
+
+                    <!-- 主計時器 -->
+                    <div class="timer-main glass-card">
+                        <div id="timerDisplay" class="mega-timer">00:00</div>
+                        <div id="timerStatus" class="timer-status">準備中</div>
+                        
+                        <div id="timerProgressBarContainer" class="progress-container enhanced-progress">
+                            <div id="timerProgressBar" class="progress-bar animated-progress"></div>
+                        </div>
+                        
+                        <div id="nextSegmentPreview" class="next-segment-preview">
+                            <!-- 下一段預覽將動態載入 -->
+                        </div>
+                    </div>
+
+                    <div id="speechRecognitionStatus" class="speech-status hidden"></div>
+                </div>
+
+                <!-- 控制區域 -->
+                <div class="debate-controls">
+                    <div class="control-group primary-controls">
+                        <button id="nextStageButton" class="btn btn-primary btn-lg control-main">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                            </svg>
+                            下一階段
+                        </button>
+
+                        <button id="pauseResumeTimerButton" class="btn btn-warning btn-lg control-timer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5M8.25 5.25v13.5"/>
+                            </svg>
+                            暫停
+                        </button>
+
+                        <button id="manualStartTimerButton" class="btn btn-secondary btn-lg control-timer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
+                            </svg>
+                            手動開始
+                        </button>
+                    </div>
+
+                    <div class="control-group secondary-controls">
+                        <button id="skipStageButton" class="btn btn-ghost">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.688c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062A1.125 1.125 0 013 16.81V8.688zM12.75 8.688c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062a1.125 1.125 0 01-1.683-.977V8.688z"/>
+                            </svg>
+                            跳過
+                        </button>
+
+                        <button id="resetButton" class="btn btn-ghost text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                            </svg>
+                            重設
+                        </button>
+
+                        <div class="auto-mode-toggle">
+                            <label class="toggle-label">
+                                <span class="toggle-text">自動模式</span>
+                                <label class="enhanced-toggle">
+                                    <input type="checkbox" id="autoModeToggle">
+                                    <span class="toggle-slider">
+                                        <span class="toggle-thumb"></span>
+                                    </span>
+                                </label>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 使用提示 -->
+            <div class="usage-tips">
+                <div class="tip-content">
+                    <div class="tip-icon">💡</div>
+                    <div class="tip-text">
+                        <strong>使用提示：</strong>
+                        建議使用電腦版 Chrome / Edge 瀏覽器，確保麥克風權限開啟以獲得最佳體驗
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 頁尾 -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="footer-logo">⚡</span>
+                    <span class="footer-text">
+                        由 <a href="#" class="footer-link">辯時計團隊</a> 精心製作
+                    </span>
+                </div>
+                <div class="footer-actions">
+                    <button id="shortcutHelpButton" class="footer-button">快捷鍵說明</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 快捷鍵說明模態框 -->
+    <div id="shortcutHelpModal" class="modal enhanced-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="modal-icon">⌨️</span>
+                    鍵盤快捷鍵
+                </h3>
+                <button class="modal-close btn btn-ghost btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">Space</kbd>
+                        <span class="shortcut-desc">播放/暫停計時器</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">N</kbd>
+                        <span class="shortcut-desc">下一階段</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">P</kbd>
+                        <span class="shortcut-desc">暫停/恢復</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">S</kbd>
+                        <span class="shortcut-desc">跳過階段</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">R</kbd>
+                        <span class="shortcut-desc">重設</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">F</kbd>
+                        <span class="shortcut-desc">全螢幕</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">T</kbd>
+                        <span class="shortcut-desc">切換主題</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd class="shortcut-key">A</kbd>
+                        <span class="shortcut-desc">自動模式</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 階段選擇模態框 -->
+    <div id="stageChoiceModal" class="modal enhanced-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="stageChoiceModalTitle" class="modal-title">選擇階段類型與選手</h3>
+                <button class="modal-close btn btn-ghost btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group enhanced">
+                    <label class="input-label">階段類型</label>
+                    <select id="stageActionTypeSelect" class="form-select">
+                        <option value="speech">發言</option>
+                        <option value="question">提問</option>
+                        <option value="response">回應</option>
+                    </select>
+                </div>
+                <div class="input-group enhanced">
+                    <label class="input-label">選手</label>
+                    <select id="stagePlayerSelect" class="form-select">
+                        <!-- 選項將動態載入 -->
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmStageChoiceButton" class="btn btn-primary">確認選擇</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隱藏元素 -->
+    <button id="forceStartMainTimerButton" style="display: none;"></button>
+
+    <!-- 音頻元素 -->
+    <audio id="warningSound1min" preload="auto"></audio>
+    <audio id="warningSound30sec" preload="auto"></audio>
+    <audio id="timesUpSound" preload="auto"></audio>
+    <audio id="stageAdvanceSound" preload="auto"></audio>
+    <audio id="speechDetectedSound" preload="auto"></audio>
+    <audio id="drawSound" preload="auto"></audio>
+
+    <script src="ui-enhancements.js" defer></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
