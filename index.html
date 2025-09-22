@@ -1,709 +1,122 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>辯時計 - 專業辯論計時器</title>
+    <title>辯時計 - 專業、安全、現代化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" defer></script>
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary-color: #64748b;
-            --accent-color: #f59e0b;
-            --background: #ffffff;
-            --surface: #f8fafc;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-color: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--background);
-            overflow-x: hidden;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
         }
-
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            background: var(--gradient-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
+        .text-gradient {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.1"><circle cx="36" cy="24" r="2"/><circle cx="6" cy="44" r="2"/><circle cx="36" cy="6" r="2"/></g></svg>');
-            animation: float 20s ease-in-out infinite;
+        .card-bg {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+        .modal-bg {
+             background-color: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-
-        .hero-content {
-            text-align: center;
-            color: white;
-            z-index: 1;
-            position: relative;
-            max-width: 800px;
-            padding: 0 2rem;
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #4f46e5;
         }
-
-        .hero-title {
-            font-size: 4rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            animation: fadeInUp 1s ease-out;
+        [data-theme="dark"] .dark\:card-bg {
+            background-color: rgba(31, 41, 55, 0.5);
         }
-
-        .hero-subtitle {
-            font-size: 1.5rem;
-            font-weight: 300;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-            animation: fadeInUp 1s ease-out 0.3s both;
+        .animate-pulse-once {
+            animation: pulse 0.7s cubic-bezier(0.4, 0, 0.6, 1);
         }
-
-        .hero-description {
-            font-size: 1.1rem;
-            margin-bottom: 3rem;
-            opacity: 0.8;
-            animation: fadeInUp 1s ease-out 0.6s both;
-            line-height: 1.8;
-        }
-
-        .cta-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 2.5rem;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-            animation: fadeInUp 1s ease-out 0.9s both;
-        }
-
-        .cta-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Features Section */
-        .features {
-            padding: 6rem 0;
-            background: var(--surface);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 3rem;
-            color: var(--text-primary);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 4rem;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            text-align: center;
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .feature-description {
-            color: var(--text-secondary);
-            line-height: 1.7;
-        }
-
-        /* How it works */
-        .how-it-works {
-            padding: 6rem 0;
-            background: white;
-        }
-
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
-            margin-top: 4rem;
-        }
-
-        .step {
-            text-align: center;
-            position: relative;
-        }
-
-        .step-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 60px;
-            height: 60px;
-            background: var(--gradient-primary);
-            color: white;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-        }
-
-        .step-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .step-description {
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        /* Call to Action */
-        .final-cta {
-            padding: 6rem 0;
-            background: var(--gradient-accent);
-            text-align: center;
-        }
-
-        .final-cta-title {
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .final-cta-description {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2rem;
-            margin-bottom: 2.5rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .final-cta-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1.2rem 3rem;
-            background: white;
-            color: var(--primary-color);
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .final-cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            text-align: center;
-            padding: 2rem 0;
-        }
-
-        .footer a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Security Warning Section */
-        .security-warning {
-            padding: 6rem 0;
-            background: linear-gradient(135deg, #fee2e2 0%, #fef3c7 50%, #fde68a 100%);
-            position: relative;
-        }
-
-        .security-warning::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23dc2626" fill-opacity="0.05"><path d="M20 0L30 20L20 40L10 20z"/></g></svg>');
-            opacity: 0.3;
-        }
-
-        .warning-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 3rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            border: 2px solid rgba(220, 38, 38, 0.2);
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
-
-        .warning-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .warning-icon {
-            font-size: 2.5rem;
-            animation: pulse 2s infinite;
-        }
-
         @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { opacity: .8; }
         }
-
-        .warning-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #dc2626;
-            margin: 0;
+        .timesup-animation {
+            animation: timesup-flash 0.5s infinite;
         }
-
-        .warning-intro {
-            font-size: 1.1rem;
-            color: #374151;
-            margin-bottom: 2.5rem;
-            text-align: center;
-            font-weight: 500;
+        @keyframes timesup-flash {
+            0%, 100% { color: #ef4444; }
+            50% { color: white; }
         }
-
-        .security-risks {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            margin-bottom: 2.5rem;
+        .grace-period-text {
+             animation: grace-pulse 1.5s infinite;
         }
-
-        .risk-item {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            border-left: 5px solid #dc2626;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .risk-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.15);
-        }
-
-        .risk-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .risk-number {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: #dc2626;
-            color: white;
-            border-radius: 50%;
-            font-weight: 700;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .risk-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin: 0;
-        }
-
-        .risk-content p {
-            margin-bottom: 0.75rem;
-            line-height: 1.7;
-            color: #374151;
-        }
-
-        .risk-content p:last-child {
-            margin-bottom: 0;
-        }
-
-        .risk-label {
-            font-weight: 600;
-            color: #dc2626;
-        }
-
-        .security-solution {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .security-solution::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.1"><circle cx="10" cy="10" r="2"/></g></svg>');
-            animation: rotate 20s linear infinite;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .solution-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .shield-icon {
-            font-size: 1.5rem;
-        }
-
-        .security-solution p {
-            font-size: 1.1rem;
-            margin: 0;
-            position: relative;
-            z-index: 1;
-            font-weight: 500;
-        }
-        
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2.5rem;
-            }
-            
-            .hero-subtitle {
-                font-size: 1.2rem;
-            }
-            
-            .section-title {
-                font-size: 2rem;
-            }
-            
-            .final-cta-title {
-                font-size: 2rem;
-            }
-        }
-
-        /* Scroll animations */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.6s ease;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        @keyframes grace-pulse {
+             0%, 100% { opacity: 1; }
+             50% { opacity: 0.7; }
         }
     </style>
 </head>
-<body>
-    <section class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">辯時計</h1>
-            <h2 class="hero-subtitle">專業辯論計時系統</h2>
-            <p class="hero-description">
-                為辯論比賽量身打造的智慧計時器，支援語音偵測、自動流程管理、自訂比賽範本。
-                讓主持人專注於比賽進行，計時交給我們處理。
-            </p>
-            <a href="#" class="cta-button" onclick="startApp()">
-                <span>🚀</span>
-                開始使用
-            </a>
-            <p class="hero-description">
-                
-            </p>
-            
-            <p class="hero-description">
-                ⭣⭣⭣下滑了解更多⭣⭣⭣
-            </p>
-        </div>
-    </section>
+<body class="bg-gray-900 text-white selection:bg-indigo-500 selection:text-white">
 
-    <section class="features">
-        <div class="container">
-            <h2 class="section-title fade-in">強大功能特色</h2>
-            <div class="features-grid">
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">🎤</div>
-                    <h3 class="feature-title">智慧語音偵測</h3>
-                    <p class="feature-description">自動偵測發言開始，無需手動操作計時器。支援緩衝時間設定，確保發言者準備充足。</p>
+    <div id="landingPage">
+        <div class="relative min-h-screen overflow-hidden">
+            <div class="absolute inset-0 z-0 opacity-20">
+                <div class="absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)]"></div>
+            </div>
+
+            <header class="absolute top-0 left-0 right-0 z-20 py-6 px-4 sm:px-6 lg:px-8">
+                <div class="max-w-7xl mx-auto flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-8 h-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-xl font-bold text-white">辯時計</span>
+                    </div>
+                    <button onclick="window.location.href='app.html'" class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200">
+                        開始使用
+                    </button>
                 </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">⚙️</div>
-                    <h3 class="feature-title">自訂比賽流程</h3>
-                    <p class="feature-description">靈活的流程編輯器，支援拖拽排序、匯入匯出範本。適應各種辯論賽制需求。</p>
+            </header>
+
+            <main class="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
+                <h1 class="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white mb-6">
+                    專業、安全、<span class="text-gradient">現代化</span>
+                    <br>
+                    為臺灣辯論而生
+                </h1>
+                <p class="max-w-2xl text-lg sm:text-xl text-gray-300 mb-10">
+                    告別老舊、資安堪慮的計時器。我們提供一個完全本地運行、開源透明的解決方案，讓您的辯論賽事更流暢、更專業。
+                </p>
+                <button onclick="window.location.href='app.html'" class="px-8 py-4 text-lg font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-transform duration-200 hover:scale-105">
+                    立即開始，無需註冊
+                </button>
+            </main>
+        </div>
+
+        <section class="py-20 sm:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white">強大功能，一應俱全</h2>
+                    <p class="mt-4 text-lg text-gray-400">專為辯論比賽設計的每一個細節</p>
                 </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">🎲</div>
-                    <h3 class="feature-title">結辯順序抽籤</h3>
-                    <p class="feature-description">內建抽籤功能，公平決定結辯順序。動畫效果增加儀式感與公正性。</p>
-                </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">📱</div>
-                    <h3 class="feature-title">響應式設計</h3>
-                    <p class="feature-description">支援全螢幕模式，適配各種裝置。清晰的介面設計，遠距離也能輕鬆查看。</p>
-                </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">🔊</div>
-                    <h3 class="feature-title">音效提醒系統</h3>
-                    <p class="feature-description">多種音效提醒時間節點，包含1分鐘警告、30秒警告、時間到等重要時刻。</p>
-                </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">⌨️</div>
-                    <h3 class="feature-title">快捷鍵操作</h3>
-                    <p class="feature-description">豐富的鍵盤快捷鍵支援，讓主持人快速操作。提升比賽進行的流暢度。</p>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                        <h3 class="text-xl font-semibold text-white">🛡️ 絕對安全</h3>
+                        <p class="mt-2 text-gray-400">所有操作均在您的瀏覽器本地完成，無任何資料上傳，徹底杜絕資安風險。</p>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                        <h3 class="text-xl font-semibold text-white">⚙️ 高度自訂</h3>
+                        <p class="mt-2 text-gray-400">靈活的流程編輯器，支援各種賽制，可匯入、匯出您的專屬流程範本。</p>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                        <h3 class="text-xl font-semibold text-white">🎤 智慧語音</h3>
+                        <p class="mt-2 text-gray-400">可選的語音偵測功能，自動開始計時，讓主持人更專注於比賽本身。</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
-    <section class="security-warning">
-        <div class="container">
-            <div class="warning-card fade-in">
-                <div class="warning-header">
-                    <span class="warning-icon">⚠️</span>
-                    <h2 class="warning-title">中國計時網站的三大資安陷阱</h2>
-                </div>
-                <p class="warning-intro">別小看「只是計時網站」！中國駭客與監控系統正威脅您的資料：</p>
-                
-                <div class="security-risks">
-                    <div class="risk-item">
-                        <div class="risk-header">
-                            <span class="risk-number">1</span>
-                            <h3 class="risk-title">資料竊取，傳回中國！</h3>
-                        </div>
-                        <div class="risk-content">
-                            <p><span class="risk-label">🔍 風險：</span>中國網站可能偷錄您的姓名、比賽筆記，傳至中國伺服器，受《數據安全法》（2021）規範，政府可隨時調用。《朝鮮日報》報導，中國應用程式引發全球「監視恐懼症」！</p>
-                            <p><span class="risk-label">💥 別以為沒關係：</span>策略外洩讓對手搶先，敏感議題討論可能讓您身陷隱私危機！</p>
-                        </div>
-                    </div>
-
-                    <div class="risk-item">
-                        <div class="risk-header">
-                            <span class="risk-number">2</span>
-                            <h3 class="risk-title">隱形監控，無處可逃！</h3>
-                        </div>
-                        <div class="risk-content">
-                            <p><span class="risk-label">🔍 風險：</span>網站嵌入追蹤程式，記錄您的議題研究，隱私政策不清，違反GDPR。《報呱》揭露，加拿大海底撈60台監視器將資料傳回中國！</p>
-                            <p><span class="risk-label">💥 別以為沒關係：</span>敏感議題（如人權）可能因監控受限，影響您的辯論表現！</p>
-                        </div>
-                    </div>
-
-                    <div class="risk-item">
-                        <div class="risk-header">
-                            <span class="risk-number">3</span>
-                            <h3 class="risk-title">零時差與供應鏈攻擊，防不勝防！</h3>
-                        </div>
-                        <div class="risk-content">
-                            <p><span class="risk-label">🔍 風險：</span>中國駭客利用漏洞發動零時差攻擊，入侵計時網站；供應鏈攻擊威脅下游用戶。RSAC 2025報告稱，中國攻擊生態系統如「彈道飛彈計畫」，X帖子揭露台灣44台伺服器被控！</p>
-                            <p><span class="risk-label">💥 別以為沒關係：</span>比賽資料被竊或系統癱瘓，可能讓您瞬間失利！</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="security-solution">
-                    <div class="solution-badge">
-                        <span class="shield-icon">🛡️</span>
-                        <strong>安全解決方案</strong>
-                    </div>
-                    <p>選擇本地化、開源透明的辯時計，保護您的比賽資料與隱私安全！</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="how-it-works">
-        <div class="container">
-            <h2 class="section-title fade-in">簡單三步驟</h2>
-            <div class="steps">
-                <div class="step fade-in">
-                    <div class="step-number">1</div>
-                    <h3 class="step-title">設定比賽</h3>
-                    <p class="step-description">選擇比賽範本，輸入隊伍名稱和辯題。可使用預設流程或自訂專屬流程。</p>
-                </div>
-                <div class="step fade-in">
-                    <div class="step-number">2</div>
-                    <h3 class="step-title">開始比賽</h3>
-                    <p class="step-description">按下開始按鈕，系統自動引導每個階段。語音偵測自動開始計時。</p>
-                </div>
-                <div class="step fade-in">
-                    <div class="step-number">3</div>
-                    <h3 class="step-title">專業主持</h3>
-                    <p class="step-description">系統提供主持稿，音效提醒重要時刻。讓您專注於比賽品質控制。</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="final-cta">
-        <div class="container">
-            <h2 class="final-cta-title">準備好開始了嗎？</h2>
-            <p class="final-cta-description">
-                立即體驗專業級辯論計時系統，讓您的辯論比賽更加順暢專業。
-                完全免費使用，無需註冊。
-            </p>
-            <a href="#" class="final-cta-button" onclick="startApp()">
-                <span>⚡</span>
-                立即開始使用
-            </a>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 <a href="https://chengsc.pythonanywhere.com/" target="_blank" rel="noopener noreferrer">台灣辯論彩券製作</a>. 版權所有.</p>
-        </div>
-    </footer>
-
-    <script>
-        // Scroll animations
-        function handleScrollAnimations() {
-            const elements = document.querySelectorAll('.fade-in');
-            elements.forEach(element => {
-                const elementTop = element.getBoundingClientRect().top;
-                const elementVisible = 150;
-                
-                if (elementTop < window.innerHeight - elementVisible) {
-                    element.classList.add('visible');
-                }
-            });
-        }
-
-        window.addEventListener('scroll', handleScrollAnimations);
-        handleScrollAnimations(); // Initial check
-
-        // Start app function
-        function startApp() {
-            // This line is no longer commented out and will redirect to the app.
-            window.location.href = 'app.html';
-        }
-
-        // Smooth scrolling for any internal links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-
-        // Add some interactive hover effects
-        document.querySelectorAll('.feature-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-10px) scale(1.02)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-    </script>
 </body>
 </html>
