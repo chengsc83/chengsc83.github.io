@@ -83,7 +83,7 @@
         <header class="sticky top-0 z-40 w-full glass-card border-b border-slate-900/10 dark:border-slate-300/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center space-x-4">
+                    <div data-action="returnToHome" class="flex items-center space-x-4 cursor-pointer">
                         <svg class="h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -452,6 +452,23 @@
                 });
             },
             confirmReset() {
+                window.location.reload();
+            },
+            returnToHome() {
+                if (App.state.currentView === 'debate' || App.state.currentView === 'editor') {
+                    App.renderModal({
+                        title: '確認返回首頁',
+                        body: '<p class="text-slate-600 dark:text-slate-300">您確定要返回首頁嗎？目前的比賽或編輯進度將會遺失。</p>',
+                        footer: `
+                            <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg transition-colors">取消</button>
+                            <button data-action="confirmReturnToHome" class="px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors">確定返回</button>
+                        `
+                    });
+                } else {
+                    window.location.reload();
+                }
+            },
+            confirmReturnToHome() {
                 window.location.reload();
             },
             openEditor() {
@@ -1468,7 +1485,7 @@
         },
         
         // --- HELPERS ---
-        showNotification(message, type = 'info') {
+        showNotification(message, type = 'info', duration = 3000) {
             const container = document.getElementById('notification-container');
             const a = { info: 'bg-blue-500', success: 'bg-green-500', error: 'bg-red-500' };
             const div = document.createElement('div');
@@ -1479,7 +1496,7 @@
                 div.style.transition = 'opacity 0.5s';
                 div.style.opacity = '0';
                 setTimeout(() => div.remove(), 500);
-            }, 3000);
+            }, duration);
         },
         
         interpolateScript(script, options = {}) {
@@ -1635,7 +1652,13 @@
                     const timerLabel = this.interpolateScript(stage.timerLabel || stage.baseTimerLabel, choiceResult);
                     switch (stage.type) {
                         case 'speech_auto': this.startGracePeriodTimer(stage, timerLabel); break;
-                        case 'manual_prep': this.renderDebateControls(); break;
+                        case 'manual_prep': 
+                            if(this.state.isAutoMode) {
+                                this.startManualPrepTimer(stage.duration);
+                            } else {
+                                this.renderDebateControls();
+                            }
+                            break;
                         case 'choice_speech': this.startGracePeriodTimer(stage, timerLabel); break;
                         case 'announcement':
                         case 'draw_rebuttal_order':
@@ -1703,4 +1726,3 @@
     </script>
 </body>
 </html>
-
