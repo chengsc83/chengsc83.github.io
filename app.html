@@ -555,10 +555,19 @@
             startDraw() {
                 App.playSound('drawSound');
                 App.state.rebuttalOrder = Math.random() < 0.5 ? 'positive' : 'negative';
-                App.renderDebateStage();
-                if (App.state.isAutoMode) {
-                    setTimeout(() => App.actions.nextStage(), 2000);
-                }
+                
+                // Render the result on screen immediately
+                App.renderDebateStage(); 
+
+                const drawnTeamName = App.state.rebuttalOrder === 'positive' ? App.state.positiveTeamName : App.state.negativeTeamName;
+                const resultText = `抽籤結果：${drawnTeamName} 先結辯`;
+                
+                // Speak the result, and only auto-advance after speaking is done
+                App.speak(resultText, () => {
+                    if (App.state.isAutoMode) {
+                        setTimeout(() => App.actions.nextStage(), 2000);
+                    }
+                });
             },
             manualStartTimer() {
                 const stage = App.state.currentFlow[App.state.currentStageIndex];
@@ -929,7 +938,8 @@
             const showForceStart = stage && (stage.type === 'speech_auto' || stage.type === 'choice_speech') && this.state.timer.type === 'grace' && !this.state.mainSpeechTimerStartedByGrace;
             const isLastStage = this.state.currentStageIndex >= this.state.currentFlow.length - 1;
             const isTimerRunning = this.state.timer.interval || this.state.timer.graceInterval;
-            const nextBtnDisabled = (isTimerRunning && !isPaused) || isLastStage;
+            const drawNotCompleted = stage && stage.type === 'draw_rebuttal_order' && !this.state.rebuttalOrder;
+            const nextBtnDisabled = (isTimerRunning && !isPaused) || isLastStage || drawNotCompleted;
             const autoModeChecked = this.state.isAutoMode ? 'checked' : '';
 
             container.innerHTML = `
@@ -1661,8 +1671,12 @@
                             break;
                         case 'choice_speech': this.startGracePeriodTimer(stage, timerLabel); break;
                         case 'announcement':
-                        case 'draw_rebuttal_order':
                             if(this.state.isAutoMode) setTimeout(() => this.actions.nextStage(), 2000);
+                            break;
+                        case 'draw_rebuttal_order':
+                            // In this stage, we always wait for the user to click the "startDraw" button.
+                            // Auto-mode advancement is handled within the startDraw action itself.
+                            this.renderDebateControls();
                             break;
                     }
                 };
@@ -1726,3 +1740,6 @@
     </script>
 </body>
 </html>
+
+
+
