@@ -1560,17 +1560,23 @@
                     }
                 };
                 
-                 this.recognition.onerror = (event) => {
-                    console.error("Speech recognition error:", event.error);
-                    this.state.isRecognizing = false;
-                    this.state.speechRecognitionStatus = 'error';
-                     if(this.state.transcription.active) {
-                         this.showNotification(`語音轉錄錯誤: ${event.error}`, 'error');
-                         this.actions.stopTranscription();
-                    }
-                     if(this.state.currentView === 'debate') this.renderTranscriptionPanel();
-                };
-
+                this.recognition.onerror = (event) => {
+                    // 優雅地處理 "no-speech" 錯誤，這不是一個嚴重故障。
+                    if (event.error === 'no-speech') {
+                        console.warn("語音辨識：未偵測到語音。");
+                        // 不做任何處理，接下來會觸發 onend 事件，由 onend 中的邏輯來決定是否重啟。
+                        return; 
+                    }
+                    // 對於所有其他更嚴重的錯誤，才執行原本的錯誤處理流程。
+                    console.error("Speech recognition error:", event.error);
+                    this.state.isRecognizing = false;
+                    this.state.speechRecognitionStatus = 'error';
+                     if(this.state.transcription.active) {
+                         this.showNotification(`語音轉錄錯誤: ${event.error}`, 'error');
+                         this.actions.stopTranscription();
+                    }
+                     if(this.state.currentView === 'debate') this.renderTranscriptionPanel();
+                };
                 this.recognition.onend = () => {
                     this.state.isRecognizing = false;
                      if (this.state.speechRecognitionStatus === 'active') {
