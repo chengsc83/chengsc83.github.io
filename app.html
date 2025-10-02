@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="scroll-smooth">
+<html lang="zh-TW" class="scroll-smooth dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -351,8 +351,9 @@
         
         loadState() {
             const theme = localStorage.getItem('debateTimerTheme');
+            if (theme === 'light') {document.documentElement.classList.remove('dark');}
             if (theme) {
-                document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.classList.toggle('light', theme === 'light');
             } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 document.documentElement.classList.add('dark');
             }
@@ -427,6 +428,9 @@
             
             // Global actions
             switch(key) {
+                case 'I':
+                    this.actions.togglePip();
+                    break;
                 case 'R':
                     this.actions.resetDebate();
                     break;
@@ -876,6 +880,7 @@
                     { key: 'N', desc: '下一階段' },
                     { key: 'Space / P', desc: '暫停 / 繼續計時' },
                     { key: 'A', desc: '切換自動模式' },
+                    { key: 'I', desc: '切換畫中畫模式' },
                     { key: 'R', desc: '重設辯論' },
                     { key: 'F', desc: '切換全螢幕' },
                     { key: 'T', desc: '切換亮/暗主題' },
@@ -884,10 +889,10 @@
                 ];
                 
                 const body = `
-                    <div class="space-y-3">
-                        ${shortcuts.map(s => `
-                            <div class="flex items-center justify-between p-2 rounded-md shortcut-item">
-                                <span class="font-semibold">${s.desc}</span>
+                    <div class="space-y-4">
+                    ${shortcuts.map(s => `
+                                <div class="flex items-center justify-between p-2 rounded-md shortcut-item">
+                                <span class="font-semibold">${s.desc}</span>
                                 <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-200 border border-gray-300 rounded-md dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">${s.key}</kbd>
                             </div>
                         `).join('')}
@@ -1282,10 +1287,9 @@
                     <div class="p-6 border-b border-slate-200 dark:border-slate-700">
                         <h3 class="font-bold text-xl">${title}</h3>
                     </div>
-                    <div class="p-6">${body}</div>
-                    <div class="p-4 modal-footer flex justify-end gap-2 rounded-b-2xl">${footer}</div>
-                </div>
-            `;
+                    <div class="p-6">${body}</div>
+                    <div class="p-4 modal-footer flex justify-end gap-2 rounded-b-2xl">${footer}</div>
+                </div>`;
             document.body.appendChild(modal);
         },
         
