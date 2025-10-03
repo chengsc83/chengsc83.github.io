@@ -12,10 +12,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --font-body: 'Inter', sans-serif; 
-            --font-mono: 'JetBrains Mono', monospace; 
-            
+        :root {
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
             --bg-page: #f1f5f9; /* slate-100 */
             --bg-card: rgba(255, 255, 255, 0.6);
             --bg-input: rgba(255, 255, 255, 0.7);
@@ -25,7 +25,7 @@
             --text-primary: #1e293b; /* slate-800 */
             --text-secondary: #475569; /* slate-600 */
             --text-placeholder: #94a3b8; /* slate-400 */
-            
+
             --border-color: #cbd5e1; /* slate-300 */
         }
 
@@ -39,22 +39,22 @@
             --text-primary: #e2e8f0; /* slate-200 */
             --text-secondary: #94a3b8; /* slate-400 */
             --text-placeholder: #64748b; /* slate-500 */
-            
+
             --border-color: #475569; /* slate-600 */
         }
-        
-        body { 
-            font-family: var(--font-body); 
+
+        body {
+            font-family: var(--font-body);
             background-color: var(--bg-page);
             color: var(--text-primary);
         }
-        
-        .glass-card { 
-            background-color: var(--bg-card); 
-            backdrop-filter: blur(12px); 
-            -webkit-backdrop-filter: blur(12px); 
+
+        .glass-card {
+            background-color: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-        
+
         .form-element {
             background-color: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -118,7 +118,7 @@
 
         <main id="main-content" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
             </main>
-        
+
         <div id="sidebar" class="fixed inset-0 z-50 hidden">
             <div id="sidebar-overlay" data-action="toggleSidebar" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
             <div id="sidebar-panel" class="fixed top-0 right-0 h-full w-full max-w-sm glass-card border-l border-slate-900/10 dark:border-slate-300/10">
@@ -126,8 +126,8 @@
         </div>
 
         <div id="notification-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
-        
-         
+
+
         <audio id="ringSound" preload="auto" src="ring.m4a"></audio>
         <audio id="stageAdvanceSound" preload="auto" src="sounds/stage_advance.mp3"></audio>
         <audio id="speechDetectedSound" preload="auto" src="sounds/speech_detected.mp3"></audio>
@@ -352,7 +352,7 @@
             this.render();
             this.addEventListeners();
         },
-        
+
         loadState() {
             const theme = localStorage.getItem('debateTimerTheme');
             if (theme === 'light') {document.documentElement.classList.remove('dark');}
@@ -364,7 +364,7 @@
             this.state.isAutoMode = localStorage.getItem('debateAutoMode') === 'true';
             this.state.enableSpeechDetection = localStorage.getItem('debateSpeechDetection') !== 'false';
         },
-        
+
         // --- EVENT HANDLING ---
         addEventListeners() {
             document.body.addEventListener('click', this.handleGlobalClick.bind(this));
@@ -372,7 +372,7 @@
             document.addEventListener('fullscreenchange', this.renderHeader.bind(this));
             window.addEventListener('keydown', this.handleKeyDown.bind(this));
         },
-        
+
         handleGlobalClick(e) {
             // 【新增】iOS 音訊解鎖機制
             if (!App.state.isAudioUnlocked) {
@@ -426,13 +426,13 @@
             }
 
             const key = e.key.toUpperCase();
-            
+
             // Actions specific to the debate view
             if (this.state.currentView === 'debate') {
                 switch(key) {
                     case 'B': // <-- 新增這個 case
                         document.querySelector('[data-action="previousStage"]:not([disabled])')?.click();
-                        break;                    
+                        break;
                     case 'N':
                         document.querySelector('[data-action="nextStage"]:not([disabled])')?.click();
                         break;
@@ -450,7 +450,7 @@
                         break;
                 }
             }
-            
+
             // Global actions
             switch(key) {
                 case 'I':
@@ -481,7 +481,7 @@
                     break;
             }
         },
-        
+
         // --- ACTIONS ---
         actions: {
             startDebate(e) {
@@ -490,7 +490,7 @@
                     App.showNotification("請選擇一個比賽格式", "error");
                     return;
                 }
-                
+
                 App.state.positiveTeamName = document.getElementById('positiveTeamNameInput').value.trim() || "正方";
                 App.state.negativeTeamName = document.getElementById('negativeTeamNameInput').value.trim() || "反方";
                 App.state.debateTopic = document.getElementById('debateTopicInput').value.trim() || "（未設定辯題）";
@@ -530,7 +530,7 @@
                         }
                     }
                 });
-                
+
                 if (!isValid) {
                     App.showNotification("請完成所有九宮格欄位", "error");
                     return;
@@ -589,19 +589,31 @@
                 setTimeout(() => {
                     App.state.isAdvancingStage = false;
                 }, 500);
-            },            
+            },
             previousStage() {
-                if (App.state.isAdvancingStage) return; // 防止重複點擊
-                if (App.state.currentStageIndex <= 0) return; // 如果在第一階段之前，則不執行
+                if (App.state.isAdvancingStage) return;
+                if (App.state.currentStageIndex <= 0) return;
 
                 App.state.isAdvancingStage = true;
-
                 App.clearAllTimers();
                 App.stopRecognition();
 
+                // 【修復】在回到上一階段時，還原動作計數。
+                const departingStage = App.state.currentFlow[App.state.currentStageIndex];
+                if (departingStage && departingStage.selectedAction) {
+                    const team = departingStage.choosingTeam;
+                    const actionToRevert = departingStage.selectedAction;
+                    if (team === 'positive') {
+                        App.state.positiveActionCounts[actionToRevert]--;
+                    } else {
+                        App.state.negativeActionCounts[actionToRevert]--;
+                    }
+                    // 清除已儲存的選擇，以便下次可以重新選擇。
+                    delete departingStage.selectedAction;
+                }
+
                 App.state.currentStageIndex--;
 
-                // 檢查是否回到了抽籤階段之前，如果是，則重置抽籤結果
                 const hasDrawStageOccurred = App.state.currentFlow.slice(0, App.state.currentStageIndex + 1).some(s => s.type === 'draw_rebuttal_order');
                 if (!hasDrawStageOccurred) {
                     App.state.rebuttalOrder = null;
@@ -609,11 +621,10 @@
 
                 App.loadStage(App.state.currentStageIndex);
 
-                // 短暫延遲後重置旗標，防止競爭條件
                 setTimeout(() => {
                     App.state.isAdvancingStage = false;
                 }, 500);
-            },            
+            },
             togglePause() {
                 App.state.timer.isPaused = !App.state.timer.isPaused;
                 if (App.state.timer.isPaused) {
@@ -731,26 +742,26 @@
                     baseScript: formData.get('baseScript'),
                     baseTimerLabel: formData.get('baseTimerLabel'),
                 };
-                
+
                 if (isNaN(index)) { // new stage
                     App.state.currentFlow.push(stageData);
                 } else { // editing existing
                     App.state.currentFlow[index] = stageData;
                 }
-                
+
                 App.renderEditorStageList();
                 App.actions.closeModal(e);
             },
             startDraw() {
                 App.playSound('drawSound');
                 App.state.rebuttalOrder = Math.random() < 0.5 ? 'positive' : 'negative';
-                
+
                 // Render the result on screen immediately
-                App.renderDebateStage(); 
+                App.renderDebateStage();
 
                 const drawnTeamName = App.state.rebuttalOrder === 'positive' ? App.state.positiveTeamName : App.state.negativeTeamName;
                 const resultText = `抽籤結果：${drawnTeamName} 先結辯`;
-                
+
                 // Speak the result, and only auto-advance after speaking is done
                 App.speak(resultText, () => {
                     if (App.state.isAutoMode) {
@@ -786,7 +797,7 @@
                     // For simplicity, we no longer derive the player from the nine-square grid during the debate.
                     // The grid is for setup, and the team announces the player verbally.
                     const selectedPlayer = "辯士";
-                    
+
                     // Update UI with the selected player and action
                     const stageContainer = document.getElementById('stageContainer');
                     if (stageContainer) {
@@ -803,7 +814,7 @@
                     }
 
                     App.actions.closeModal(e);
-                    
+
                     // Resolve the promise to continue the process
                     resolve({ selected_player: selectedPlayer, selected_action_type: selectedAction });
                 }
@@ -926,7 +937,7 @@
                     { key: 'Esc', desc: '關閉彈出視窗或側邊欄' },
                     { key: '? 或 /', desc: '顯示快捷鍵說明' },
                 ];
-                
+
                 const body = `
                     <div class="space-y-4">
                     ${shortcuts.map(s => `
@@ -937,7 +948,7 @@
                         `).join('')}
                     </div>
                 `;
-                
+
                 App.renderModal({
                     title: '快捷鍵說明',
                     body: body,
@@ -952,7 +963,7 @@
                 if (modal) modal.remove();
             },
         },
-        
+
         changeActions: {
             toggleAutoMode(e) {
                 App.state.isAutoMode = e.target.checked;
@@ -966,7 +977,7 @@
             toggleSpeechDetection(e) {
                 App.state.enableSpeechDetection = e.target.checked;
                 localStorage.setItem('debateSpeechDetection', App.state.enableSpeechDetection);
-            },            
+            },
             formatChanged(e) {
                 const isBianGeBei = e.target.value === '辯革盃 (九辯位自由排序制)';
                 document.getElementById('playersSection').style.display = isBianGeBei ? '' : 'none';
@@ -979,7 +990,7 @@
             this.renderHeader();
             this.renderSidebar();
         },
-        
+
         router() {
             switch (this.state.currentView) {
                 case 'setup':
@@ -1004,7 +1015,7 @@
             const formatOptions = Object.keys(this.debateFormats)
                 .map(name => `<option value="${name}">${name}</option>`)
                 .join('');
-            
+
             const speechDetectionChecked = this.state.enableSpeechDetection ? 'checked' : '';
 
             this.mainContent.innerHTML = `
@@ -1110,7 +1121,7 @@
                 </div>
             `;
         },
-        
+
         renderDebateView() {
             this.mainContent.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1128,7 +1139,7 @@
             this.renderDebateStage();
             this.renderTranscriptionPanel();
         },
-        
+
         renderDebateStage() {
             const stage = this.state.currentFlow[this.state.currentStageIndex];
             const infoContainer = document.getElementById('debateInfoContainer');
@@ -1136,13 +1147,13 @@
             const timerContainer = document.getElementById('timerContainer');
 
             if (!infoContainer || !stageContainer || !timerContainer) return;
-            
+
             // Render Debate Info (Topic, Teams)
             infoContainer.innerHTML = `
                 <div class="glass-card p-4 rounded-2xl shadow-lg">
                      <p class="text-center font-semibold text-lg">${this.state.debateTopic}</p>
                      <p class="text-center text-sm text-slate-500">
-                         <span class="font-medium text-green-600">${this.state.positiveTeamName}</span> vs 
+                         <span class="font-medium text-green-600">${this.state.positiveTeamName}</span> vs
                          <span class="font-medium text-red-600">${this.state.negativeTeamName}</span>
                      </p>
                 </div>
@@ -1156,7 +1167,7 @@
 
             let stageContent = '';
             let timerContent = '';
-            
+
             // Stage announcement / script
             stageContainer.innerHTML = `
                 <div class="glass-card p-6 rounded-2xl shadow-lg">
@@ -1188,11 +1199,11 @@
             timerContainer.innerHTML = timerContent;
             this.renderDebateControls();
         },
-        
+
         renderDebateControls() {
             const container = document.getElementById('debateControlsContainer');
             if(!container) return;
-            
+
             const isPaused = this.state.timer.isPaused;
             const stage = this.state.currentFlow[this.state.currentStageIndex];
             const canShowNext = this.state.currentStageIndex < this.state.currentFlow.length -1;
@@ -1238,14 +1249,14 @@
                  </div>
             `;
         },
-        
+
         renderTranscriptionPanel() {
             const container = document.getElementById('transcriptionPanel');
             if (!container) return;
 
             const { active, paused } = this.state.transcription;
             const status = this.state.speechRecognitionStatus;
-            
+
             let statusText, statusColor;
             if (status === 'unavailable' || status === 'error') {
                  statusText = '語音功能不可用'; statusColor = 'bg-red-500';
@@ -1285,13 +1296,13 @@
             `;
             this.renderTranscriptionParagraphs();
         },
-        
+
         renderTranscriptionParagraphs() {
             const container = document.getElementById('paragraphsContainer');
             const interimEl = document.getElementById('interimContent');
 
             if (!container) return;
-            
+
             if(this.state.transcription.paragraphs.length === 0 && !this.state.transcription.active) {
                 container.innerHTML = `<div class="text-center text-slate-500 py-10">點擊下方按鈕開始轉錄</div>`;
             } else if (this.state.transcription.paragraphs.length === 0 && this.state.transcription.active) {
@@ -1331,10 +1342,10 @@
                 </div>`;
             document.body.appendChild(modal);
         },
-        
+
         renderEditorView() {
             const originalFormatName = Object.keys(this.debateFormats).find(key => JSON.stringify(this.debateFormats[key]) === JSON.stringify(this.state.originalFlowBeforeEdit)) || '自訂流程';
-            
+
             this.mainContent.innerHTML = `
                 <div class="max-w-4xl mx-auto space-y-8">
                     <div class="text-center">
@@ -1397,7 +1408,7 @@
             if (this.state.sortableInstance) {
                 this.state.sortableInstance.destroy();
             }
-            
+
             if (typeof Sortable !== 'undefined') {
                 this.state.sortableInstance = Sortable.create(container, {
                     animation: 150,
@@ -1412,7 +1423,7 @@
                 });
             }
         },
-        
+
         renderStageEditorModal(stage = {}, index = NaN) {
             const isNew = isNaN(index);
             const title = isNew ? '新增階段' : `編輯階段: ${stage.name}`;
@@ -1450,7 +1461,7 @@
                     <button data-action="saveStage" class="px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">儲存</button>
                 `
             });
-            
+
             const typeSelector = document.getElementById('stageTypeSelector');
             const renderDynamicFields = (type) => {
                 const container = document.getElementById('dynamic-fields-container');
@@ -1486,8 +1497,8 @@
             const themeBtn = document.getElementById('themeToggleBtn');
             if (themeBtn) {
                 const isDark = document.documentElement.classList.contains('dark');
-                themeBtn.innerHTML = isDark 
-                    ? `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>` 
+                themeBtn.innerHTML = isDark
+                    ? `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`
                     : `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21c3.93 0 7.403-2.126 9.002-5.248z" /></svg>`;
             }
         },
@@ -1532,14 +1543,14 @@
                 const loadVoices = () => {
                     this.voices = this.synth.getVoices().filter(v => v.lang.startsWith('zh-TW') || v.lang.startsWith('zh'));
                 };
-                
+
                 if (this.synth.onvoiceschanged !== undefined) {
                     this.synth.onvoiceschanged = loadVoices;
                 }
                 loadVoices();
             }
         },
-        
+
         initSpeechRecognition() {
             this.state.speechRecognitionStatus = 'unavailable';
             try {
@@ -1549,7 +1560,7 @@
                     this.recognition = null;
                     return; // Gracefully exit if not supported
                 }
-                
+
                 this.recognition = new SpeechRecognition();
                 this.recognition.continuous = true;
                 this.recognition.interimResults = true;
@@ -1584,7 +1595,7 @@
                                 interimTranscript += event.results[i][0].transcript;
                             }
                         }
-                        
+
                         this.state.transcription.interimContent = interimTranscript;
 
                         if (finalTranscript) {
@@ -1606,13 +1617,13 @@
                         this.renderTranscriptionParagraphs();
                     }
                 };
-                
+
                 this.recognition.onerror = (event) => {
                     // 優雅地處理 "no-speech" 錯誤，這不是一個嚴重故障。
                     if (event.error === 'no-speech') {
                         console.warn("語音辨識：未偵測到語音。");
                         // 不做任何處理，接下來會觸發 onend 事件，由 onend 中的邏輯來決定是否重啟。
-                        return; 
+                        return;
                     }
                     // 對於所有其他更嚴重的錯誤，才執行原本的錯誤處理流程。
                     console.error("Speech recognition error:", event.error);
@@ -1639,7 +1650,7 @@
                     }
                     if(this.state.currentView === 'debate') this.renderTranscriptionPanel();
                 };
-                
+
                 this.state.speechRecognitionStatus = 'ready';
                 console.log("Speech Recognition is ready.");
 
@@ -1653,16 +1664,16 @@
         startRecognition() {
             if(this.recognition && !this.state.isRecognizing) {
                 this.state.recognitionManuallyStopped = false;
-                try { 
+                try {
                     this.recognition.start();
-                } catch(e) { 
+                } catch(e) {
                     console.error("Recognition start error", e);
                     this.state.speechRecognitionStatus = 'error';
                     this.renderTranscriptionPanel();
                 }
             }
         },
-        
+
         stopRecognition() {
             // This function is for temporarily stopping, usually by pause or stage change
             if(this.recognition && this.state.isRecognizing) {
@@ -1674,7 +1685,7 @@
                 try { this.recognition.stop(); } catch(e) { console.error("Recognition stop error", e); }
             }
         },
-        
+
         speak(text, onEndCallback) {
             // If speech is not supported or text is empty, execute callback immediately.
             if (!this.synth || !text) {
@@ -1687,7 +1698,7 @@
                 }
                 return;
             }
-            
+
             // If a new, important message comes in, clear the old queue and cancel any current speech.
             if (this.synth.speaking) {
                 this.state.speechQueue = []; // Clear the queue of any pending utterances
@@ -1698,17 +1709,17 @@
             this.state.speechQueue.push({ text, onEndCallback });
 
             // A short delay helps the synth engine reset after a cancel command
-            setTimeout(() => this.processSpeechQueue(), 100); 
+            setTimeout(() => this.processSpeechQueue(), 100);
         },
 
         processSpeechQueue() {
             if (this.state.isSpeaking || this.state.speechQueue.length === 0) {
                 return;
             }
-            
+
             this.state.isSpeaking = true;
             const { text, onEndCallback } = this.state.speechQueue.shift();
-            
+
             if (!this.synth) {
                 if (onEndCallback) onEndCallback();
                 this.state.isSpeaking = false;
@@ -1787,10 +1798,10 @@
                     sound.currentTime = 0;
                     sound.play().catch(e => console.warn(`Ring sound play failed:`, e.message));
                     count++;
-                    
+
                 if (count < times) {
                             // 如果還需要繼續響鈴，則設定下一次播放
-                        setTimeout(play, 400); 
+                        setTimeout(play, 400);
                     } else {
                         // 這是最後一次響鈴，在短暫延遲後重置旗標，允許下一次播放
                         setTimeout(() => {
@@ -1816,7 +1827,7 @@
                 setTimeout(() => div.remove(), 500);
             }, duration);
         },
-        
+
         interpolateScript(script, options = {}) {
             if (!script) return "";
             let firstTeam = "", secondTeam = "";
@@ -1824,7 +1835,7 @@
                 firstTeam = this.state.rebuttalOrder === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName;
                 secondTeam = this.state.rebuttalOrder === 'positive' ? this.state.negativeTeamName : this.state.positiveTeamName;
             }
-            
+
             const replacements = {
                 positive_team_name: this.state.positiveTeamName,
                 negative_team_name: this.state.negativeTeamName,
@@ -1842,7 +1853,7 @@
             const s = seconds % 60;
             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         },
-        
+
         updateTimerDisplay(time) {
             const timerEl = document.getElementById('timerDisplay');
             const progressEl = document.getElementById('timerProgressBar');
@@ -1880,7 +1891,7 @@
             }
 
             const { timeLeft, type, initialDuration } = App.state.timer;
-            
+
             if (timeLeft === 60 && initialDuration > 60) App.playRingSound(1);
             else if (timeLeft === 30 && initialDuration > 30) App.playRingSound(2);
 
@@ -1908,20 +1919,20 @@
                 App.renderDebateControls();
             }
         },
-        
+
         startGracePeriodTimer(stage, timerLabel) {
             this.clearAllTimers();
             this.state.timer.type = 'grace';
             this.state.timer.timeLeft = stage.graceDuration || 60;
             this.state.timer.initialDuration = stage.graceDuration || 60;
             this.state.mainSpeechTimerStartedByGrace = false;
-            
+
             const finalLabel = timerLabel || this.interpolateScript(stage.timerLabel);
             const timerStatusEl = document.getElementById('timerStatus');
             if (timerStatusEl) {
                 timerStatusEl.textContent = `準備 (${finalLabel})`;
             }
-            
+
             this.updateTimerDisplay(this.state.timer.timeLeft);
             if (this.state.enableSpeechDetection) {
                 this.startRecognition();
@@ -1929,13 +1940,13 @@
             this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
             this.renderDebateControls();
         },
-        
+
         startMainSpeechTimer(duration) {
             this.clearAllTimers();
             this.state.timer.type = 'main';
             this.state.timer.timeLeft = duration;
             this.state.timer.initialDuration = duration;
-            
+
             const stage = this.state.currentFlow[this.state.currentStageIndex];
             const timerStatusEl = document.getElementById('timerStatus');
             if(timerStatusEl) {
@@ -1961,7 +1972,7 @@
         loadStage(index) {
             const stage = this.state.currentFlow[index];
             if (!stage) return;
-            
+
             this.renderDebateStage(); // Render initial stage UI first
             if (this.state.pip.isActive) { // New: Update PiP on stage change
                 this.renderPipCanvas();
@@ -1970,15 +1981,17 @@
             // Async function to handle the stage logic
             const executeStage = async () => {
                 let choiceResult = {};
-                
+
                 if (stage.type === 'choice_speech') {
                     try {
                         choiceResult = await this.getStageChoice(stage);
+                        //【修復】將選擇的行動類型儲存到當前階段的狀態中，以便在「上一階段」時可以還原計數。
+                        stage.selectedAction = choiceResult.selected_action_type;
                     } catch(e) {
                         console.error("Choice was cancelled or failed", e);
-                        // If choice fails, we might want to halt or go to next stage
-                        if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
-                        return; // Stop processing this stage
+                        // If choice fails, we might want to halt or go to next stage
+                        if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
+                        return; // Stop processing this stage
                     }
                 }
 
@@ -1986,7 +1999,7 @@
                     const timerLabel = this.interpolateScript(stage.timerLabel || stage.baseTimerLabel, choiceResult);
                     switch (stage.type) {
                         case 'speech_auto': this.startGracePeriodTimer(stage, timerLabel); break;
-                        case 'manual_prep': 
+                        case 'manual_prep':
                             if(this.state.isAutoMode) {
                                 this.startManualPrepTimer(stage.duration);
                             } else {
@@ -2004,7 +2017,7 @@
                             break;
                     }
                 };
-                
+
                 const scriptToSpeak = this.interpolateScript(stage.script || stage.baseScript, choiceResult);
                 this.speak(scriptToSpeak, speakCallback);
             };
@@ -2015,13 +2028,22 @@
         getStageChoice(stage) {
             return new Promise((resolve, reject) => {
                 this.state.currentChoice = { stage, resolve }; // Store resolve to be called later
-                
+
                 const team = stage.choosingTeam;
 
                 // Handle fixed actions like "立論"
                 if (stage.fixedAction) {
                     const selectedAction = stage.fixedAction;
-                    
+
+                    //【修復】只有在第一次載入此階段時才計算 fixedAction。
+                    if (!stage.selectedAction) {
+                         if (team === 'positive') {
+                            App.state.positiveActionCounts[selectedAction]++;
+                        } else {
+                            App.state.negativeActionCounts[selectedAction]++;
+                        }
+                    }
+
                     // Pre-update UI before speaking
                     const stageContainer = document.getElementById('stageContainer');
                     stageContainer.innerHTML = `
@@ -2036,10 +2058,10 @@
                     this.state.currentChoice = { stage: null, resolve: null };
                     return;
                 }
-                
+
                 // For other rounds, show a modal to get user input based on counts.
                 const actionCounts = (team === 'positive') ? this.state.positiveActionCounts : this.state.negativeActionCounts;
-                
+
                 const optionsHTML = stage.actionChoices.map(action => {
                     const count = actionCounts[action] || 0;
                     const isDiabled = count >= 3;
@@ -2049,7 +2071,7 @@
                 this.renderModal({
                     title: `請 ${team === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName} 選擇動作`,
                     body: `<div class="flex justify-center flex-wrap gap-4">${optionsHTML}</div>`,
-                    footer: '' 
+                    footer: ''
                 });
             });
         },
