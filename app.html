@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>辯時計 Pro - 專業辯論計時系統</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -180,6 +181,8 @@
             autoAdvanceTimeout: null,
             speechQueue: [],
             isSpeaking: false,
+            isRinging: false,
+            isAudioUnlocked: false,
             currentChoice: {
                 stage: null,
                 resolve: null,
@@ -371,6 +374,27 @@
         },
         
         handleGlobalClick(e) {
+            // 【新增】iOS 音訊解鎖機制
+            if (!App.state.isAudioUnlocked) {
+                const sound = document.getElementById('ringSound');
+                if (sound && sound.paused) {
+                    sound.volume = 0; // 暫時靜音
+                    sound.play().then(() => {
+                        // 播放成功後立刻暫停並恢復音量
+                        sound.pause();
+                        sound.currentTime = 0;
+                        sound.volume = 1;
+                        App.state.isAudioUnlocked = true;
+                        console.log("Audio context unlocked for iOS.");
+                    }).catch(e => {
+                        // 如果解鎖失敗 (例如瀏覽器更嚴格的限制)，下次點擊會再試一次
+                        console.warn("Audio unlock failed on this attempt.");
+                    });
+                } else if (sound && !sound.paused) {
+                    // 如果音訊不知為何已在播放，也標記為已解鎖
+                        App.state.isAudioUnlocked = true;
+                }
+            }
             const actionTarget = e.target.closest('[data-action]');
             if (actionTarget) {
                 const action = actionTarget.dataset.action;
@@ -531,28 +555,41 @@
                 App.actions.nextStage();
             },
             nextStage() {
-                if (App.state.isAdvancingStage) return; // Prevent double-calls
+            // 【新增】針對 iOS 抽籤後手動點擊的特殊處理
+                const currentStage = App.state.currentFlow[App.state.currentStageIndex];
+                if (currentStage && currentStage.type === 'draw_rebuttal_order') {
+                    // 如果正在播報抽籤結果時手動點擊，必須強制取消語音，
+                    // 以防止其結束後的回調 (callback) 觸發多餘的自動跳轉。
+                if (window.speechSynthesis && App.state.isSpeaking) {
+                        window.speechSynthesis.cancel();
+                    }
+                    // 同時清空語音佇列，確保萬無一失
+                    App.state.speechQueue = [];
+                    App.state.isSpeaking = false;
+                }
+
+                if (App.state.isAdvancingStage) return; // 防止重複點擊
                 App.state.isAdvancingStage = true;
 
-                App.clearAllTimers();
+                App.clearAllTimers(); // 這個函式會清除任何已排定的自動跳轉
                 App.stopRecognition();
 
-                if (App.state.currentStageIndex < App.state.currentFlow.length - 1) {
+                 if (App.state.currentStageIndex < App.state.currentFlow.length - 1) {
                     App.state.currentStageIndex++;
                     App.playSound('stageAdvanceSound');
                     App.loadStage(App.state.currentStageIndex);
                 } else {
                     App.showNotification("所有流程已結束", "info");
-                    App.state.isAdvancingStage = false; // Reset if it's the end
+                    App.state.isAdvancingStage = false; // 如果是最後，重置旗標
                     App.renderDebateControls();
                     return;
                 }
-                
-                // Reset the flag after a short delay to prevent race conditions.
+
+                // 短暫延遲後重置旗標
                 setTimeout(() => {
                     App.state.isAdvancingStage = false;
                 }, 500);
-            },
+            },            
             previousStage() {
                 if (App.state.isAdvancingStage) return; // 防止重複點擊
                 if (App.state.currentStageIndex <= 0) return; // 如果在第一階段之前，則不執行
@@ -847,6 +884,7 @@
                         App.renderPipCanvas();
                         const video = document.createElement('video');
                         video.muted = true;
+                        video.playsInline = true;
                         video.srcObject = App.pipCanvas.captureStream();
                         App.state.pip.videoElement = video;
 
@@ -1531,7 +1569,7 @@
                         clearInterval(this.state.timer.graceInterval);
                         this.playSound('speechDetectedSound');
                         this.state.mainSpeechTimerStartedByGrace = true;
-                        this.speak("偵測到語音，自動開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
+                        this.speak("開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
                     }
 
                     // Handle transcription panel results
@@ -1700,11 +1738,16 @@
                     setTimeout(() => this.processSpeechQueue(), 50);
                 }
             };
-            
+
             utterance.onend = onDone;
             utterance.onerror = (e) => {
-                console.error("Speech synthesis utterance error:", e, "for text:", text);
-                onDone(e);
+                // 如果錯誤是 'interrupted' 或 'canceled'，這屬於正常操作，不需要當作嚴重錯誤回報
+                if (e.error === 'interrupted' || e.error === 'canceled') {
+                    console.log(`Speech was interrupted for text: "${text}"`);
+                } else {
+                    console.error("Speech synthesis utterance error:", e, "for text:", text);
+                }
+                onDone(e); // 無論如何都呼叫 onDone 以繼續處理佇列
             };
 
             // Watchdog timer in case onend/onerror don't fire (a common browser bug)
@@ -1730,23 +1773,35 @@
         },
 
         playRingSound(times = 1) {
-            const sound = document.getElementById('ringSound');
-            if (!sound) return;
+            // 如果正在響鈴，則忽略新的請求，避免打斷
+            if (App.state.isRinging) return;
 
-            let count = 0;
-            const play = () => {
-                if (count < times) {
-                    sound.currentTime = 0;
-                    sound.play().catch(e => console.warn(`Ring sound play failed:`, e.message));
-                    count++;
-                    // 如果需要播放多次，在每次播放之間加入短暫延遲
-                    if (count < times) {
-                        setTimeout(play, 400); // 延遲 400 毫秒
-                    }
-                }
-            };
-            play();
-        },
+            const sound = document.getElementById('ringSound');
+            if (!sound) return;
+
+            App.state.isRinging = true; // 設定旗標，表示開始響鈴
+            let count = 0;
+
+            const play = () => {
+                if (count < times) {
+                    sound.currentTime = 0;
+                    sound.play().catch(e => console.warn(`Ring sound play failed:`, e.message));
+                    count++;
+                    
+                if (count < times) {
+                            // 如果還需要繼續響鈴，則設定下一次播放
+                        setTimeout(play, 400); 
+                    } else {
+                        // 這是最後一次響鈴，在短暫延遲後重置旗標，允許下一次播放
+                        setTimeout(() => {
+                            App.state.isRinging = false;
+                        }, 400);
+                    }
+                }
+            };
+
+            play(); // 開始播放序列
+        },
         // --- HELPERS ---
         showNotification(message, type = 'info', duration = 3000) {
             const container = document.getElementById('notification-container');
@@ -1811,9 +1866,9 @@
             this.state.timer.isPaused = false;
             this.state.timer.type = null;
             if (this.state.autoAdvanceTimeout) {
-                clearTimeout(this.state.autoAdvanceTimeout);
-                this.state.autoAdvanceTimeout = null;
-            }
+                clearTimeout(this.state.autoAdvanceTimeout);
+                this.state.autoAdvanceTimeout = null;
+            }
 
         },
 
@@ -1823,11 +1878,11 @@
             if (App.state.pip.isActive) { // New: Update PiP canvas
                 App.renderPipCanvas();
             }
-            
+
             const { timeLeft, type, initialDuration } = App.state.timer;
             
             if (timeLeft === 60 && initialDuration > 60) App.playRingSound(1);
-            else if (timeLeft === 30 && initialDuration > 30) App.playRingSound(2);
+            else if (timeLeft === 30 && initialDuration > 30) App.playRingSound(2);
 
             if (timeLeft <= 0) {
                 const timerEl = document.getElementById('timerDisplay');
@@ -2089,4 +2144,3 @@
     </script>
 </body>
 </html>
-
