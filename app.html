@@ -598,7 +598,19 @@
 
                 App.clearAllTimers();
                 App.stopRecognition();
-
+                // 【修復】在回到上一階段時，還原動作計數。
+                const departingStage = App.state.currentFlow[App.state.currentStageIndex];
+                if (departingStage && departingStage.selectedAction) {
+                    const team = departingStage.choosingTeam;
+                    const actionToRevert = departingStage.selectedAction;
+                    if (team === 'positive') {
+                        App.state.positiveActionCounts[actionToRevert]--;
+                    } else {
+                        App.state.negativeActionCounts[actionToRevert]--;
+                    }
+                    // 清除已儲存的選擇，以便下次可以重新選擇。
+                    delete departingStage.selectedAction;
+                }
                 App.state.currentStageIndex--;
 
                 // 檢查是否回到了抽籤階段之前，如果是，則重置抽籤結果
@@ -1974,6 +1986,7 @@
                 if (stage.type === 'choice_speech') {
                     try {
                         choiceResult = await this.getStageChoice(stage);
+                        stage.selectedAction = choiceResult.selected_action_type;
                     } catch(e) {
                         console.error("Choice was cancelled or failed", e);
                         // If choice fails, we might want to halt or go to next stage
@@ -2021,6 +2034,14 @@
                 // Handle fixed actions like "立論"
                 if (stage.fixedAction) {
                     const selectedAction = stage.fixedAction;
+                                        //【修復】只有在第一次載入此階段時才計算 fixedAction。
+                    if (!stage.selectedAction) {
+                         if (team === 'positive') {
+                            App.state.positiveActionCounts[selectedAction]++;
+                        } else {
+                            App.state.negativeActionCounts[selectedAction]++;
+                        }
+                    }
                     
                     // Pre-update UI before speaking
                     const stageContainer = document.getElementById('stageContainer');
@@ -2144,3 +2165,4 @@
     </script>
 </body>
 </html>
+
