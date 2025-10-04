@@ -102,14 +102,14 @@
                     <div class="flex items-center space-x-2">
                          <button data-action="showPremiumModal" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-90 transition-opacity">
                              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                               <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
+                                 <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
                              </svg>
                              升級 Premium
                          </button>
                         <button id="themeToggleBtn" data-action="toggleTheme" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="切換主題">
-                            </button>
+                        </button>
                         <button id="hamburgerBtn" data-action="toggleSidebar" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="開啟選單">
-                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                         </button>
                     </div>
                 </div>
@@ -117,21 +117,21 @@
         </header>
 
         <main id="main-content" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-            </main>
+        </main>
         
         <div id="sidebar" class="fixed inset-0 z-50 hidden">
             <div id="sidebar-overlay" data-action="toggleSidebar" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
             <div id="sidebar-panel" class="fixed top-0 right-0 h-full w-full max-w-sm glass-card border-l border-slate-900/10 dark:border-slate-300/10">
-                </div>
+            </div>
         </div>
 
         <div id="notification-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
         
-         
+        
         <audio id="ringSound" preload="auto" src="ring.m4a"></audio>
         <audio id="stageAdvanceSound" preload="auto" src="sounds/stage_advance.mp3"></audio>
-        <audio id="speechDetectedSound" preload="auto" src="sounds/speech_detected.mp3"></audio>
-        <audio id="drawSound" preload="auto" src="sounds/draw.mp3"></audio>
+        <audio id="speechDetectedSound" preload="auto" src="sounds/speech_detected.mp3"></audio>
+        <audio id="drawSound" preload="auto" src="sounds/draw.mp3"></audio>
         <canvas id="pipCanvas" width="640" height="360" class="hidden"></canvas>
     </div>
 
@@ -189,10 +189,120 @@
             },
             positiveActionCounts: { '申論': 0, '質答': 0 },
             negativeActionCounts: { '申論': 0, '質答': 0 },
+            customGraceDuration: 60, // 預設準備時間為 60 秒
+
+            // [ADD THIS START]
+            recording: {
+                mediaRecorder: null,
+                mediaStream: null,
+                isRecording: false,
+                isAvailable: false,
+                recordedChunks: [],
+                audioBlob: null,
+            },
+// [ADD THIS END]
         },
 
         // --- DEBATE FORMATS ---
         debateFormats: {
+
+             "新式奧瑞岡五五四制(無結辯)": [
+                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+                 { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+            ],
+                "新式奧瑞岡五五四制(五分半)(無結辯)": [
+                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+                 { name: "正方一辯 申論", type: "speech_auto", duration: 330, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+            ],
+                "新式奧瑞岡四四四制(無結辯)": [
+                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+                 { name: "正方一辯 申論", type: "speech_auto", duration: 240, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 240, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 240, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 240, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 240, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 240, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 240, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+            ],
+                "新式奧瑞岡四四四制(四分半)(無結辯)": [
+                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+                 { name: "正方一辯 申論", type: "speech_auto", duration: 270, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+            ],
+                "新式奧瑞岡三三三制(無結辯)": [
+                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+                 { name: "正方一辯 申論", type: "speech_auto", duration: 180, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 180, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 180, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 180, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 180, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 180, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 180, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+            ],
+                "新式奧瑞岡三三三制(三分半)(無結辯)": [
+                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+                 { name: "正方一辯 申論", type: "speech_auto", duration: 210, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 210, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 210, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 210, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 210, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 210, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "反方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 210, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
+                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+            ],     
             "辯革盃 (九辯位自由排序制)": [
                 { name: "賽前準備及介紹", type: "announcement", script: "歡迎各位來到辯革盃比賽。本次比賽辯題為：「{{debate_topic}}」。正方代表隊：{{positive_team_name}}，反方代表隊：{{negative_team_name}}。" },
                 { name: "正方立論", type: "choice_speech", choosingTeam: 'positive', fixedAction: '申論', duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行立論，時間四分三十秒。", baseTimerLabel: "正方立論" },
@@ -346,6 +456,8 @@
             if (this.pipCanvas) { // New
                 this.pipCtx = this.pipCanvas.getContext('2d');
             }
+            this.showPromotionModal();
+            this.initAudioRecording();
             this.initSpeechRecognition();
             this.initSpeechSynthesis();
             this.loadState();
@@ -363,6 +475,10 @@
             }
             this.state.isAutoMode = localStorage.getItem('debateAutoMode') === 'true';
             this.state.enableSpeechDetection = localStorage.getItem('debateSpeechDetection') !== 'false';
+            const savedGraceDuration = localStorage.getItem('debateGraceDuration');
+            if (savedGraceDuration) {
+                this.state.customGraceDuration = parseInt(savedGraceDuration, 10);
+            }
         },
         
         // --- EVENT HANDLING ---
@@ -393,7 +509,7 @@
                 } else if (sound && !sound.paused) {
                     // 如果音訊不知為何已在播放，也標記為已解鎖
                         App.state.isAudioUnlocked = true;
-                }
+                }
             }
             const actionTarget = e.target.closest('[data-action]');
             if (actionTarget) {
@@ -430,9 +546,9 @@
             // Actions specific to the debate view
             if (this.state.currentView === 'debate') {
                 switch(key) {
-                    case 'B': // <-- 新增這個 case
-                        document.querySelector('[data-action="previousStage"]:not([disabled])')?.click();
-                        break;                    
+                    case 'B': // <-- 新增這個 case
+                        document.querySelector('[data-action="previousStage"]:not([disabled])')?.click();
+                        break;                      
                     case 'N':
                         document.querySelector('[data-action="nextStage"]:not([disabled])')?.click();
                         break;
@@ -484,6 +600,10 @@
         
         // --- ACTIONS ---
         actions: {
+            startRecording() { App.startRecording(); },
+            stopRecording() { App.stopRecording(); },
+            downloadAudio() { App.downloadAudio(); },
+            downloadTranscript() { App.downloadTranscript(); },
             startDebate(e) {
                 const selectedFormatName = document.getElementById('formatSelect').value;
                 if (!selectedFormatName) {
@@ -580,8 +700,14 @@
                     App.loadStage(App.state.currentStageIndex);
                 } else {
                     App.showNotification("所有流程已結束", "info");
-                    App.state.isAdvancingStage = false; // 如果是最後，重置旗標
-                    App.renderDebateControls();
+                    // 如果正在錄音，則停止它。onstop 事件會接續處理下載畫面的渲染
+                    if (App.state.recording.isRecording) {
+                        App.stopRecording(); 
+                    } else {
+                        // 如果沒有在錄音，直接渲染下載畫面
+                        App.renderEndDebateDownloads();
+                    }
+                    App.state.isAdvancingStage = false; 
                     return;
                 }
 
@@ -589,31 +715,33 @@
                 setTimeout(() => {
                     App.state.isAdvancingStage = false;
                 }, 500);
-            },            
+            },              
             previousStage() {
-                if (App.state.isAdvancingStage) return; // 防止重複點擊
-                if (App.state.currentStageIndex <= 0) return; // 如果在第一階段之前，則不執行
+                if (App.state.isAdvancingStage) return;
+                if (App.state.currentStageIndex <= 0) return;
 
                 App.state.isAdvancingStage = true;
 
                 App.clearAllTimers();
                 App.stopRecognition();
-                // 【修復】在回到上一階段時，還原動作計數。
-                const departingStage = App.state.currentFlow[App.state.currentStageIndex];
-                if (departingStage && departingStage.selectedAction) {
-                    const team = departingStage.choosingTeam;
-                    const actionToRevert = departingStage.selectedAction;
-                    if (team === 'positive') {
-                        App.state.positiveActionCounts[actionToRevert]--;
-                    } else {
-                        App.state.negativeActionCounts[actionToRevert]--;
+
+                // [FIXED] 檢查並撤銷目前階段的動作計數
+                const stageToUndo = App.state.currentFlow[App.state.currentStageIndex];
+                if (stageToUndo && stageToUndo.type === 'choice_speech' && stageToUndo.executedAction) {
+                    const team = stageToUndo.choosingTeam;
+                    const actionToUndo = stageToUndo.executedAction;
+                    
+                    if (team === 'positive' && App.state.positiveActionCounts[actionToUndo] > 0) {
+                        App.state.positiveActionCounts[actionToUndo]--;
+                    } else if (team === 'negative' && App.state.negativeActionCounts[actionToUndo] > 0) {
+                        App.state.negativeActionCounts[actionToUndo]--;
                     }
-                    // 清除已儲存的選擇，以便下次可以重新選擇。
-                    delete departingStage.selectedAction;
+                    
+                    delete stageToUndo.executedAction;
                 }
+
                 App.state.currentStageIndex--;
 
-                // 檢查是否回到了抽籤階段之前，如果是，則重置抽籤結果
                 const hasDrawStageOccurred = App.state.currentFlow.slice(0, App.state.currentStageIndex + 1).some(s => s.type === 'draw_rebuttal_order');
                 if (!hasDrawStageOccurred) {
                     App.state.rebuttalOrder = null;
@@ -621,11 +749,10 @@
 
                 App.loadStage(App.state.currentStageIndex);
 
-                // 短暫延遲後重置旗標，防止競爭條件
                 setTimeout(() => {
                     App.state.isAdvancingStage = false;
                 }, 500);
-            },            
+            },                
             togglePause() {
                 App.state.timer.isPaused = !App.state.timer.isPaused;
                 if (App.state.timer.isPaused) {
@@ -653,6 +780,7 @@
                 });
             },
             confirmReset() {
+                if (App.state.recording.isRecording) App.stopRecording();
                 window.location.reload();
             },
             returnToHome() {
@@ -670,6 +798,7 @@
                 }
             },
             confirmReturnToHome() {
+                if (App.state.recording.isRecording) App.stopRecording();
                 window.location.reload();
             },
             openEditor() {
@@ -764,11 +893,11 @@
                 const resultText = `抽籤結果：${drawnTeamName} 先結辯`;
                 
                 // Speak the result, and only auto-advance after speaking is done
-                App.speak(resultText, () => {
-                    if (App.state.isAutoMode) {
-                        App.state.autoAdvanceTimeout = setTimeout(() => App.actions.nextStage(), 2000);
-                    }
-                });
+                App.speak(resultText, () => {
+                    if (App.state.isAutoMode) {
+                        App.state.autoAdvanceTimeout = setTimeout(() => App.actions.nextStage(), 2000);
+                    }
+                });
             },
             manualStartTimer() {
                 const stage = App.state.currentFlow[App.state.currentStageIndex];
@@ -794,9 +923,13 @@
                     } else {
                         App.state.negativeActionCounts[selectedAction]++;
                     }
+                    
+                    // [FIXED] Store the executed choice for potential reversal.
+                    const currentStageInFlow = App.state.currentFlow[App.state.currentStageIndex];
+                    if (currentStageInFlow) {
+                        currentStageInFlow.executedAction = selectedAction;
+                    }
 
-                    // For simplicity, we no longer derive the player from the nine-square grid during the debate.
-                    // The grid is for setup, and the team announces the player verbally.
                     const selectedPlayer = "辯士";
                     
                     // Update UI with the selected player and action
@@ -828,7 +961,6 @@
                 }
                 App.state.transcription.active = true;
                 App.state.transcription.paused = false;
-                App.state.transcription.paragraphs = []; // Clear previous transcription
                 App.state.transcription.currentParagraphId = null;
                 App.startRecognition();
                 App.renderTranscriptionPanel();
@@ -942,10 +1074,10 @@
                 const body = `
                     <div class="space-y-4">
                     ${shortcuts.map(s => `
-                                <div class="flex items-center justify-between p-2 rounded-md shortcut-item">
-                                <span class="font-semibold">${s.desc}</span>
-                                <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-200 border border-gray-300 rounded-md dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">${s.key}</kbd>
-                            </div>
+                            <div class="flex items-center justify-between p-2 rounded-md shortcut-item">
+                            <span class="font-semibold">${s.desc}</span>
+                            <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-200 border border-gray-300 rounded-md dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">${s.key}</kbd>
+                        </div>
                         `).join('')}
                     </div>
                 `;
@@ -978,7 +1110,15 @@
             toggleSpeechDetection(e) {
                 App.state.enableSpeechDetection = e.target.checked;
                 localStorage.setItem('debateSpeechDetection', App.state.enableSpeechDetection);
-            },            
+            },
+            setGraceDuration(e) {
+                const duration = parseInt(e.target.value, 10);
+                if (!isNaN(duration) && duration >= 0) {
+                    App.state.customGraceDuration = duration;
+                    localStorage.setItem('debateGraceDuration', duration);
+                    App.showNotification(`準備時間已設定為 ${duration} 秒`, 'success');
+                }
+            },              
             formatChanged(e) {
                 const isBianGeBei = e.target.value === '辯革盃 (九辯位自由排序制)';
                 document.getElementById('playersSection').style.display = isBianGeBei ? '' : 'none';
@@ -1012,7 +1152,7 @@
             }
         },
 
-        renderSetupView() {
+renderSetupView() {
             const formatOptions = Object.keys(this.debateFormats)
                 .map(name => `<option value="${name}">${name}</option>`)
                 .join('');
@@ -1051,24 +1191,31 @@
                                      <h4 class="font-medium text-green-600">正方選手 (A, B, C)</h4>
                                      ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
                                  </div>
-                                  <div class="space-y-2">
+                                 <div class="space-y-2">
                                      <h4 class="font-medium text-red-600">反方選手 (A, B, C)</h4>
                                      ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
                                  </div>
                              </div>
                          </div>
                          <div>
-                            <label class="block text-sm font-medium mb-1">進階設定</label>
-                            <div class="p-3 rounded-md settings-box">
-                                <div class="w-full text-left flex items-center justify-between">
-                                    <span class="text-sm">啟用準備時間語音偵測</span>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                                    </label>
+                             <label class="block text-sm font-medium mb-1">進階設定</label>
+                             <div class="p-3 rounded-md settings-box">
+                                 <div class="w-full text-left flex items-center justify-between">
+                                     <span class="text-sm">啟用準備時間語音偵測</span>
+                                     <label class="relative inline-flex items-center cursor-pointer">
+                                         <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
+                                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                     </label>
+                                 </div>
+                                 <p class="text-xs text-slate-500 mt-1">開啟後，在準備時間結束後會自動偵測選手發言並開始計時。</p>
+                                 
+                                <div class="mt-4 w-full text-left flex items-center justify-between">
+                                    <span class="text-sm">發言準備時間 (秒)</span>
+                                    <input type="number" id="graceDurationInput" data-change-action="setGraceDuration" class="form-element w-24 p-2 border rounded-md text-center" value="${this.state.customGraceDuration}">
                                 </div>
-                                <p class="text-xs text-slate-500 mt-1">開啟後，在準備時間結束後會自動偵測選手發言並開始計時。</p>
-                            </div>
+                                <p class="text-xs text-slate-500 mt-1">設定選手上台後、主要計時開始前的準備/緩衝時間。</p>
+
+                             </div>
                          </div>
                     </div>
                     <div class="flex justify-center items-center space-x-4">
@@ -1076,6 +1223,7 @@
                         <button data-action="startDebate" class="px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">開始辯論</button>
                     </div>
                 </div>
+                ${this.renderPromotionArea()}
             `;
             // Trigger change event to show/hide player section correctly on first render
             const formatSelect = document.getElementById('formatSelect');
@@ -1086,21 +1234,21 @@
 
         renderNineSquareGridView() {
              const renderGrid = (team, players) => {
-                let gridHtml = `<div class="space-y-4"><h3 class="text-xl font-bold text-center ${team === 'positive' ? 'text-green-600' : 'text-red-600'}">${team === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName}</h3><div class="grid grid-cols-3 gap-1 bg-slate-300 dark:bg-slate-600 p-1 rounded-lg">`;
-                const headers = ['申論', '質詢', '答辯'];
-                gridHtml += headers.map(h => `<div class="text-center font-semibold p-2 rounded-t-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">${h}</div>`).join('');
+                 let gridHtml = `<div class="space-y-4"><h3 class="text-xl font-bold text-center ${team === 'positive' ? 'text-green-600' : 'text-red-600'}">${team === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName}</h3><div class="grid grid-cols-3 gap-1 bg-slate-300 dark:bg-slate-600 p-1 rounded-lg">`;
+                 const headers = ['申論', '質詢', '答辯'];
+                 gridHtml += headers.map(h => `<div class="text-center font-semibold p-2 rounded-t-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">${h}</div>`).join('');
 
-                for (let round = 1; round <= 3; round++) {
-                    gridHtml += headers.map(type => `
-                        <div class="bg-slate-100 dark:bg-slate-800 p-2 flex items-center justify-center">
-                            <select id="${team}-${round}-${type}" class="form-element w-full text-center p-2 border-0 rounded-md">
-                                <option value="">選擇</option>
-                                ${players.map((p, i) => `<option value="${String.fromCharCode(65 + i)}">${p}</option>`).join('')}
-                            </select>
-                        </div>`).join('');
-                }
-                gridHtml += `</div></div>`;
-                return gridHtml;
+                 for (let round = 1; round <= 3; round++) {
+                     gridHtml += headers.map(type => `
+                         <div class="bg-slate-100 dark:bg-slate-800 p-2 flex items-center justify-center">
+                             <select id="${team}-${round}-${type}" class="form-element w-full text-center p-2 border-0 rounded-md">
+                                 <option value="">選擇</option>
+                                 ${players.map((p, i) => `<option value="${String.fromCharCode(65 + i)}">${p}</option>`).join('')}
+                             </select>
+                         </div>`).join('');
+                 }
+                 gridHtml += `</div></div>`;
+                 return gridHtml;
             };
 
             this.mainContent.innerHTML = `
@@ -1133,13 +1281,16 @@
                         <div id="debateControlsContainer"></div>
                     </div>
                     <div class="space-y-6">
-                         <div id="transcriptionPanel" class="glass-card rounded-2xl shadow-lg overflow-hidden"></div>
+                        <div id="transcriptionPanel" class="glass-card rounded-2xl shadow-lg overflow-hidden"></div>
                     </div>
                 </div>
+
+                ${this.renderPromotionArea()}
             `;
             this.renderDebateStage();
             this.renderTranscriptionPanel();
         },
+
         
         renderDebateStage() {
             const stage = this.state.currentFlow[this.state.currentStageIndex];
@@ -1220,9 +1371,9 @@
             container.innerHTML = `
                 <div class="flex flex-wrap items-center justify-center gap-4">
                     <button data-action="previousStage" class="flex-grow text-white bg-slate-500 hover:bg-slate-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 flex items-center justify-center gap-2 ${this.state.currentStageIndex <= 0 ? 'hidden' : ''} ${prevBtnDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${prevBtnDisabled ? 'disabled' : ''}>
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                         上一階段
-                    </button>
+                    </button>
                     <button data-action="nextStage" class="flex-grow text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 flex items-center justify-center gap-2 ${canShowNext ? '' : 'hidden'} ${nextBtnDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${nextBtnDisabled ? 'disabled' : ''}>
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                         下一階段
@@ -1231,22 +1382,22 @@
                        ${isPaused ? '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>繼續' : '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>暫停'}
                     </button>
                      <button data-action="manualStartTimer" class="btn-secondary flex-grow font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${showManualStart ? '' : 'hidden'}">
-                        開始${this.interpolateScript(stage?.timerLabel)}
-                     </button>
-                     <button data-action="forceStartMainTimer" class="btn-secondary flex-grow font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${showForceStart ? '' : 'hidden'}">
-                        強制開始計時
-                     </button>
+                         開始${this.interpolateScript(stage?.timerLabel)}
+                       </button>
+                       <button data-action="forceStartMainTimer" class="btn-secondary flex-grow font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${showForceStart ? '' : 'hidden'}">
+                         強制開始計時
+                       </button>
                 </div>
                  <div class="flex items-center justify-center gap-6 pt-4">
-                     <button data-action="togglePip" title="畫中畫模式" class="text-sm text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400">畫中畫</button>
-                     <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設</button>
-                     <div class="flex items-center gap-2 text-sm font-medium">
-                         <span>自動模式</span>
-                         <label class="relative inline-flex items-center cursor-pointer">
-                             <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                         </label>
-                     </div>
+                       <button data-action="togglePip" title="畫中畫模式" class="text-sm text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400">畫中畫</button>
+                       <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設</button>
+                       <div class="flex items-center gap-2 text-sm font-medium">
+                           <span>自動模式</span>
+                           <label class="relative inline-flex items-center cursor-pointer">
+                               <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
+                               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                           </label>
+                       </div>
                  </div>
             `;
         },
@@ -1256,43 +1407,77 @@
             if (!container) return;
 
             const { active, paused } = this.state.transcription;
-            const status = this.state.speechRecognitionStatus;
+            const speechStatus = this.state.speechRecognitionStatus;
+            const { isRecording, isAvailable, audioBlob } = this.state.recording;
             
-            let statusText, statusColor;
-            if (status === 'unavailable' || status === 'error') {
-                 statusText = '語音功能不可用'; statusColor = 'bg-red-500';
+            let speechStatusText, speechStatusColor;
+            if (speechStatus === 'unavailable' || speechStatus === 'error') {
+                speechStatusText = '轉錄功能不可用'; speechStatusColor = 'bg-red-500';
             } else if (active && !paused) {
-                statusText = '轉錄中...'; statusColor = 'bg-green-500 animate-pulse';
+                speechStatusText = '轉錄中...'; speechStatusColor = 'bg-green-500 animate-pulse';
             } else if (active && paused) {
-                statusText = '已暫停'; statusColor = 'bg-yellow-500';
+                speechStatusText = '已暫停'; speechStatusColor = 'bg-yellow-500';
             } else {
-                 statusText = '準備就緒'; statusColor = 'bg-slate-500';
+                speechStatusText = '準備就緒'; speechStatusColor = 'bg-slate-500';
+            }
+
+            let recordingStatusText;
+            if (isRecording) {
+                recordingStatusText = '錄音中...';
+            } else if (audioBlob) {
+                recordingStatusText = '錄音已完成';
+            } else {
+                recordingStatusText = '尚未錄音';
             }
 
             container.innerHTML = `
                 <div class="p-4 border-b border-slate-200 dark:border-slate-700">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-bold text-lg">語音轉錄</h3>
-                         <div class="flex items-center gap-2 text-sm">
-                             <span class="relative flex h-3 w-3">
-                                 <span class="absolute inline-flex h-full w-full rounded-full ${statusColor} opacity-75"></span>
-                                 <span class="relative inline-flex rounded-full h-3 w-3 ${statusColor}"></span>
-                             </span>
-                             ${statusText}
-                         </div>
+                        <h3 class="font-bold text-lg">語音紀錄</h3>
                     </div>
-                     ${(status === 'unavailable' || status === 'error') ? '<p class="text-xs text-red-500 mt-1">您的瀏覽器或環境不支援此功能。</p>' : ''}
                 </div>
-                <div id="paragraphsContainer" class="p-4 h-96 overflow-y-auto">
+                
+                <div class="p-4 border-b border-slate-200 dark:border-slate-700 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold">比賽錄音</span>
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="relative flex h-3 w-3">
+                                <span class="absolute inline-flex h-full w-full rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-slate-500'} opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 ${isRecording ? 'bg-red-500' : 'bg-slate-500'}"></span>
+                            </span>
+                            ${recordingStatusText}
+                        </div>
                     </div>
-                 <div class="p-2 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 italic">
-                     即時：<span id="interimContent"></span>
-                 </div>
-                <div class="p-4 grid grid-cols-2 gap-2 border-t border-slate-200 dark:border-slate-700">
-                    ${!active ? '<button data-action="startTranscription" class="col-span-2 w-full text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">開始</button>' : ''}
-                    ${(active && !paused) ? `<button data-action="pauseTranscription" class="btn-secondary w-full font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">暫停</button>` : ''}
-                    ${(active && paused) ? '<button data-action="resumeTranscription" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">繼續</button>' : ''}
-                    ${active ? '<button data-action="stopTranscription" class="w-full text-white bg-red-600 hover:bg-red-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">停止</button>' : ''}
+                    ${!isAvailable ? '<p class="text-xs text-red-500 mt-1">您的瀏覽器或環境不支援錄音功能。</p>' : ''}
+                    <div class="grid grid-cols-2 gap-2">
+                        ${!isRecording ? `<button data-action="startRecording" ${!isAvailable ? 'disabled' : ''} class="col-span-2 w-full text-white bg-blue-600 hover:bg-blue-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed">開始錄音</button>` : ''}
+                        ${isRecording ? `<button data-action="stopRecording" class="col-span-2 w-full text-white bg-red-600 hover:bg-red-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">停止錄音</button>` : ''}
+                    </div>
+                </div>
+
+                <div class="p-4 border-b border-slate-200 dark:border-slate-700 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold">語音轉錄</span>
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="relative flex h-3 w-3">
+                                <span class="absolute inline-flex h-full w-full rounded-full ${speechStatusColor} opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 ${speechStatusColor}"></span>
+                            </span>
+                            ${speechStatusText}
+                        </div>
+                    </div>
+                    ${(speechStatus === 'unavailable' || speechStatus === 'error') ? '<p class="text-xs text-red-500 mt-1">您的瀏覽器或環境不支援轉錄功能。</p>' : ''}
+                    <div class="grid grid-cols-2 gap-2">
+                        ${!active ? `<button data-action="startTranscription" class="col-span-2 w-full text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">開始轉錄</button>` : ''}
+                        ${(active && !paused) ? `<button data-action="pauseTranscription" class="btn-secondary w-full font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">暫停轉錄</button>` : ''}
+                        ${(active && paused) ? `<button data-action="resumeTranscription" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">繼續轉錄</button>` : ''}
+                        ${active ? `<button data-action="stopTranscription" class="w-full text-white bg-red-600 hover:bg-red-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">停止轉錄</button>` : ''}
+                    </div>
+                </div>
+
+                <div id="paragraphsContainer" class="p-4 h-64 overflow-y-auto"></div>
+                <div class="p-2 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 italic">
+                    即時：<span id="interimContent"></span>
                 </div>
             `;
             this.renderTranscriptionParagraphs();
@@ -1343,7 +1528,27 @@
                 </div>`;
             document.body.appendChild(modal);
         },
-        
+        showPromotionModal() {
+            const modalBody = `
+                <div>
+                    <p class="mb-4 text-slate-600 dark:text-slate-300">
+                        想要在辯論活動中使用辯時計或贊助開發者嗎?或是在辯時計中投放廣告嗎?歡迎諮詢開發者!
+                    </p>
+                    
+                    <img src="https://ppt.cc/f77Bnx@.jpg" alt="宣傳內容" class="w-full rounded-lg shadow-md">
+                    
+                    <p class="mt-4 text-xs text-slate-500">
+                        想了解更多功能嗎？點擊右上角選單探索或查看快捷鍵說明！
+                    </p>
+                </div>
+            `;
+            
+            this.renderModal({
+                title: '🎉 歡迎來到辯時計 Pro 🎉',
+                body: modalBody,
+                footer: `<button data-action="closeModal" class="px-6 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">開始使用</button>`
+            });
+        },
         renderEditorView() {
             const originalFormatName = Object.keys(this.debateFormats).find(key => JSON.stringify(this.debateFormats[key]) === JSON.stringify(this.state.originalFlowBeforeEdit)) || '自訂流程';
             
@@ -1355,7 +1560,7 @@
                     </div>
 
                     <div id="editor-stage-list" class="space-y-3">
-                        </div>
+                    </div>
 
                     <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6">
                          <button data-action="addStage" class="btn-secondary w-full sm:w-auto px-6 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
@@ -1503,7 +1708,27 @@
                     : `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21c3.93 0 7.403-2.126 9.002-5.248z" /></svg>`;
             }
         },
-
+        renderPromotionArea() {
+            // 您可以在這裡客製化您的宣傳內容
+            return `
+                <div class="mt-12 p-6 sm:p-8 rounded-2xl bg-slate-200/50 dark:bg-slate-800/50 border border-slate-300/70 dark:border-slate-700/70">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                        <div class="md:col-span-1">
+                            <img src="https://ppt.cc/f77Bnx@.jpg" alt="宣傳圖片" class="rounded-lg shadow-lg w-full h-auto object-cover">
+                        </div>
+                        <div class="md:col-span-2">
+                            <h3 class="text-xl font-bold mb-2 text-slate-800 dark:text-slate-100">探索「辯時計 Pro」的更多可能</h3>
+                            <p class="text-slate-600 dark:text-slate-300 mb-4">
+                                感謝您使用本系統！我們致力於提供最專業的辯論計時體驗。點擊下方按鈕了解我們的進階功能或贊助我們的開發。
+                            </p>
+                            <a href="#" data-action="showPremiumModal" class="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow">
+                                了解更多
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
         renderSidebar() {
             const sidebarPanel = document.getElementById('sidebar-panel');
             if (!sidebarPanel) return;
@@ -1517,9 +1742,9 @@
                      <div class="w-full text-left p-3 flex items-center justify-between hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">
                          <span>自動模式</span>
                          <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                        </label>
+                             <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
+                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                         </label>
                      </div>
                      <button data-action="toggleFullscreen" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">全螢幕</button>
                      <button data-action="togglePip" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">畫中畫模式</button>
@@ -1529,7 +1754,7 @@
                  <div class="p-4 absolute bottom-0 w-full">
                      <button data-action="showPremiumModal" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-90 transition-opacity">
                          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                           <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
+                             <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
                          </svg>
                          升級 Premium
                      </button>
@@ -1619,27 +1844,27 @@
                     }
                 };
                 
-                this.recognition.onerror = (event) => {
-                    // 優雅地處理 "no-speech" 錯誤，這不是一個嚴重故障。
-                    if (event.error === 'no-speech') {
-                        console.warn("語音辨識：未偵測到語音。");
-                        // 不做任何處理，接下來會觸發 onend 事件，由 onend 中的邏輯來決定是否重啟。
-                        return; 
-                    }
-                    // 對於所有其他更嚴重的錯誤，才執行原本的錯誤處理流程。
-                    console.error("Speech recognition error:", event.error);
-                    this.state.isRecognizing = false;
-                    this.state.speechRecognitionStatus = 'error';
-                     if(this.state.transcription.active) {
-                         this.showNotification(`語音轉錄錯誤: ${event.error}`, 'error');
-                         this.actions.stopTranscription();
-                    }
-                     if(this.state.currentView === 'debate') this.renderTranscriptionPanel();
-                };
+                this.recognition.onerror = (event) => {
+                    // 優雅地處理 "no-speech" 錯誤，這不是一個嚴重故障。
+                    if (event.error === 'no-speech') {
+                        console.warn("語音辨識：未偵測到語音。");
+                        // 不做任何處理，接下來會觸發 onend 事件，由 onend 中的邏輯來決定是否重啟。
+                        return; 
+                    }
+                    // 對於所有其他更嚴重的錯誤，才執行原本的錯誤處理流程。
+                    console.error("Speech recognition error:", event.error);
+                    this.state.isRecognizing = false;
+                    this.state.speechRecognitionStatus = 'error';
+                     if(this.state.transcription.active) {
+                         this.showNotification(`語音轉錄錯誤: ${event.error}`, 'error');
+                         this.actions.stopTranscription();
+                    }
+                     if(this.state.currentView === 'debate') this.renderTranscriptionPanel();
+                };
                 this.recognition.onend = () => {
                     this.state.isRecognizing = false;
                      if (this.state.speechRecognitionStatus === 'active') {
-                         this.state.speechRecognitionStatus = 'ready';
+                          this.state.speechRecognitionStatus = 'ready';
                     }
                     // Re-start for grace period detection
                     if (this.state.timer.type === 'grace' && !this.state.timer.isPaused && this.state.timer.graceInterval && !this.state.recognitionManuallyStopped) {
@@ -1801,7 +2026,7 @@
                     count++;
                     
                 if (count < times) {
-                            // 如果還需要繼續響鈴，則設定下一次播放
+                         // 如果還需要繼續響鈴，則設定下一次播放
                         setTimeout(play, 400); 
                     } else {
                         // 這是最後一次響鈴，在短暫延遲後重置旗標，允許下一次播放
@@ -1921,6 +2146,7 @@
             }
         },
         
+// [REPLACE THIS]
         startGracePeriodTimer(stage, timerLabel) {
             this.clearAllTimers();
             this.state.timer.type = 'grace';
@@ -1936,6 +2162,29 @@
             
             this.updateTimerDisplay(this.state.timer.timeLeft);
             if (this.state.enableSpeechDetection) {
+                this.startRecognition();
+            }
+            this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
+            this.renderDebateControls();
+        },
+
+        startGracePeriodTimer(stage, timerLabel) {
+            this.clearAllTimers();
+            this.state.timer.type = 'grace';
+            // 使用 stage.graceDuration (如果存在)，否則使用使用者自訂的值
+            const graceDuration = stage.graceDuration ?? this.state.customGraceDuration;
+            this.state.timer.timeLeft = graceDuration;
+            this.state.timer.initialDuration = graceDuration;
+            this.state.mainSpeechTimerStartedByGrace = false;
+            
+            const finalLabel = timerLabel || this.interpolateScript(stage.timerLabel);
+            const timerStatusEl = document.getElementById('timerStatus');
+            if (timerStatusEl) {
+                timerStatusEl.textContent = `準備 (${finalLabel})`;
+            }
+            
+            this.updateTimerDisplay(this.state.timer.timeLeft);
+            if (this.state.enableSpeechDetection && graceDuration > 0) { // 只有在準備時間>0時才啟用偵測
                 this.startRecognition();
             }
             this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
@@ -1986,12 +2235,11 @@
                 if (stage.type === 'choice_speech') {
                     try {
                         choiceResult = await this.getStageChoice(stage);
-                        stage.selectedAction = choiceResult.selected_action_type;
                     } catch(e) {
                         console.error("Choice was cancelled or failed", e);
-                        // If choice fails, we might want to halt or go to next stage
-                        if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
-                        return; // Stop processing this stage
+                        // If choice fails, we might want to halt or go to next stage
+                        if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
+                        return; // Stop processing this stage
                     }
                 }
 
@@ -2007,9 +2255,9 @@
                             }
                             break;
                         case 'choice_speech': this.startGracePeriodTimer(stage, timerLabel); break;
-                        case 'announcement':
-                            if(this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
-                            break;
+                        case 'announcement':
+                            if(this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
+                            break;
                         case 'draw_rebuttal_order':
                             // In this stage, we always wait for the user to click the "startDraw" button.
                             // Auto-mode advancement is handled within the startDraw action itself.
@@ -2027,22 +2275,25 @@
 
         getStageChoice(stage) {
             return new Promise((resolve, reject) => {
-                this.state.currentChoice = { stage, resolve }; // Store resolve to be called later
-                
+                this.state.currentChoice = { stage, resolve, reject };
+
                 const team = stage.choosingTeam;
 
                 // Handle fixed actions like "立論"
                 if (stage.fixedAction) {
                     const selectedAction = stage.fixedAction;
-                                        //【修復】只有在第一次載入此階段時才計算 fixedAction。
-                    if (!stage.selectedAction) {
-                         if (team === 'positive') {
-                            App.state.positiveActionCounts[selectedAction]++;
-                        } else {
-                            App.state.negativeActionCounts[selectedAction]++;
-                        }
+
+                    // [FIXED] Increment count for fixed actions and store it for reversal
+                    if (team === 'positive') {
+                        this.state.positiveActionCounts[selectedAction]++;
+                    } else if (team === 'negative') {
+                        this.state.negativeActionCounts[selectedAction]++;
                     }
-                    
+                    const currentStageInFlow = this.state.currentFlow[this.state.currentStageIndex];
+                    if (currentStageInFlow) {
+                        currentStageInFlow.executedAction = selectedAction;
+                    }
+
                     // Pre-update UI before speaking
                     const stageContainer = document.getElementById('stageContainer');
                     stageContainer.innerHTML = `
@@ -2051,7 +2302,7 @@
                             <p class="text-slate-600 dark:text-slate-300">${this.interpolateScript(stage.baseScript, { selected_player: '辯士', selected_action_type: selectedAction })}</p>
                         </div>`;
                     const timerStatus = document.getElementById('timerStatus');
-                      if(timerStatus) timerStatus.textContent = this.interpolateScript(stage.baseTimerLabel, { selected_player: '辯士', selected_action_type: selectedAction });
+                    if(timerStatus) timerStatus.textContent = this.interpolateScript(stage.baseTimerLabel, { selected_player: '辯士', selected_action_type: selectedAction });
 
                     resolve({ selected_player: '辯士', selected_action_type: selectedAction });
                     this.state.currentChoice = { stage: null, resolve: null };
@@ -2063,8 +2314,8 @@
                 
                 const optionsHTML = stage.actionChoices.map(action => {
                     const count = actionCounts[action] || 0;
-                    const isDiabled = count >= 3;
-                    return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-6 py-3 rounded-lg text-white font-semibold ${isDiabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} transition-colors" ${isDiabled ? 'disabled' : ''}>${action} (${3 - count}次)</button>`
+                    const isDisabled = count >= 3;
+                    return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-6 py-3 rounded-lg text-white font-semibold ${isDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} transition-colors" ${isDisabled ? 'disabled' : ''}>${action} (${3 - count}次)</button>`
                 }).join('');
 
                 this.renderModal({
@@ -2073,6 +2324,163 @@
                     footer: '' 
                 });
             });
+        },
+
+        // --- AUDIO RECORDING & DOWNLOAD ---
+        async initAudioRecording() {
+            if ('MediaRecorder' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    // 檢查權限，但先不佔用麥克風
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    this.state.recording.isAvailable = true;
+                    console.log("Audio recording is available.");
+                } catch (err) {
+                    console.error("Microphone access denied:", err);
+                    this.state.recording.isAvailable = false;
+                    this.showNotification("麥克風權限被拒絕，無法使用錄音功能。", "error");
+                }
+            } else {
+                this.state.recording.isAvailable = false;
+                console.warn("MediaRecorder API not supported.");
+            }
+        },
+
+        async startRecording() {
+            if (!this.state.recording.isAvailable) {
+                this.showNotification("錄音功能不可用或未授權。", "error");
+                return;
+            }
+            if (this.state.recording.isRecording) return;
+
+            try {
+                this.state.recording.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                this.state.recording.recordedChunks = [];
+                
+                const options = { mimeType: 'audio/webm; codecs=opus' };
+                this.state.recording.mediaRecorder = new MediaRecorder(this.state.recording.mediaStream, options);
+
+                this.state.recording.mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        this.state.recording.recordedChunks.push(event.data);
+                    }
+                };
+
+                this.state.recording.mediaRecorder.onstop = () => {
+                    this.state.recording.audioBlob = new Blob(this.state.recording.recordedChunks, { type: 'audio/webm' });
+                    if (this.state.recording.mediaStream) {
+                        this.state.recording.mediaStream.getTracks().forEach(track => track.stop());
+                        this.state.recording.mediaStream = null;
+                    }
+                    this.state.recording.isRecording = false;
+                    this.renderTranscriptionPanel(); // 更新UI
+                    this.showNotification("錄音已停止。", "info");
+                    
+                    // 如果是因為比賽結束而停止，則顯示下載畫面
+                    if (this.state.currentStageIndex >= this.state.currentFlow.length - 1) {
+                        this.renderEndDebateDownloads();
+                    }
+                };
+
+                this.state.recording.mediaRecorder.start();
+                this.state.recording.isRecording = true;
+                this.renderTranscriptionPanel(); // 更新UI
+                this.showNotification("錄音已開始。", "success");
+
+            } catch (err) {
+                console.error("Error starting recording:", err);
+                this.showNotification("無法開始錄音，請檢查麥克風權限。", "error");
+            }
+        },
+
+        stopRecording() {
+            if (this.state.recording.mediaRecorder && this.state.recording.isRecording) {
+                this.state.recording.mediaRecorder.stop();
+            }
+        },
+
+        downloadAudio() {
+            if (!this.state.recording.audioBlob) {
+                this.showNotification("沒有可下載的錄音。", "error");
+                return;
+            }
+            const url = URL.createObjectURL(this.state.recording.audioBlob);
+            const a = document.createElement('a');
+            document.body.appendChild(a);
+            a.style = 'display: none';
+            a.href = url;
+            const filename = `辯論錄音_${new Date().toISOString().slice(0,10)}.webm`;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        },
+
+        downloadTranscript() {
+            const { paragraphs } = this.state.transcription;
+            if (paragraphs.length === 0) {
+                this.showNotification("沒有可下載的逐字稿。", "error");
+                return;
+            }
+
+            // 1. 將所有段落按照 speaker (即階段名稱) 進行分組
+            const groupedByStage = paragraphs.reduce((acc, p) => {
+                const stageName = p.speaker || "未分類";
+                if (!acc[stageName]) {
+                    acc[stageName] = "";
+                }
+                // 將同一階段的內容串接起來
+                acc[stageName] += p.content;
+                return acc;
+            }, {});
+
+            // 2. 產生檔案標頭
+            let transcriptContent = `辯題：${this.state.debateTopic}\n`;
+            transcriptContent += `正方：${this.state.positiveTeamName}\n`;
+            transcriptContent += `反方：${this.state.negativeTeamName}\n\n`;
+            transcriptContent += "--- 逐字稿 ---\n\n";
+
+            // 3. 遍歷分組後的物件，產生最終格式的文字
+            for (const stageName in groupedByStage) {
+                transcriptContent += `[${stageName}]\n`;
+                transcriptContent += `${groupedByStage[stageName].trim()}\n\n`;
+            }
+
+            // 4. 建立 Blob 並觸發下載
+            const blob = new Blob([transcriptContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            document.body.appendChild(a);
+            a.style = 'display: none';
+            a.href = url;
+            const filename = `辯論逐字稿_${new Date().toISOString().slice(0,10)}.txt`;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        },
+        renderEndDebateDownloads() {
+            const container = document.getElementById('debateControlsContainer');
+            if (!container) return;
+
+            const hasAudio = !!this.state.recording.audioBlob;
+            const hasTranscript = this.state.transcription.paragraphs.length > 0;
+
+            container.innerHTML = `
+                <div class="glass-card p-6 rounded-2xl shadow-lg text-center space-y-4">
+                    <h3 class="font-bold text-xl">比賽結束</h3>
+                    <p class="text-slate-600 dark:text-slate-300">您可以下載本次比賽的紀錄：</p>
+                    <div class="flex flex-wrap items-center justify-center gap-4">
+                        <button data-action="downloadAudio" class="flex-grow btn-secondary font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${!hasAudio ? 'opacity-50 cursor-not-allowed' : ''}" ${!hasAudio ? 'disabled' : ''}>
+                            下載錄音 (.webm)
+                        </button>
+                        <button data-action="downloadTranscript" class="flex-grow btn-secondary font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${!hasTranscript ? 'opacity-50 cursor-not-allowed' : ''}" ${!hasTranscript ? 'disabled' : ''}>
+                            下載逐字稿 (.txt)
+                        </button>
+                    </div>
+                    <button data-action="confirmReset" class="mt-4 text-sm text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400">返回主畫面</button>
+                </div>
+            `;
         },
 
         // --- PICTURE-IN-PICTURE ---
@@ -2165,4 +2573,3 @@
     </script>
 </body>
 </html>
-
