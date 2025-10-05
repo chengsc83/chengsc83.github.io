@@ -109,7 +109,7 @@
 
 ## ✍️ 作者
 
-- **[鄭世駿 James Cheng]** - *主要開發者* - [您的 GitHub 帳號連結(可選)]
+- **[鄭世駿 James Cheng]** - *主要開發者* - (https://github.com/chengsc83)
 
 若有任何合作邀約或問題，歡迎聯繫：`james830.sc@gmail.com`
 
