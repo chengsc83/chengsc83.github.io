@@ -204,250 +204,257 @@
         },
 
         // --- DEBATE FORMATS ---
-        debateFormats: {
+// [REPLACE] 請將舊的 debateFormats 物件完整替換成這個 debateFormatGroups 物件
 
-             "新式奧瑞岡五五四制(無結辯)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
-                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-                "新式奧瑞岡五五四制(五分半)(無結辯)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 330, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-                "新式奧瑞岡四四四制(無結辯)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 240, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 240, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 240, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 240, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 240, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 240, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 240, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-                "新式奧瑞岡四四四制(四分半)(無結辯)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 270, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-                "新式奧瑞岡三三三制(無結辯)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 180, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 180, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 180, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 180, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 180, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 180, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 180, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-                "新式奧瑞岡三三三制(三分半)(無結辯)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 210, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 210, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 210, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 210, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 210, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 210, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 210, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],     
-            "辯革盃 (九辯位自由排序制)": [
-                { name: "賽前準備及介紹", type: "announcement", script: "歡迎各位來到辯革盃比賽。本次比賽辯題為：「{{debate_topic}}」。正方代表隊：{{positive_team_name}}，反方代表隊：{{negative_team_name}}。" },
-                { name: "正方立論", type: "choice_speech", choosingTeam: 'positive', fixedAction: '申論', duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行立論，時間四分三十秒。", baseTimerLabel: "正方立論" },
-                { name: "反方立論", type: "choice_speech", choosingTeam: 'negative', fixedAction: '申論', duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請反方辯士上台進行立論，時間四分三十秒。", baseTimerLabel: "反方立論" },
-                { name: "正方選擇 1", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
-                { name: "反方選擇 1", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
-                { name: "正方選擇 2", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
-                { name: "反方選擇 2", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
-                { name: "正方選擇 3", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
-                { name: "反方選擇 3", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
-                { name: "正方選擇 4", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
-                { name: "反方選擇 4", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
-                { name: "正方選擇 5", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
-                { name: "反方選擇 5", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
-                { name: "正方選擇 6", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
-                { name: "反方選擇 6", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceDuration: 60, graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
-                { name: "比賽結束", type: "announcement", script: "比賽結束。感謝各位。" },
-            ],
-             "新式奧瑞岡五五四制": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
-                 { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
-                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
-                 { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-            "新式奧瑞岡五五四制(五分半)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制(五分半)。", timerLabel: null },
-                 { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
-                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 330, script: "準備時間結束。現在請正方一辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
-                 { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-            "新式奧瑞岡四四四制(四分半)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡四四四制(四分半)。", timerLabel: null },
-                 { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
-                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 270, script: "準備時間結束。現在請正方一辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 270, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請反方一辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 270, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請正方二辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 270, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請反方二辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 270, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請正方三辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 270, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請反方三辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 270, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
-                 { name: "先結辯方 結辯", type: "speech_auto", duration: 270, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "後結辯方 結辯", type: "speech_auto", duration: 270, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-            "新式奧瑞岡四四四制": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡四四四制。", timerLabel: null },
-                 { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
-                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 240, script: "準備時間結束。現在請正方一辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 240, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方一辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 240, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方二辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 240, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方二辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 240, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方三辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 240, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方三辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 240, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
-                 { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-            "新式奧瑞岡三三三制(三分半)": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡三三三制(三分半)。", timerLabel: null },
-                 { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
-                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 210, script: "準備時間結束。現在請正方一辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 210, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方一辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 210, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方二辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 210, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方二辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 210, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方三辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 210, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方三辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 210, script: "感謝{{negative_team_name}}三辯。接著請{{positive_team_name}}二辯上臺質詢{{negative_team_name}}三辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
-                 { name: "先結辯方 結辯", type: "speech_auto", duration: 210, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "後結辯方 結辯", type: "speech_auto", duration: 210, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-            "新式奧瑞岡三三三制": [
-                 { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡三三三制。", timerLabel: null },
-                 { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
-                 { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
-                 { name: "正方一辯 申論", type: "speech_auto", duration: 180, script: "準備時間結束。現在請正方一辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 180, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方一辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 180, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方二辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 180, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方二辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 180, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方三辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 180, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "反方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方三辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 180, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
-                 { name: "先結辯方 結辯", type: "speech_auto", duration: 180, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "後結辯方 結辯", type: "speech_auto", duration: 180, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceDuration: 60, graceEndAction: "auto_start" },
-                 { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
-            ],
-        },
+debateFormatGroups: {
+    "特殊賽制": {
+        "辯革盃 (九辯位自由排序制)": [
+            { name: "賽前準備及介紹", type: "announcement", script: "歡迎各位來到辯革盃比賽。本次比賽辯題為：「{{debate_topic}}」。正方代表隊：{{positive_team_name}}，反方代表隊：{{negative_team_name}}。" },
+            { name: "正方立論", type: "choice_speech", choosingTeam: 'positive', fixedAction: '申論', duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請正方辯士上台進行立論，時間四分三十秒。", baseTimerLabel: "正方立論" },
+            { name: "反方立論", type: "choice_speech", choosingTeam: 'negative', fixedAction: '申論', duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行立論，時間四分三十秒。", baseTimerLabel: "反方立論" },
+            { name: "正方選擇 1", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
+            { name: "反方選擇 1", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
+            { name: "正方選擇 2", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
+            { name: "反方選擇 2", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
+            { name: "正方選擇 3", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
+            { name: "反方選擇 3", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
+            { name: "正方選擇 4", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
+            { name: "反方選擇 4", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
+            { name: "正方選擇 5", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
+            { name: "反方選擇 5", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
+            { name: "正方選擇 6", type: "choice_speech", choosingTeam: 'positive', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請正方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "正方 {{selected_action_type}}" },
+            { name: "反方選擇 6", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
+            { name: "比賽結束", type: "announcement", script: "比賽結束。感謝各位。" },
+        ],
+    },
+    "新式奧瑞岡 (含結辯)": {
+        "新式奧瑞岡三三三制": [
+             { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡三三三制。", timerLabel: null },
+             { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
+             { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+             { name: "正方一辯 申論", type: "speech_auto", duration: 180, script: "準備時間結束。現在請正方一辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 180, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方一辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方一辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 180, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方二辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 180, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方二辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 180, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方三辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 180, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方三辯上臺申論，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 180, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
+             { name: "先結辯方 結辯", type: "speech_auto", duration: 180, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "後結辯方 結辯", type: "speech_auto", duration: 180, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間三分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡三三三制(三分半)": [
+             { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡三三三制(三分半)。", timerLabel: null },
+             { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
+             { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+             { name: "正方一辯 申論", type: "speech_auto", duration: 210, script: "準備時間結束。現在請正方一辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 210, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方一辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方一辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 210, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方二辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 210, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方二辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 210, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方三辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 210, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "反方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方三辯上臺申論，時間三分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 210, script: "感謝{{negative_team_name}}三辯。接著請{{positive_team_name}}二辯上臺質詢{{negative_team_name}}三辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
+             { name: "先結辯方 結辯", type: "speech_auto", duration: 210, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "後結辯方 結辯", type: "speech_auto", duration: 210, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間三分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+             { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡四四四制": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡四四四制。", timerLabel: null },
+            { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
+            { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 240, script: "準備時間結束。現在請正方一辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 240, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方一辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 240, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方二辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 240, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方二辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 240, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方三辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 240, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方三辯上臺申論，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 240, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
+            { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡四四四制(四分半)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡四四四制(四分半)。", timerLabel: null },
+            { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
+            { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 270, script: "準備時間結束。現在請正方一辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 270, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請反方一辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 270, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請正方二辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 270, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請反方二辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 270, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請正方三辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 270, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 270, script: "感謝雙方。現在請反方三辯上臺申論，時間四分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 270, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
+            { name: "先結辯方 結辯", type: "speech_auto", duration: 270, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "後結辯方 結辯", type: "speech_auto", duration: 270, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分半。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡五五四制": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+            { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
+            { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
+            { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡五五四制(五分半)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制(五分半)。", timerLabel: null },
+            { name: "結辯順序抽籤", type: "draw_rebuttal_order", duration: null, script: "首先，我們來進行結辯順序抽籤。請點擊下方按鈕開始抽籤。", timerLabel: null },
+            { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 330, script: "準備時間結束。現在請正方一辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分半。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "結辯準備", type: "manual_prep", duration: 180, script: "申論質詢階段完畢。先前抽籤結果為 {{first_rebuttal_team_name}} 先結辯。雙方將有三分鐘準備結辯。計時開始。", timerLabel: "結辯準備時間" },
+            { name: "先結辯方 結辯", type: "speech_auto", duration: 240, script: "準備時間到。現在請 {{first_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "後結辯方 結辯", type: "speech_auto", duration: 240, script: "感謝 {{first_rebuttal_team_name}} 代表。現在請 {{second_rebuttal_team_name}} 代表上臺結辯，時間四分鐘。您有一分鐘時間開始發言。", timerLabel: "結辯時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+    },
+    "新式奧瑞岡 (無結辯)": {
+        "新式奧瑞岡三三三制(無結辯)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 180, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 180, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 180, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 180, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 180, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 180, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 180, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 180, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡三三三制(三分半)(無結辯)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 210, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 210, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 210, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 210, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 210, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 210, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 210, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 210, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡四四四制(無結辯)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 240, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 240, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 240, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 240, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 240, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 240, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 240, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 240, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡四四四制(四分半)(無結辯)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 270, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡五五四制(無結辯)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+            { name: "開賽預備", type: "manual_prep", duration: 60, script: "結辯順序抽籤完畢。主席宣布，比賽開始。正方一辯準備上台申論，計時一分鐘準備時間。", timerLabel: "整體準備時間" },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 300, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 300, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 300, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 300, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 300, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 300, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 300, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+        "新式奧瑞岡五五四制(五分半)(無結辯)": [
+            { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 330, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 330, script: "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 330, script: "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 330, script: "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 330, script: "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 330, script: "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 330, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
+            { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
+        ],
+    },
+},
 
         // --- CORE METHODS ---
         init() {
@@ -623,12 +630,13 @@
                     App.state.negativeActionCounts = { '申論': 0, '質答': 0 };
                     App.state.currentView = 'nineSquare';
                 } else {
-                    App.state.currentFlow = JSON.parse(JSON.stringify(App.debateFormats[selectedFormatName] || []));
-                    App.state.currentView = 'debate';
-                    App.actions.nextStage(); // Start the first stage
-                }
-                App.render();
-            },
+                const format = App.getDebateFormat(selectedFormatName);
+                App.state.currentFlow = JSON.parse(JSON.stringify(format || []));
+                App.state.currentView = 'debate';
+                App.actions.nextStage(); // Start the first stage
+            }
+            App.render();
+        },
             confirmNineSquare() {
                 const posGrid = {}, negGrid = {};
                 let isValid = true;
@@ -806,12 +814,13 @@
                 if (selectedFormatName === "CUSTOM_EMPTY") {
                     App.state.currentFlow = [];
                 } else {
-                    App.state.currentFlow = JSON.parse(JSON.stringify(App.debateFormats[selectedFormatName] || []));
-                }
-                App.state.originalFlowBeforeEdit = JSON.parse(JSON.stringify(App.state.currentFlow));
-                App.state.currentView = 'editor';
-                App.render();
-            },
+                const format = App.getDebateFormat(selectedFormatName);
+                App.state.currentFlow = JSON.parse(JSON.stringify(format || []));
+            }
+            App.state.originalFlowBeforeEdit = JSON.parse(JSON.stringify(App.state.currentFlow));
+            App.state.currentView = 'editor';
+            App.render();
+        },
             closeEditor() {
                 App.renderModal({
                     title: '確認取消編輯',
@@ -830,7 +839,10 @@
             saveAndCloseEditor() {
                 let baseName = document.getElementById('editor-flow-name').value || '自訂流程';
                 const newFlowName = `${baseName} (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
-                App.debateFormats[newFlowName] = JSON.parse(JSON.stringify(App.state.currentFlow));
+                if (!App.debateFormatGroups['自訂流程']) {
+                    App.debateFormatGroups['自訂流程'] = {};
+                }
+                App.debateFormatGroups['自訂流程'][newFlowName] = JSON.parse(JSON.stringify(App.state.currentFlow));
                 App.state.currentView = 'setup';
                 App.render();
                 // After render, set the new value
@@ -841,7 +853,7 @@
                 }, 0);
             },
             addStage() {
-                App.renderStageEditorModal(); // Call with no args for new stage
+                App.renderStageEditorModal(); 
             },
             editStage(e) {
                 const index = parseInt(e.target.closest('[data-index]').dataset.index, 10);
@@ -1152,86 +1164,96 @@
             }
         },
 
+// [REPLACE] 請替換掉整個 renderSetupView 函式
+
 renderSetupView() {
-            const formatOptions = Object.keys(this.debateFormats)
+    // Generate categorized options
+    let formatOptions = '';
+    for (const groupName in this.debateFormatGroups) {
+        const formats = this.debateFormatGroups[groupName];
+        if (Object.keys(formats).length > 0) {
+            formatOptions += `<optgroup label="${groupName}">`;
+            formatOptions += Object.keys(formats)
                 .map(name => `<option value="${name}">${name}</option>`)
                 .join('');
-            
-            const speechDetectionChecked = this.state.enableSpeechDetection ? 'checked' : '';
+            formatOptions += `</optgroup>`;
+        }
+    }
+    
+    const speechDetectionChecked = this.state.enableSpeechDetection ? 'checked' : '';
 
-            this.mainContent.innerHTML = `
-                <div class="max-w-3xl mx-auto space-y-8">
-                    <div class="text-center">
-                        <h2 class="text-3xl font-extrabold tracking-tight">賽前設定</h2>
-                        <p class="mt-2 text-lg text-slate-500">設定比賽參數與流程範本</p>
+    this.mainContent.innerHTML = `
+        <div class="max-w-3xl mx-auto space-y-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-extrabold tracking-tight">賽前設定</h2>
+                <p class="mt-2 text-lg text-slate-500">設定比賽參數與流程範本</p>
+            </div>
+            <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-lg space-y-6">
+                <div>
+                    <label for="debateTopicInput" class="block text-sm font-medium mb-1">辯題</label>
+                    <input type="text" id="debateTopicInput" class="form-element w-full p-2 border rounded-md" value="${this.state.debateTopic}">
+                </div>
+                <div>
+                    <label for="formatSelect" class="block text-sm font-medium mb-1">比賽流程範本</label>
+                    <select id="formatSelect" data-change-action="formatChanged" class="form-element w-full p-2 border rounded-md">${formatOptions}</select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="positiveTeamNameInput" class="block text-sm font-medium mb-1 text-green-600">正方隊名</label>
+                        <input type="text" id="positiveTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.positiveTeamName}">
                     </div>
-                    <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-lg space-y-6">
-                        <div>
-                            <label for="debateTopicInput" class="block text-sm font-medium mb-1">辯題</label>
-                            <input type="text" id="debateTopicInput" class="form-element w-full p-2 border rounded-md" value="${this.state.debateTopic}">
-                        </div>
-                        <div>
-                            <label for="formatSelect" class="block text-sm font-medium mb-1">比賽流程範本</label>
-                            <select id="formatSelect" data-change-action="formatChanged" class="form-element w-full p-2 border rounded-md">${formatOptions}</select>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="positiveTeamNameInput" class="block text-sm font-medium mb-1 text-green-600">正方隊名</label>
-                                <input type="text" id="positiveTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.positiveTeamName}">
-                            </div>
-                            <div>
-                                <label for="negativeTeamNameInput" class="block text-sm font-medium mb-1 text-red-600">反方隊名</label>
-                                <input type="text" id="negativeTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.negativeTeamName}">
-                            </div>
-                        </div>
-                         <div id="playersSection" class="space-y-4" style="display: none;">
-                             <h3 class="text-md font-semibold border-b pb-2">辯革盃選手設定</h3>
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                 <div class="space-y-2">
-                                     <h4 class="font-medium text-green-600">正方選手 (A, B, C)</h4>
-                                     ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
-                                 </div>
-                                 <div class="space-y-2">
-                                     <h4 class="font-medium text-red-600">反方選手 (A, B, C)</h4>
-                                     ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
-                                 </div>
-                             </div>
-                         </div>
-                         <div>
-                             <label class="block text-sm font-medium mb-1">進階設定</label>
-                             <div class="p-3 rounded-md settings-box">
-                                 <div class="w-full text-left flex items-center justify-between">
-                                     <span class="text-sm">啟用準備時間語音偵測</span>
-                                     <label class="relative inline-flex items-center cursor-pointer">
-                                         <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
-                                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                                     </label>
-                                 </div>
-                                 <p class="text-xs text-slate-500 mt-1">開啟後，在準備時間結束後會自動偵測選手發言並開始計時。</p>
-                                 
-                                <div class="mt-4 w-full text-left flex items-center justify-between">
-                                    <span class="text-sm">發言準備時間 (秒)</span>
-                                    <input type="number" id="graceDurationInput" data-change-action="setGraceDuration" class="form-element w-24 p-2 border rounded-md text-center" value="${this.state.customGraceDuration}">
-                                </div>
-                                <p class="text-xs text-slate-500 mt-1">設定選手上台後、主要計時開始前的準備/緩衝時間。</p>
-
-                             </div>
-                         </div>
-                    </div>
-                    <div class="flex justify-center items-center space-x-4">
-                        <button data-action="openEditor" class="btn-secondary px-6 py-2 rounded-lg transition-colors">自定義流程</button>
-                        <button data-action="startDebate" class="px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">開始辯論</button>
+                    <div>
+                        <label for="negativeTeamNameInput" class="block text-sm font-medium mb-1 text-red-600">反方隊名</label>
+                        <input type="text" id="negativeTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.negativeTeamName}">
                     </div>
                 </div>
-                ${this.renderPromotionArea()}
-            `;
-            // Trigger change event to show/hide player section correctly on first render
-            const formatSelect = document.getElementById('formatSelect');
-            if (formatSelect) {
-                formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-        },
+                  <div id="playersSection" class="space-y-4" style="display: none;">
+                      <h3 class="text-md font-semibold border-b pb-2">辯革盃選手設定</h3>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div class="space-y-2">
+                              <h4 class="font-medium text-green-600">正方選手 (A, B, C)</h4>
+                              ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                          </div>
+                          <div class="space-y-2">
+                              <h4 class="font-medium text-red-600">反方選手 (A, B, C)</h4>
+                              ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                          </div>
+                      </div>
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium mb-1">進階設定</label>
+                      <div class="p-3 rounded-md settings-box">
+                          <div class="w-full text-left flex items-center justify-between">
+                              <span class="text-sm">啟用準備時間語音偵測</span>
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                  <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
+                                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                              </label>
+                          </div>
+                          <p class="text-xs text-slate-500 mt-1">開啟後，在準備時間結束後會自動偵測選手發言並開始計時。</p>
+                          
+                          <div class="mt-4 w-full text-left flex items-center justify-between">
+                              <span class="text-sm">發言準備時間 (秒)</span>
+                              <input type="number" id="graceDurationInput" data-change-action="setGraceDuration" class="form-element w-24 p-2 border rounded-md text-center" value="${this.state.customGraceDuration}">
+                          </div>
+                          <p class="text-xs text-slate-500 mt-1">設定選手上台後、主要計時開始前的準備/緩衝時間。</p>
 
+                      </div>
+                  </div>
+            </div>
+            <div class="flex justify-center items-center space-x-4">
+                <button data-action="openEditor" class="btn-secondary px-6 py-2 rounded-lg transition-colors">自定義流程</button>
+                <button data-action="startDebate" class="px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">開始辯論</button>
+            </div>
+        </div>
+        ${this.renderPromotionArea()}
+    `;
+    // Trigger change event to show/hide player section correctly on first render
+    const formatSelect = document.getElementById('formatSelect');
+    if (formatSelect) {
+        formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+},
         renderNineSquareGridView() {
              const renderGrid = (team, players) => {
                  let gridHtml = `<div class="space-y-4"><h3 class="text-xl font-bold text-center ${team === 'positive' ? 'text-green-600' : 'text-red-600'}">${team === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName}</h3><div class="grid grid-cols-3 gap-1 bg-slate-300 dark:bg-slate-600 p-1 rounded-lg">`;
@@ -1550,7 +1572,7 @@ renderSetupView() {
             });
         },
         renderEditorView() {
-            const originalFormatName = Object.keys(this.debateFormats).find(key => JSON.stringify(this.debateFormats[key]) === JSON.stringify(this.state.originalFlowBeforeEdit)) || '自訂流程';
+            const originalFormatName = this.findFormatNameByFlow(this.state.originalFlowBeforeEdit) || '自訂流程';
             
             this.mainContent.innerHTML = `
                 <div class="max-w-4xl mx-auto space-y-8">
@@ -2040,6 +2062,30 @@ renderSetupView() {
             play(); // 開始播放序列
         },
         // --- HELPERS ---
+        // [ADD] 請將這兩個新函式加到 App 物件中，例如 HELPERS 區塊
+
+// [ADD] 請將這兩個新函式加到 App 物件中，例如 HELPERS 區塊
+
+        getDebateFormat(formatName) {
+            for (const groupName in this.debateFormatGroups) {
+                if (this.debateFormatGroups[groupName][formatName]) {
+                    return this.debateFormatGroups[groupName][formatName];
+                }
+            }
+            return null;
+        },
+
+        findFormatNameByFlow(flow) {
+            const flowString = JSON.stringify(flow);
+            for (const groupName in this.debateFormatGroups) {
+                for (const formatName in this.debateFormatGroups[groupName]) {
+                    if (JSON.stringify(this.debateFormatGroups[groupName][formatName]) === flowString) {
+                        return formatName;
+                    }
+                }
+            }
+            return null;
+        },
         showNotification(message, type = 'info', duration = 3000) {
             const container = document.getElementById('notification-container');
             const a = { info: 'bg-blue-500', success: 'bg-green-500', error: 'bg-red-500' };
@@ -2146,32 +2192,10 @@ renderSetupView() {
             }
         },
         
-// [REPLACE THIS]
         startGracePeriodTimer(stage, timerLabel) {
             this.clearAllTimers();
             this.state.timer.type = 'grace';
-            this.state.timer.timeLeft = stage.graceDuration || 60;
-            this.state.timer.initialDuration = stage.graceDuration || 60;
-            this.state.mainSpeechTimerStartedByGrace = false;
-            
-            const finalLabel = timerLabel || this.interpolateScript(stage.timerLabel);
-            const timerStatusEl = document.getElementById('timerStatus');
-            if (timerStatusEl) {
-                timerStatusEl.textContent = `準備 (${finalLabel})`;
-            }
-            
-            this.updateTimerDisplay(this.state.timer.timeLeft);
-            if (this.state.enableSpeechDetection) {
-                this.startRecognition();
-            }
-            this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
-            this.renderDebateControls();
-        },
-
-        startGracePeriodTimer(stage, timerLabel) {
-            this.clearAllTimers();
-            this.state.timer.type = 'grace';
-            // 使用 stage.graceDuration (如果存在)，否則使用使用者自訂的值
+            // [FIX] 優先使用賽制流程中定義的 graceDuration，若無則使用使用者在設定頁面自訂的值
             const graceDuration = stage.graceDuration ?? this.state.customGraceDuration;
             this.state.timer.timeLeft = graceDuration;
             this.state.timer.initialDuration = graceDuration;
@@ -2184,10 +2208,17 @@ renderSetupView() {
             }
             
             this.updateTimerDisplay(this.state.timer.timeLeft);
-            if (this.state.enableSpeechDetection && graceDuration > 0) { // 只有在準備時間>0時才啟用偵測
+            // [FIX] 只有在準備時間大於 0 秒時才啟用語音偵測
+            if (this.state.enableSpeechDetection && graceDuration > 0) { 
                 this.startRecognition();
             }
-            this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
+
+            // 如果準備時間為 0，則直接開始主要計時
+            if (graceDuration <= 0) {
+                this.runTimerInterval(); 
+            } else {
+                this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
+            }
             this.renderDebateControls();
         },
         
