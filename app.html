@@ -199,12 +199,23 @@
                 isAvailable: false,
                 recordedChunks: [],
                 audioBlob: null,
+                micAudioTrack: null, // 用來儲存音訊軌道
+                isMicMuted: false,   // 追蹤目前的靜音狀態
             },
-// [ADD THIS END]
-        },
 
-        // --- DEBATE FORMATS ---
-// [REPLACE] 請將舊的 debateFormats 物件完整替換成這個 debateFormatGroups 物件
+            freeDebate: {
+                stage: null,    
+                initialDuration: 180, 
+                positiveTimeLeft: 180,
+                negativeTimeLeft: 180,
+                activeTeam: null, // 'positive', 'negative', 或 null
+                interval: null, 
+                isPaused: false,
+                firstSpeakerSelected: false, // 是否已選擇第一位發言者
+            },
+
+        },
+        // --- CONSTANTS ---
 
 debateFormatGroups: {
     "特殊賽制": {
@@ -226,6 +237,50 @@ debateFormatGroups: {
             { name: "反方選擇 6", type: "choice_speech", choosingTeam: 'negative', actionChoices: ['申論', '質答'], duration: 270, graceEndAction: "auto_start", graceEndAction: "auto_start", baseScript: "請反方辯士上台進行 {{selected_action_type}}，時間四分三十秒。", baseTimerLabel: "反方 {{selected_action_type}}" },
             { name: "比賽結束", type: "announcement", script: "比賽結束。感謝各位。" },
         ],
+        "風雩盃": [
+            { 
+                name: "賽前介紹與規則說明", 
+                type: "announcement", 
+                script: `大家好！歡迎來到風雩盃中學辯論錦標賽。
+                本次比賽的辯題為：「{{debate_topic}}」。
+                正方由 {{positive_team_name}} 擔任，反方由 {{negative_team_name}} 擔任。` 
+            },
+            { name: "正方一辯 申論", type: "speech_auto", duration: 210, script: "首先請正方一辯上台申論，時間三分半，有請！", timerLabel: "正方一辯 申論", graceEndAction: "auto_start" },
+            { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 180, script: "接著請反方二辯上台質詢正方一辯，時間三分鐘，有請！", timerLabel: "反方二辯 質詢", graceEndAction: "auto_start" },
+            { name: "反方一辯 申論", type: "speech_auto", duration: 210, script: "再來請反方一辯上台申論，時間三分半，有請！", timerLabel: "反方一辯 申論", graceEndAction: "auto_start" },
+            { name: "正方三辯 質詢 反方一辯", type: "speech_auto", duration: 180, script: "再來請正方三辯上台質詢反方一辯，時間三分鐘，有請！", timerLabel: "正方三辯 質詢", graceEndAction: "auto_start" },
+            { name: "正方二辯 申論", type: "speech_auto", duration: 180, script: "再來請正方二辯上台申論，時間三分鐘，有請！", timerLabel: "正方二辯 申論", graceEndAction: "auto_start" },
+            { name: "反方三辯 質詢 正方二辯", type: "speech_auto", duration: 180, script: "再來請反方三辯上台質詢正方二辯，時間三分鐘，有請！", timerLabel: "反方三辯 質詢", graceEndAction: "auto_start" },
+            { name: "反方二辯 申論", type: "speech_auto", duration: 180, script: "再來請反方二辯上台申論，時間三分鐘，有請！", timerLabel: "反方二辯 申論", graceEndAction: "auto_start" },
+            { name: "正方一辯 質詢 反方二辯", type: "speech_auto", duration: 180, script: "再來請正方一辯上台質詢反方二辯，時間三分鐘，有請！", timerLabel: "正方一辯 質詢", graceEndAction: "auto_start" },
+            { 
+                name: "對辯環節 (雙方四辯)", 
+                type: "free_debate", 
+                duration: 120, 
+                script: `接下來進行對辯環節，此環節中，選手毋須登台，雙方四辯將輪流起立發言。
+                在此環節中雙方各有兩分鐘的時間，每當一方發言結束，另一方將開始計時。
+                首先由正方四辯開始提問，有請。`
+            },
+            { name: "正方三辯 申論", type: "speech_auto", duration: 180, script: "對辯環節結束。接著請正方三辯上台申論，時間三分鐘，有請！", timerLabel: "正方三辯 申論", graceEndAction: "auto_start" },
+            { name: "反方一辯 質詢 正方三辯", type: "speech_auto", duration: 180, script: "再來請反方一辯上台質詢正方三辯，時間三分鐘，有請！", timerLabel: "反方一辯 質詢", graceEndAction: "auto_start" },
+            { name: "反方三辯 申論", type: "speech_auto", duration: 180, script: "再來請反方三辯上台申論，時間三分鐘，有請！", timerLabel: "反方三辯 申論", graceEndAction: "auto_start" },
+            { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 180, script: "再來請正方二辯上台質詢反方三辯，時間三分鐘，有請！", timerLabel: "正方二辯 質詢", graceEndAction: "auto_start" },
+            { 
+                name: "自由辯論環節", 
+                type: "free_debate", 
+                duration: 240, 
+                script: `感謝雙方辯士精彩的交鋒，接著是自由辯論環節，雙方辯士將輪流發言。
+                在此階段雙方各有四分鐘的時間，每當一方發言結束，另一方則開始計時。
+                首先由正方辯士開始提問，有請。`
+            },
+            { name: "反方四辯 總結", type: "speech_auto", duration: 240, script: "自由辯論環節結束。接著進入比賽的最後一個階段，總結陳詞。由反方先行上台總結，有請反方四辯，時間四分鐘。", timerLabel: "反方總結", graceEndAction: "auto_start" },
+            { name: "正方四辯 總結", type: "speech_auto", duration: 240, script: "感謝反方四辯精彩的發言，接著請正方四辯上台總結，時間四分鐘。", timerLabel: "正方總結", graceEndAction: "auto_start" },
+            { 
+                name: "比賽結束", 
+                type: "announcement", 
+                script: "感謝正方四辯精彩的發言，主席宣布本場比賽到此告一段落。" 
+            }
+        ]
     },
     "新式奧瑞岡 (含結辯)": {
         "新式奧瑞岡三三三制": [
@@ -372,7 +427,7 @@ debateFormatGroups: {
             { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 180, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
             { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
         ],
-        "新式奧瑞岡三三三制(三分半)(無結辯)": [
+        "新式奧瑞岡三三三制(三分半，無結辯)": [
             { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
             { name: "正方一辯 申論", type: "speech_auto", duration: 210, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
             { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 210, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
@@ -404,7 +459,7 @@ debateFormatGroups: {
             { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 240, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
             { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
         ],
-        "新式奧瑞岡四四四制(四分半)(無結辯)": [
+        "新式奧瑞岡四四四制(四分半，無結辯)": [
             { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
             { name: "正方一辯 申論", type: "speech_auto", duration: 270, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
             { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
@@ -437,7 +492,7 @@ debateFormatGroups: {
             { name: "正方二辯 質詢 反方三辯", type: "speech_auto", duration: 300, script: "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
             { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
         ],
-        "新式奧瑞岡五五四制(五分半)(無結辯)": [
+        "新式奧瑞岡五五四制(五分半，無結辯)": [
             { name: "賽前準備", type: "announcement", duration: null, script: "歡迎來到本次辯論比賽。本次辯題為：「{{debate_topic}}」。正方代表隊是 {{positive_team_name}}，反方代表隊是 {{negative_team_name}}。比賽採新式奧瑞岡五五四制。", timerLabel: null },
             { name: "正方一辯 申論", type: "speech_auto", duration: 330, script: "準備時間結束。現在請正方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。", timerLabel: "申論時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
             { name: "反方二辯 質詢 正方一辯", type: "speech_auto", duration: 330, script: "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。", timerLabel: "質詢時間", graceEndAction: "auto_start", graceEndAction: "auto_start" },
@@ -454,6 +509,47 @@ debateFormatGroups: {
             { name: "比賽結束宣告", type: "announcement", duration: null, script: "感謝雙方結辯。本場比賽所有賽程到此結束。", timerLabel: null },
         ],
     },
+    "新加坡制": {
+        "新加坡制 (正方開場3min, 自由辯4min)": [
+            { name: "賽前介紹", type: "announcement", script: "歡迎各位。本次比賽採新加坡制，辯題為：「{{debate_topic}}」。正方為{{positive_team_name}}，反方為{{negative_team_name}}。" },
+            { name: "正方一辯 陳詞", type: "speech_auto", duration: 180, script: "請正方一辯上臺陳詞，時間三分鐘。", timerLabel: "正方一辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方一辯 陳詞", type: "speech_auto", duration: 180, script: "請反方一辯上臺陳詞，時間三分鐘。", timerLabel: "反方一辯 陳詞", graceEndAction: "auto_start" },
+            { name: "正方二辯 陳詞", type: "speech_auto", duration: 180, script: "請正方二辯上臺陳詞，時間三分鐘。", timerLabel: "正方二辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方二辯 陳詞", type: "speech_auto", duration: 180, script: "請反方二辯上臺陳詞，時間三分鐘。", timerLabel: "反方二辯 陳詞", graceEndAction: "auto_start" },
+            { name: "正方三辯 陳詞", type: "speech_auto", duration: 180, script: "請正方三辯上臺陳詞，時間三分鐘。", timerLabel: "正方三辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方三辯 陳詞", type: "speech_auto", duration: 180, script: "請反方三辯上臺陳詞，時間三分鐘。", timerLabel: "反方三辯 陳詞", graceEndAction: "auto_start" },
+            { name: "自由辯論", type: "free_debate", duration: 240, script: "接下來進入自由辯論環節，雙方各有四分鐘發言時間。" },
+            { name: "反方四辯 總結", type: "speech_auto", duration: 240, script: "請反方四辯上臺總結，時間四分鐘。", timerLabel: "反方總結", graceEndAction: "auto_start" },
+            { name: "正方四辯 總結", type: "speech_auto", duration: 240, script: "請正方四辯上臺總結，時間四分鐘。", timerLabel: "正方總結", graceEndAction: "auto_start" },
+            { name: "比賽結束", type: "announcement", script: "比賽結束，感謝各位。" }
+        ],
+        "新加坡制 (正方開場4min, 自由辯4min)": [
+            { name: "賽前介紹", type: "announcement", script: "歡迎各位。本次比賽採新加坡制，辯題為：「{{debate_topic}}」。正方為{{positive_team_name}}，反方為{{negative_team_name}}。" },
+            { name: "正方一辯 陳詞", type: "speech_auto", duration: 240, script: "請正方一辯上臺陳詞，時間四分鐘。", timerLabel: "正方一辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方一辯 陳詞", type: "speech_auto", duration: 180, script: "請反方一辯上臺陳詞，時間三分鐘。", timerLabel: "反方一辯 陳詞", graceEndAction: "auto_start" },
+            { name: "正方二辯 陳詞", type: "speech_auto", duration: 180, script: "請正方二辯上臺陳詞，時間三分鐘。", timerLabel: "正方二辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方二辯 陳詞", type: "speech_auto", duration: 180, script: "請反方二辯上臺陳詞，時間三分鐘。", timerLabel: "反方二辯 陳詞", graceEndAction: "auto_start" },
+            { name: "正方三辯 陳詞", type: "speech_auto", duration: 180, script: "請正方三辯上臺陳詞，時間三分鐘。", timerLabel: "正方三辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方三辯 陳詞", type: "speech_auto", duration: 180, script: "請反方三辯上臺陳詞，時間三分鐘。", timerLabel: "反方三辯 陳詞", graceEndAction: "auto_start" },
+            { name: "自由辯論", type: "free_debate", duration: 240, script: "接下來進入自由辯論環節，雙方各有四分鐘發言時間。" },
+            { name: "反方四辯 總結", type: "speech_auto", duration: 240, script: "請反方四辯上臺總結，時間四分鐘。", timerLabel: "反方總結", graceEndAction: "auto_start" },
+            { name: "正方四辯 總結", type: "speech_auto", duration: 240, script: "請正方四辯上臺總結，時間四分鐘。", timerLabel: "正方總結", graceEndAction: "auto_start" },
+            { name: "比賽結束", type: "announcement", script: "比賽結束，感謝各位。" }
+        ],
+         "新加坡制 (正方開場4min, 自由辯5min)": [
+            { name: "賽前介紹", type: "announcement", script: "歡迎各位。本次比賽採新加坡制，辯題為：「{{debate_topic}}」。正方為{{positive_team_name}}，反方為{{negative_team_name}}。" },
+            { name: "正方一辯 陳詞", type: "speech_auto", duration: 240, script: "請正方一辯上臺陳詞，時間四分鐘。", timerLabel: "正方一辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方一辯 陳詞", type: "speech_auto", duration: 180, script: "請反方一辯上臺陳詞，時間三分鐘。", timerLabel: "反方一辯 陳詞", graceEndAction: "auto_start" },
+            { name: "正方二辯 陳詞", type: "speech_auto", duration: 180, script: "請正方二辯上臺陳詞，時間三分鐘。", timerLabel: "正方二辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方二辯 陳詞", type: "speech_auto", duration: 180, script: "請反方二辯上臺陳詞，時間三分鐘。", timerLabel: "反方二辯 陳詞", graceEndAction: "auto_start" },
+            { name: "正方三辯 陳詞", type: "speech_auto", duration: 180, script: "請正方三辯上臺陳詞，時間三分鐘。", timerLabel: "正方三辯 陳詞", graceEndAction: "auto_start" },
+            { name: "反方三辯 陳詞", type: "speech_auto", duration: 180, script: "請反方三辯上臺陳詞，時間三分鐘。", timerLabel: "反方三辯 陳詞", graceEndAction: "auto_start" },
+            { name: "自由辯論", type: "free_debate", duration: 300, script: "接下來進入自由辯論環節，雙方各有五分鐘發言時間。" },
+            { name: "反方四辯 總結", type: "speech_auto", duration: 240, script: "請反方四辯上臺總結，時間四分鐘。", timerLabel: "反方總結", graceEndAction: "auto_start" },
+            { name: "正方四辯 總結", type: "speech_auto", duration: 240, script: "請正方四辯上臺總結，時間四分鐘。", timerLabel: "正方總結", graceEndAction: "auto_start" },
+            { name: "比賽結束", type: "announcement", script: "比賽結束，感謝各位。" }
+        ]
+    },
 },
 
         // --- CORE METHODS ---
@@ -463,7 +559,8 @@ debateFormatGroups: {
             if (this.pipCanvas) { // New
                 this.pipCtx = this.pipCanvas.getContext('2d');
             }
-            this.showPromotionModal();
+            //this.showPromotionModal();
+            this.checkForSharedFlow()
             this.initAudioRecording();
             this.initSpeechRecognition();
             this.initSpeechSynthesis();
@@ -538,30 +635,54 @@ debateFormatGroups: {
         },
 
         handleKeyDown(e) {
-            // Don't trigger shortcuts if user is typing in an input/textarea
+            // --- 基本防呆：避免在輸入文字時觸發快捷鍵 ---
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 return;
             }
-            // Don't trigger shortcuts if a modal is open, except for Escape
             const isModalOpen = !!document.querySelector('.modal-container');
             if (isModalOpen && e.key !== 'Escape') {
                 return;
             }
 
+            // --- [新增] 自由辯論環節的專屬快捷鍵邏輯 ---
+            const currentStage = this.state.currentFlow[this.state.currentStageIndex];
+            if (currentStage && currentStage.type === 'free_debate' && (e.key === ' ' || e.code === 'Space')) {
+                e.preventDefault(); // 防止頁面滾動
+
+                const { freeDebate } = this.state;
+                const { activeTeam, isPaused, positiveTimeLeft, negativeTimeLeft } = freeDebate;
+
+                // 判斷是否可以切換 (對方時間 > 0 且計時器未暫停)
+                const canSwitch = !isPaused && (
+                    (activeTeam === 'positive' && negativeTimeLeft > 0) ||
+                    (activeTeam === 'negative' && positiveTimeLeft > 0) ||
+                    activeTeam === null // 處理其中一方時間用完後，另一方仍可繼續發言的情況
+                );
+
+                if (canSwitch && freeDebate.firstSpeakerSelected) {
+                    this.switchFreeDebateTeam();
+                }
+                
+                // 處理完畢後必須 return，避免觸發下方通用的空白鍵「暫停」邏輯
+                return; 
+            }
+
+            // --- 原有的通用快捷鍵邏輯 ---
             const key = e.key.toUpperCase();
             
-            // Actions specific to the debate view
+            // 一般辯論畫面的快捷鍵
             if (this.state.currentView === 'debate') {
                 switch(key) {
-                    case 'B': // <-- 新增這個 case
+                    case 'B':
                         document.querySelector('[data-action="previousStage"]:not([disabled])')?.click();
-                        break;                      
+                        break;
                     case 'N':
                         document.querySelector('[data-action="nextStage"]:not([disabled])')?.click();
                         break;
                     case ' ': // Spacebar
                     case 'P':
-                        e.preventDefault(); // Prevent spacebar from scrolling
+                        e.preventDefault();
+                        // 觸發標準計時器的暫停/繼續
                         document.querySelector('[data-action="togglePause"]')?.click();
                         break;
                     case 'A':
@@ -574,7 +695,7 @@ debateFormatGroups: {
                 }
             }
             
-            // Global actions
+            // 全局快捷鍵
             switch(key) {
                 case 'I':
                     this.actions.togglePip();
@@ -590,9 +711,9 @@ debateFormatGroups: {
                     break;
                 case '?':
                 case '/':
-                     e.preventDefault();
-                     this.actions.showShortcutHelp();
-                     break;
+                    e.preventDefault();
+                    this.actions.showShortcutHelp();
+                    break;
                 case 'ESCAPE':
                     const modal = document.querySelector('.modal-container');
                     const sidebar = document.getElementById('sidebar');
@@ -607,6 +728,14 @@ debateFormatGroups: {
         
         // --- ACTIONS ---
         actions: {
+            toggleMicMute() { App.toggleMicMute(); },
+            startFreeDebate(e) { 
+            const team = e.target.closest('[data-team]').dataset.team;
+            App.startFreeDebateTimer(team);
+                },
+            switchFreeDebate() { App.switchFreeDebateTeam(); },
+            togglePauseFreeDebate() { App.togglePauseFreeDebate(); },
+            resetFreeDebateStage() { App.resetFreeDebateStage(); },
             startRecording() { App.startRecording(); },
             stopRecording() { App.stopRecording(); },
             downloadAudio() { App.downloadAudio(); },
@@ -682,6 +811,42 @@ debateFormatGroups: {
                 App.render();
                 App.actions.nextStage();
             },
+            shareFlow() {
+            if (App.state.currentFlow.length === 0) {
+                App.showNotification("流程是空的，無法分享", "error");
+                return;
+            }
+            try {
+                const flowString = JSON.stringify(App.state.currentFlow);
+                const encodedData = btoa(unescape(encodeURIComponent(flowString))); // 處理中文字元的 Base64 編碼
+                const shareUrl = `${window.location.origin}${window.location.pathname}?flow=${encodedData}`;
+
+                App.renderModal({
+                    title: '分享您的自訂流程',
+                    body: `
+                        <p class="text-slate-600 dark:text-slate-300 mb-4">複製下方的連結並傳送給其他人。他們點開連結後即可使用您設計的流程。</p>
+                        <input type="text" readonly value="${shareUrl}" id="shareUrlInput" class="form-element w-full p-2 border rounded-md font-mono text-sm break-all">
+                    `,
+                    footer: `<button data-action="copyShareUrl" class="px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">複製連結</button>`
+                });
+            } catch (e) {
+                console.error("Error generating share link:", e);
+                App.showNotification("產生分享連結時發生錯誤", "error");
+                }
+            },
+
+            copyShareUrl() {
+                const input = document.getElementById('shareUrlInput');
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(input.value)
+                        .then(() => App.showNotification("連結已複製！", "success"))
+                        .catch(err => App.showNotification("複製失敗", "error"));
+                } else {
+                    input.select();
+                    document.execCommand('copy');
+                    App.showNotification("連結已複製！", "success");
+                }
+            },
             nextStage() {
             // 【新增】針對 iOS 抽籤後手動點擊的特殊處理
                 const currentStage = App.state.currentFlow[App.state.currentStageIndex];
@@ -733,23 +898,25 @@ debateFormatGroups: {
                 App.clearAllTimers();
                 App.stopRecognition();
 
-                // [FIXED] 檢查並撤銷目前階段的動作計數
+                // 檢查並撤銷目前階段的動作計數
                 const stageToUndo = App.state.currentFlow[App.state.currentStageIndex];
                 if (stageToUndo && stageToUndo.type === 'choice_speech' && stageToUndo.executedAction) {
                     const team = stageToUndo.choosingTeam;
                     const actionToUndo = stageToUndo.executedAction;
                     
-                    if (team === 'positive' && App.state.positiveActionCounts[actionToUndo] > 0) {
-                        App.state.positiveActionCounts[actionToUndo]--;
-                    } else if (team === 'negative' && App.state.negativeActionCounts[actionToUndo] > 0) {
-                        App.state.negativeActionCounts[actionToUndo]--;
+                    const counts = (team === 'positive') ? App.state.positiveActionCounts : App.state.negativeActionCounts;
+                    
+                    if (counts[actionToUndo] > 0) {
+                        counts[actionToUndo]--;
                     }
                     
+                    // 清除已執行的動作紀錄，以便重新選擇
                     delete stageToUndo.executedAction;
                 }
 
                 App.state.currentStageIndex--;
 
+                // 如果返回到抽籤階段之前，則清除抽籤結果
                 const hasDrawStageOccurred = App.state.currentFlow.slice(0, App.state.currentStageIndex + 1).some(s => s.type === 'draw_rebuttal_order');
                 if (!hasDrawStageOccurred) {
                     App.state.rebuttalOrder = null;
@@ -760,7 +927,7 @@ debateFormatGroups: {
                 setTimeout(() => {
                     App.state.isAdvancingStage = false;
                 }, 500);
-            },                
+},            
             togglePause() {
                 App.state.timer.isPaused = !App.state.timer.isPaused;
                 if (App.state.timer.isPaused) {
@@ -814,13 +981,13 @@ debateFormatGroups: {
                 if (selectedFormatName === "CUSTOM_EMPTY") {
                     App.state.currentFlow = [];
                 } else {
-                const format = App.getDebateFormat(selectedFormatName);
-                App.state.currentFlow = JSON.parse(JSON.stringify(format || []));
-            }
-            App.state.originalFlowBeforeEdit = JSON.parse(JSON.stringify(App.state.currentFlow));
-            App.state.currentView = 'editor';
-            App.render();
-        },
+                    const format = App.getDebateFormat(selectedFormatName);
+                    App.state.currentFlow = JSON.parse(JSON.stringify(format || []));
+                }
+                App.state.originalFlowBeforeEdit = JSON.parse(JSON.stringify(App.state.currentFlow));
+                App.state.currentView = 'editor';
+                App.render();
+            },
             closeEditor() {
                 App.renderModal({
                     title: '確認取消編輯',
@@ -1145,6 +1312,13 @@ debateFormatGroups: {
         },
         
         router() {
+            // 優先判斷是否為自由辯論模式
+            const currentStage = this.state.currentFlow[this.state.currentStageIndex];
+            if (currentStage && currentStage.type === 'free_debate') {
+                this.renderFreeDebateView();
+                return; // 中斷後續執行，避免被其他 view 覆蓋
+            }
+
             switch (this.state.currentView) {
                 case 'setup':
                     this.renderSetupView();
@@ -1159,17 +1333,29 @@ debateFormatGroups: {
                     this.renderEditorView();
                     break;
             }
-            if (this.state.pip.isActive) { // New: Update PiP when view changes
+            if (this.state.pip.isActive) {
                 this.renderPipCanvas();
             }
         },
 
-// [REPLACE] 請替換掉整個 renderSetupView 函式
-
-renderSetupView() {
+    renderSetupView() {
     // Generate categorized options
-    let formatOptions = '';
+    let formatOptions = `
+        <optgroup label="自訂流程">
+            <option value="CUSTOM_EMPTY">從零開始新增一個空白流程</option>
+        </optgroup>
+    `;
+    // 加入分享的流程群組 (如果存在)
+    if (this.debateFormatGroups['分享的流程']) {
+        formatOptions += `<optgroup label="分享的流程">`;
+        formatOptions += Object.keys(this.debateFormatGroups['分享的流程'])
+            .map(name => `<option value="${name}">${name}</option>`)
+            .join('');
+        formatOptions += `</optgroup>`;
+    }
+
     for (const groupName in this.debateFormatGroups) {
+        if (groupName === '分享的流程') continue; // 避免重複渲染
         const formats = this.debateFormatGroups[groupName];
         if (Object.keys(formats).length > 0) {
             formatOptions += `<optgroup label="${groupName}">`;
@@ -1248,7 +1434,19 @@ renderSetupView() {
         </div>
         ${this.renderPromotionArea()}
     `;
-    // Trigger change event to show/hide player section correctly on first render
+    
+    // 渲染後，檢查是否有待處理的分享流程需要被選定
+    if (this.state.pendingSharedFlow) {
+        setTimeout(() => {
+            const formatSelect = document.getElementById('formatSelect');
+            if (formatSelect) {
+                formatSelect.value = this.state.pendingSharedFlow;
+            }
+            delete this.state.pendingSharedFlow; // 處理完畢後刪除
+        }, 0);
+    }
+
+    // Trigger change event to show/hide player section correctly
     const formatSelect = document.getElementById('formatSelect');
     if (formatSelect) {
         formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1313,6 +1511,218 @@ renderSetupView() {
             this.renderTranscriptionPanel();
         },
 
+
+
+// [REPLACE] 請用這段完整的程式碼替換掉您檔案中現有的 renderFreeDebateView() 函式
+
+    renderFreeDebateView() {
+        const { freeDebate, positiveTeamName, negativeTeamName } = this.state;
+        const { positiveTimeLeft, negativeTimeLeft, initialDuration, activeTeam, isPaused } = freeDebate;
+
+        const positiveProgress = (positiveTimeLeft / initialDuration) * 100;
+        const negativeProgress = (negativeTimeLeft / initialDuration) * 100;
+        
+        // 建立與標準辯論視圖相同的容器結構
+        this.mainContent.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div id="debateInfoContainer"></div>
+                    <div id="stageContainer" class="min-h-[10rem]"></div>
+                    <div id="timerContainer"></div>
+                    <div id="debateControlsContainer"></div>
+                </div>
+                <div class="space-y-6">
+                    <div id="transcriptionPanel" class="glass-card rounded-2xl shadow-lg overflow-hidden"></div>
+                </div>
+            </div>
+            ${this.renderPromotionArea()} 
+        `; // <-- 已在此處加入宣傳區塊
+
+        // 填充各個容器
+        // 1. 填充比賽資訊
+        document.getElementById('debateInfoContainer').innerHTML = `
+            <div class="glass-card p-4 rounded-2xl shadow-lg">
+                <p class="text-center font-semibold text-lg">${this.state.debateTopic}</p>
+                <p class="text-center text-sm text-slate-500">
+                    <span class="font-medium text-green-600">${positiveTeamName}</span> vs 
+                    <span class="font-medium text-red-600">${negativeTeamName}</span>
+                </p>
+            </div>
+        `;
+
+        // 2. 填充階段說明
+        document.getElementById('stageContainer').innerHTML = `
+            <div class="glass-card p-6 rounded-2xl shadow-lg">
+                <h3 class="font-bold text-xl mb-2">${this.interpolateScript(freeDebate.stage.name)}</h3>
+                <p class="text-slate-600 dark:text-slate-300">${this.interpolateScript(freeDebate.stage.script)}</p>
+            </div>
+        `;
+
+        // 3. 填充自由辯的雙計時器
+        document.getElementById('timerContainer').innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-6 rounded-2xl text-center ${activeTeam === 'positive' && !isPaused ? 'ring-4 ring-green-500' : ''}">
+                    <p class="font-semibold text-green-600">${positiveTeamName}</p>
+                    <div class="font-mono font-extrabold text-6xl my-4">${this.formatTime(positiveTimeLeft)}</div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5"><div class="bg-green-600 h-2.5 rounded-full" style="width: ${positiveProgress}%"></div></div>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center ${activeTeam === 'negative' && !isPaused ? 'ring-4 ring-red-500' : ''}">
+                    <p class="font-semibold text-red-600">${negativeTeamName}</p>
+                    <div class="font-mono font-extrabold text-6xl my-4">${this.formatTime(negativeTimeLeft)}</div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5"><div class="bg-red-600 h-2.5 rounded-full" style="width: ${negativeProgress}%"></div></div>
+                </div>
+            </div>
+        `;
+
+        // 4. 呼叫專用的函式來渲染控制按鈕
+        this.renderFreeDebateControls();
+        
+        // 5. 渲染右側的語音紀錄面板
+        this.renderTranscriptionPanel();
+    },
+    // [ADD THIS NEW FUNCTION to your App object, near the other render...Controls functions]
+
+    renderFreeDebateControls() {
+        const container = document.getElementById('debateControlsContainer');
+        if (!container) return;
+
+        // --- 獲取所有需要的狀態 ---
+        const { freeDebate, positiveTeamName, negativeTeamName, isAutoMode, currentStageIndex, currentFlow, recording } = this.state;
+        const { isPaused, firstSpeakerSelected, activeTeam, positiveTimeLeft, negativeTimeLeft } = freeDebate;
+        const { isMicMuted, micAudioTrack } = recording;
+
+        // --- 按鈕顯示邏輯判斷 ---
+        const isTimerRunning = !!freeDebate.interval;
+        const prevBtnDisabled = currentStageIndex <= 0 || (isTimerRunning && !isPaused);
+        const nextBtnDisabled = (isTimerRunning && !isPaused);
+        const autoModeChecked = isAutoMode ? 'checked' : '';
+
+        // 麥克風靜音按鈕的圖示邏輯
+        const muteIcon = isMicMuted 
+            ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`
+            : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
+
+        let mainControlsHTML = '';
+        if (!firstSpeakerSelected) {
+            // 情況一：尚未選擇首位發言者
+            mainControlsHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <button data-action="startFreeDebate" data-team="positive" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-lg transition-colors">
+                        ${positiveTeamName} 首先發言
+                    </button>
+                    <button data-action="startFreeDebate" data-team="negative" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 rounded-lg transition-colors">
+                        ${negativeTeamName} 首先發言
+                    </button>
+                </div>`;
+        } else {
+            // 情況二：比賽進行中
+            const switchBtnColor = activeTeam === 'positive' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
+            const switchBtnText = activeTeam === 'positive' ? `切換為 ${negativeTeamName}` : `切換為 ${positiveTeamName}`;
+            const canSwitch = (activeTeam === 'positive' && negativeTimeLeft > 0) || (activeTeam === 'negative' && positiveTimeLeft > 0) || activeTeam === null;
+            
+            mainControlsHTML = `
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <button data-action="switchFreeDebate" class="flex-grow ${switchBtnColor} text-white font-bold py-4 px-8 text-xl rounded-lg transition-transform transform hover:scale-105 shadow-md ${!canSwitch || isPaused ? 'opacity-50 cursor-not-allowed' : ''}" ${!canSwitch || isPaused ? 'disabled' : ''}>
+                        ${switchBtnText}
+                    </button>
+                    <button data-action="togglePauseFreeDebate" class="text-white bg-amber-500 hover:bg-amber-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200">
+                        ${isPaused ? '繼續' : '暫停'}
+                    </button>
+                </div>`;
+        }
+
+        container.innerHTML = `
+            ${mainControlsHTML}
+
+            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
+                <button data-action="previousStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${prevBtnDisabled ? 'disabled' : ''}>&larr; 上一階段</button>
+                <button data-action="nextStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${nextBtnDisabled ? 'disabled' : ''}>下一階段 &rarr;</button>
+                
+                <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
+                    ${muteIcon}
+                </button>
+
+                <button data-action="resetFreeDebateStage" class="text-sm text-slate-500 hover:text-red-500">重設環節</button>
+                <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
+                
+                <div class="flex items-center gap-2 text-sm font-medium">
+                    <span>自動模式</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+            </div>
+        `;
+    },
+
+    startFreeDebateTimer(team) {
+        const { freeDebate } = this.state;
+        if ((team === 'positive' && freeDebate.positiveTimeLeft <= 0) || (team === 'negative' && freeDebate.negativeTimeLeft <= 0)) {
+            return; // 時間用完，不能開始
+        }
+        
+        clearInterval(freeDebate.interval);
+        freeDebate.activeTeam = team;
+        freeDebate.isPaused = false;
+        if (!freeDebate.firstSpeakerSelected) freeDebate.firstSpeakerSelected = true;
+
+        freeDebate.interval = setInterval(() => this.runFreeDebateInterval(), 1000);
+        this.renderFreeDebateView();
+    },
+
+    runFreeDebateInterval() {
+        const { freeDebate } = this.state;
+        if (freeDebate.isPaused) return;
+
+        if (freeDebate.activeTeam === 'positive') {
+            freeDebate.positiveTimeLeft--;
+        } else if (freeDebate.activeTeam === 'negative') {
+            freeDebate.negativeTimeLeft--;
+        }
+
+        this.updateFreeDebateDisplay();
+
+        const timeLeft = freeDebate.activeTeam === 'positive' ? freeDebate.positiveTimeLeft : freeDebate.negativeTimeLeft;
+        if (timeLeft <= 0) {
+            this.playRingSound(3);
+            clearInterval(freeDebate.interval);
+            freeDebate.interval = null;
+            const finishedTeam = freeDebate.activeTeam === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName;
+            this.showNotification(`${finishedTeam} 時間已用完`, 'info');
+            freeDebate.activeTeam = null;
+            this.renderFreeDebateView();
+        }
+    },
+
+    updateFreeDebateDisplay() {
+        // 減少重繪，只更新數字
+        const posTimer = this.mainContent.querySelector('.glass-card:nth-child(1) .font-mono');
+        const negTimer = this.mainContent.querySelector('.glass-card:nth-child(2) .font-mono');
+        if (posTimer) posTimer.textContent = this.formatTime(this.state.freeDebate.positiveTimeLeft);
+        if (negTimer) negTimer.textContent = this.formatTime(this.state.freeDebate.negativeTimeLeft);
+    },
+
+    switchFreeDebateTeam() {
+        const nextTeam = this.state.freeDebate.activeTeam === 'positive' ? 'negative' : 'positive';
+        this.startFreeDebateTimer(nextTeam);
+    },
+
+    togglePauseFreeDebate() {
+        const { freeDebate } = this.state;
+        freeDebate.isPaused = !freeDebate.isPaused;
+        
+        if (freeDebate.isPaused) {
+            clearInterval(freeDebate.interval);
+        } else if (freeDebate.activeTeam) {
+            freeDebate.interval = setInterval(() => this.runFreeDebateInterval(), 1000);
+        }
+        this.renderFreeDebateView();
+    },
+
+    resetFreeDebate() {
+        this.loadStage(this.state.currentStageIndex); // 重新載入當前階段即可重設
+    },
         
         renderDebateStage() {
             const stage = this.state.currentFlow[this.state.currentStageIndex];
@@ -1376,23 +1786,36 @@ renderSetupView() {
         
         renderDebateControls() {
             const container = document.getElementById('debateControlsContainer');
-            if(!container) return;
+            if (!container) return;
+
+            // --- 獲取所有需要的狀態 ---
+            const { timer, currentStageIndex, currentFlow, isAutoMode, recording } = this.state;
+            const isPaused = timer.isPaused;
+            const stage = currentFlow[currentStageIndex];
             
-            const isPaused = this.state.timer.isPaused;
-            const stage = this.state.currentFlow[this.state.currentStageIndex];
-            const canShowNext = this.state.currentStageIndex < this.state.currentFlow.length -1;
-            const showManualStart = stage && stage.type === 'manual_prep' && this.state.timer.type !== 'manual_prep';
-            const showForceStart = stage && (stage.type === 'speech_auto' || stage.type === 'choice_speech') && this.state.timer.type === 'grace' && !this.state.mainSpeechTimerStartedByGrace;
-            const isLastStage = this.state.currentStageIndex >= this.state.currentFlow.length - 1;
-            const isTimerRunning = this.state.timer.interval || this.state.timer.graceInterval;
+            // 錄音與靜音相關狀態
+            const { isMicMuted, micAudioTrack } = recording;
+
+            // --- 按鈕顯示邏輯判斷 ---
+            const canShowNext = currentStageIndex < currentFlow.length - 1;
+            const showManualStart = stage && stage.type === 'manual_prep' && timer.type !== 'manual_prep';
+            const showForceStart = stage && (stage.type === 'speech_auto' || stage.type === 'choice_speech') && timer.type === 'grace' && !this.state.mainSpeechTimerStartedByGrace;
+            const isLastStage = currentStageIndex >= currentFlow.length - 1;
+            const isTimerRunning = timer.interval || timer.graceInterval;
             const drawNotCompleted = stage && stage.type === 'draw_rebuttal_order' && !this.state.rebuttalOrder;
+            
             const nextBtnDisabled = (isTimerRunning && !isPaused) || isLastStage || drawNotCompleted;
-            const autoModeChecked = this.state.isAutoMode ? 'checked' : '';
-            const prevBtnDisabled = this.state.currentStageIndex <= 0 || (isTimerRunning && !isPaused);
+            const prevBtnDisabled = currentStageIndex <= 0 || (isTimerRunning && !isPaused);
+            const autoModeChecked = isAutoMode ? 'checked' : '';
+
+            // [新增] 麥克風靜音按鈕的圖示邏輯
+            const muteIcon = isMicMuted 
+                ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`
+                : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
 
             container.innerHTML = `
                 <div class="flex flex-wrap items-center justify-center gap-4">
-                    <button data-action="previousStage" class="flex-grow text-white bg-slate-500 hover:bg-slate-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 flex items-center justify-center gap-2 ${this.state.currentStageIndex <= 0 ? 'hidden' : ''} ${prevBtnDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${prevBtnDisabled ? 'disabled' : ''}>
+                    <button data-action="previousStage" class="flex-grow text-white bg-slate-500 hover:bg-slate-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 flex items-center justify-center gap-2 ${currentStageIndex <= 0 ? 'hidden' : ''} ${prevBtnDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${prevBtnDisabled ? 'disabled' : ''}>
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                         上一階段
                     </button>
@@ -1401,26 +1824,29 @@ renderSetupView() {
                         下一階段
                     </button>
                     <button data-action="togglePause" class="flex-grow text-white bg-amber-500 hover:bg-amber-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 flex items-center justify-center gap-2 ${!isTimerRunning ? 'hidden' : ''}">
-                       ${isPaused ? '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>繼續' : '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>暫停'}
+                        ${isPaused ? '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>繼續' : '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>暫停'}
                     </button>
-                     <button data-action="manualStartTimer" class="btn-secondary flex-grow font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${showManualStart ? '' : 'hidden'}">
-                         開始${this.interpolateScript(stage?.timerLabel)}
-                       </button>
-                       <button data-action="forceStartMainTimer" class="btn-secondary flex-grow font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${showForceStart ? '' : 'hidden'}">
-                         強制開始計時
-                       </button>
+                    <button data-action="manualStartTimer" class="btn-secondary flex-grow font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${showManualStart ? '' : 'hidden'}">
+                        開始${this.interpolateScript(stage?.timerLabel)}
+                    </button>
+                    <button data-action="forceStartMainTimer" class="btn-secondary flex-grow font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${showForceStart ? '' : 'hidden'}">
+                        強制開始計時
+                    </button>
                 </div>
-                 <div class="flex items-center justify-center gap-6 pt-4">
-                       <button data-action="togglePip" title="畫中畫模式" class="text-sm text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400">畫中畫</button>
-                       <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設</button>
-                       <div class="flex items-center gap-2 text-sm font-medium">
-                           <span>自動模式</span>
-                           <label class="relative inline-flex items-center cursor-pointer">
-                               <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                           </label>
-                       </div>
-                 </div>
+                <div class="flex items-center justify-center gap-6 pt-4">
+                    <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
+                        ${muteIcon} ${isMicMuted ? '取消靜音' : '靜音'}
+                    </button>
+                    <button data-action="togglePip" title="畫中畫模式" class="text-sm font-medium text-slate-500 hover:text-indigo-600">畫中畫</button>
+                    <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
+                    <div class="flex items-center gap-2 text-sm font-medium">
+                        <span>自動模式</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                        </label>
+                    </div>
+                </div>
             `;
         },
         
@@ -1585,12 +2011,16 @@ renderSetupView() {
                     </div>
 
                     <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6">
-                         <button data-action="addStage" class="btn-secondary w-full sm:w-auto px-6 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                             新增階段
-                         </button>
+                        <button data-action="addStage" class="btn-secondary w-full sm:w-auto px-6 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            新增階段
+                        </button>
+                        <button data-action="shareFlow" class="btn-secondary w-full sm:w-auto px-6 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 4.186m0-4.186c.004-.005.008-.01.012-.015M7.217 10.907c0-.005.008-.01.012-.015m1.734-4.06c.005-.005.01-.01.016-.015m0 0a2.25 2.25 0 100 4.186m0-4.186c-.005.005-.01.01-.016.015m9.744 0c.005-.005.01-.01.016-.015m0 0a2.25 2.25 0 100 4.186m0-4.186c-.005.005-.01.01-.016.015M12 5.25v.015m0 7.485v.015m0 7.485v.015" /></svg>
+                            分享流程
+                        </button>
                         <button data-action="saveAndCloseEditor" class="w-full sm:w-auto px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">儲存並返回</button>
-                        <button data-action="closeEditor" class="btn-secondary w-full sm:w-auto px-6 py-2 rounded-lg transition-colors">取消</button>
+                        <button data-action="closeEditor" class="w-full sm:w-auto px-6 py-2 rounded-lg transition-colors">取消</button>
                     </div>
                 </div>
             `;
@@ -1663,6 +2093,7 @@ renderSetupView() {
                 { value: 'manual_prep', text: '⏱️ 手動準備計時' },
                 { value: 'speech_auto', text: '🎤 自動發言計時' },
                 { value: 'choice_speech', text: '🗣️ 選擇性發言' },
+                { value: 'free_debate', text: '⚖️ 自由辯論' },
             ];
 
             const formFields = `
@@ -1695,7 +2126,7 @@ renderSetupView() {
                 const container = document.getElementById('dynamic-fields-container');
                 let html = '';
                 const inputClasses = "form-element w-full p-2 border rounded-md";
-                if (['manual_prep', 'speech_auto', 'choice_speech'].includes(type)) {
+                if (['manual_prep', 'speech_auto', 'choice_speech', 'free_debate'].includes(type)) {
                     html += `<div><label class="block text-sm font-medium mb-1">主要時長 (秒)</label><input name="duration" type="number" class="${inputClasses}" value="${current.duration || ''}"></div>`;
                 }
                 if (['manual_prep', 'speech_auto'].includes(type)) {
@@ -1705,7 +2136,7 @@ renderSetupView() {
                     html += `<div><label class="block text-sm font-medium mb-1">語音緩衝期 (秒)</label><input name="graceDuration" type="number" class="${inputClasses}" value="${current.graceDuration || ''}"></div>`;
                     html += `<div><label class="block text-sm font-medium mb-1">緩衝期結束動作</label><select name="graceEndAction" class="${inputClasses}"><option value="auto_start" ${current.graceEndAction === 'auto_start' ? 'selected' : ''}>自動開始</option><option value="manual_start" ${current.graceEndAction === 'manual_start' ? 'selected' : ''}>手動開始</option><option value="auto_skip" ${current.graceEndAction === 'auto_skip' ? 'selected' : ''}>自動跳過</option></select></div>`;
                 }
-                 if (type === 'choice_speech') {
+                    if (type === 'choice_speech') {
                     html += `<div><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div>`;
                     html += `<div><label class="block text-sm font-medium mb-1">可選動作 (逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
                     html += `<div><label class="block text-sm font-medium mb-1">基礎講稿</label><textarea name="baseScript" class="${inputClasses}">${current.baseScript || ''}</textarea></div>`;
@@ -2086,6 +2517,37 @@ renderSetupView() {
             }
             return null;
         },
+        checkForSharedFlow() {
+            const params = new URLSearchParams(window.location.search);
+            const flowData = params.get('flow');
+
+            if (flowData) {
+                try {
+                    const decodedString = decodeURIComponent(escape(atob(flowData))); // 處理中文字元的 Base64 解碼
+                    const sharedFlow = JSON.parse(decodedString);
+
+                    if (Array.isArray(sharedFlow)) {
+                        const flowName = `分享的流程 (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+                        
+                        if (!App.debateFormatGroups['分享的流程']) {
+                            App.debateFormatGroups['分享的流程'] = {};
+                        }
+                        App.debateFormatGroups['分享的流程'][flowName] = sharedFlow;
+                        
+                        // 為了讓使用者看到效果，我們暫存名稱，待 renderSetupView 後再選定
+                        this.state.pendingSharedFlow = flowName;
+                        
+                        // 清理 URL，避免使用者重新整理時再次載入
+                        history.replaceState(null, '', window.location.pathname);
+                        App.showNotification(`已成功載入 "${flowName}"`, "success");
+                    }
+                } catch (e) {
+                    console.error("Error parsing shared flow:", e);
+                    App.showNotification("載入分享的流程失敗，連結可能已損毀。", "error");
+                    history.replaceState(null, '', window.location.pathname); // 載入失敗也清理 URL
+                }
+            }
+        },
         showNotification(message, type = 'info', duration = 3000) {
             const container = document.getElementById('notification-container');
             const a = { info: 'bg-blue-500', success: 'bg-green-500', error: 'bg-red-500' };
@@ -2253,13 +2715,48 @@ renderSetupView() {
         loadStage(index) {
             const stage = this.state.currentFlow[index];
             if (!stage) return;
+
+            // [MODIFIED] 優先處理 free_debate 這種特殊介面的階段類型
+            if (stage.type === 'free_debate') {
+                // 1. 初始化或重設自由辯論的狀態
+                const duration = stage.duration || 240; // 如果賽制沒寫時間，預設為4分鐘
+                this.state.freeDebate = {
+                    stage: stage,
+                    initialDuration: duration,
+                    positiveTimeLeft: duration,
+                    negativeTimeLeft: duration,
+                    activeTeam: null,
+                    interval: null,
+                    isPaused: false,
+                    firstSpeakerSelected: false,
+                };
+                // 清除可能殘留的計時器
+                clearInterval(this.state.freeDebate.interval);
+
+                // 2. 透過 router 渲染自由辯論的專用介面
+                this.router();
+
+                // 3. 朗讀該階段的提示語
+                this.speak(this.interpolateScript(stage.script));
+                
+                // 4. 處理完畢，中斷後續執行
+                return; 
+            }
+
+            // --- 以下為處理一般辯論階段的既有邏輯 ---
             
-            this.renderDebateStage(); // Render initial stage UI first
-            if (this.state.pip.isActive) { // New: Update PiP on stage change
+            // 如果前一個階段是自由辯論，確保將視圖切換回標準辯論介面
+            if (this.state.currentView !== 'debate') {
+                this.state.currentView = 'debate';
+            }
+
+            // 渲染標準辯論介面
+            this.renderDebateStage(); 
+            if (this.state.pip.isActive) {
                 this.renderPipCanvas();
             }
 
-            // Async function to handle the stage logic
+            // 異步執行階段的具體行為 (朗讀、計時等)
             const executeStage = async () => {
                 let choiceResult = {};
                 
@@ -2268,30 +2765,31 @@ renderSetupView() {
                         choiceResult = await this.getStageChoice(stage);
                     } catch(e) {
                         console.error("Choice was cancelled or failed", e);
-                        // If choice fails, we might want to halt or go to next stage
                         if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
-                        return; // Stop processing this stage
+                        return; // 中斷執行
                     }
                 }
 
                 const speakCallback = () => {
                     const timerLabel = this.interpolateScript(stage.timerLabel || stage.baseTimerLabel, choiceResult);
                     switch (stage.type) {
-                        case 'speech_auto': this.startGracePeriodTimer(stage, timerLabel); break;
-                        case 'manual_prep': 
+                        case 'speech_auto': 
+                            this.startGracePeriodTimer(stage, timerLabel); 
+                            break;
+                        case 'manual_prep': 
                             if(this.state.isAutoMode) {
                                 this.startManualPrepTimer(stage.duration);
                             } else {
                                 this.renderDebateControls();
                             }
                             break;
-                        case 'choice_speech': this.startGracePeriodTimer(stage, timerLabel); break;
+                        case 'choice_speech': 
+                            this.startGracePeriodTimer(stage, timerLabel); 
+                            break;
                         case 'announcement':
                             if(this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
                             break;
                         case 'draw_rebuttal_order':
-                            // In this stage, we always wait for the user to click the "startDraw" button.
-                            // Auto-mode advancement is handled within the startDraw action itself.
                             this.renderDebateControls();
                             break;
                     }
@@ -2310,43 +2808,37 @@ renderSetupView() {
 
                 const team = stage.choosingTeam;
 
-                // Handle fixed actions like "立論"
+                // 處理固定的動作，例如 "立論"
                 if (stage.fixedAction) {
                     const selectedAction = stage.fixedAction;
 
-                    // [FIXED] Increment count for fixed actions and store it for reversal
-                    if (team === 'positive') {
-                        this.state.positiveActionCounts[selectedAction]++;
-                    } else if (team === 'negative') {
-                        this.state.negativeActionCounts[selectedAction]++;
-                    }
+                    // 增加對應動作的計數
+                    const counts = (team === 'positive') ? this.state.positiveActionCounts : this.state.negativeActionCounts;
+                    counts[selectedAction]++;
+                    
+                    // 在當前階段物件中記錄已執行的動作，以便 "上一階段" 功能可以撤銷
                     const currentStageInFlow = this.state.currentFlow[this.state.currentStageIndex];
                     if (currentStageInFlow) {
                         currentStageInFlow.executedAction = selectedAction;
                     }
 
-                    // Pre-update UI before speaking
-                    const stageContainer = document.getElementById('stageContainer');
-                    stageContainer.innerHTML = `
-                        <div class="glass-card p-6 rounded-2xl shadow-lg">
-                            <h3 class="font-bold text-xl mb-2">${this.interpolateScript(stage.name)}</h3>
-                            <p class="text-slate-600 dark:text-slate-300">${this.interpolateScript(stage.baseScript, { selected_player: '辯士', selected_action_type: selectedAction })}</p>
-                        </div>`;
-                    const timerStatus = document.getElementById('timerStatus');
-                    if(timerStatus) timerStatus.textContent = this.interpolateScript(stage.baseTimerLabel, { selected_player: '辯士', selected_action_type: selectedAction });
-
+                    // 直接解析 Promise 並返回，不顯示選擇視窗
                     resolve({ selected_player: '辯士', selected_action_type: selectedAction });
-                    this.state.currentChoice = { stage: null, resolve: null };
+                    this.state.currentChoice = { stage: null, resolve: null }; // 清空選擇狀態
                     return;
                 }
                 
-                // For other rounds, show a modal to get user input based on counts.
+                // 處理需要彈出視窗讓使用者選擇的動作
                 const actionCounts = (team === 'positive') ? this.state.positiveActionCounts : this.state.negativeActionCounts;
                 
+                // 根據辯革盃規則（申論/質答各3次）產生按鈕
                 const optionsHTML = stage.actionChoices.map(action => {
                     const count = actionCounts[action] || 0;
-                    const isDisabled = count >= 3;
-                    return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-6 py-3 rounded-lg text-white font-semibold ${isDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} transition-colors" ${isDisabled ? 'disabled' : ''}>${action} (${3 - count}次)</button>`
+                    // 規則：申論最多3次，質答最多3次
+                    const isDisabled = (action === '申論' && count >= 3) || (action === '質答' && count >= 3);
+                    const remaining = (action === '申論') ? (3 - count) : (3 - count);
+
+                    return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-6 py-3 rounded-lg text-white font-semibold ${isDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} transition-colors" ${isDisabled ? 'disabled' : ''}>${action} (${remaining}次)</button>`
                 }).join('');
 
                 this.renderModal({
@@ -2386,6 +2878,12 @@ renderSetupView() {
 
             try {
                 this.state.recording.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const audioTrack = this.state.recording.mediaStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    this.state.recording.micAudioTrack = audioTrack;
+                    this.state.recording.isMicMuted = false; // 確保每次開始都是非靜音
+                    audioTrack.enabled = true; // 確保軌道是啟用的
+                }
                 this.state.recording.recordedChunks = [];
                 
                 const options = { mimeType: 'audio/webm; codecs=opus' };
@@ -2416,6 +2914,10 @@ renderSetupView() {
                 this.state.recording.mediaRecorder.start();
                 this.state.recording.isRecording = true;
                 this.renderTranscriptionPanel(); // 更新UI
+                this.renderDebateControls(); 
+                if(this.state.currentFlow[this.state.currentStageIndex]?.type === 'free_debate') {
+                    this.renderFreeDebateControls(); // [新增] 如果在自由辯，也更新控制項
+                }
                 this.showNotification("錄音已開始。", "success");
 
             } catch (err) {
@@ -2427,9 +2929,32 @@ renderSetupView() {
         stopRecording() {
             if (this.state.recording.mediaRecorder && this.state.recording.isRecording) {
                 this.state.recording.mediaRecorder.stop();
+                this.state.recording.micAudioTrack = null;
+                this.state.recording.isMicMuted = false;
             }
         },
+        toggleMicMute() {
+            const { recording } = this.state;
+            if (!recording.micAudioTrack) {
+                this.showNotification("麥克風不在啟用狀態 (請先開始錄音)", "warning");
+                return;
+            }
 
+            // 切換靜音狀態
+            recording.isMicMuted = !recording.isMicMuted;
+
+            // 直接控制音訊軌道的啟用/禁用
+            recording.micAudioTrack.enabled = !recording.isMicMuted;
+
+            this.showNotification(`麥克風已 ${recording.isMicMuted ? '靜音' : '開啟'}`, "info");
+            
+            // 重新渲染UI，更新按鈕的樣式
+            if(this.state.currentFlow[this.state.currentStageIndex]?.type === 'free_debate') {
+                this.renderFreeDebateControls();
+            } else {
+                this.renderDebateControls();
+            }
+        },
         downloadAudio() {
             if (!this.state.recording.audioBlob) {
                 this.showNotification("沒有可下載的錄音。", "error");
