@@ -7,6 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -812,29 +813,42 @@ debateFormatGroups: {
                 App.actions.nextStage();
             },
             shareFlow() {
-            if (App.state.currentFlow.length === 0) {
-                App.showNotification("流程是空的，無法分享", "error");
-                return;
-            }
-            try {
-                const flowString = JSON.stringify(App.state.currentFlow);
-                const encodedData = btoa(unescape(encodeURIComponent(flowString))); // 處理中文字元的 Base64 編碼
-                const shareUrl = `${window.location.origin}${window.location.pathname}?flow=${encodedData}`;
+                if (App.state.currentFlow.length === 0) {
+                    App.showNotification("流程是空的，無法分享", "error");
+                    return;
+                }
+                try {
+                    const flowString = JSON.stringify(App.state.currentFlow);
 
-                App.renderModal({
-                    title: '分享您的自訂流程',
-                    body: `
-                        <p class="text-slate-600 dark:text-slate-300 mb-4">複製下方的連結並傳送給其他人。他們點開連結後即可使用您設計的流程。</p>
-                        <input type="text" readonly value="${shareUrl}" id="shareUrlInput" class="form-element w-full p-2 border rounded-md font-mono text-sm break-all">
-                    `,
-                    footer: `<button data-action="copyShareUrl" class="px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">複製連結</button>`
-                });
-            } catch (e) {
-                console.error("Error generating share link:", e);
-                App.showNotification("產生分享連結時發生錯誤", "error");
+                    // [NEW] 1. 使用 pako.deflate 壓縮 JSON 字串
+                    const compressed = pako.deflate(flowString);
+
+                    // [NEW] 2. 將壓縮後的二進位數據轉換為 btoa 可以處理的字串
+                    const binaryString = String.fromCharCode.apply(null, new Uint8Array(compressed));
+
+                    // [MODIFIED] 3. 對轉換後的二進位字串進行 Base64 編碼
+                    const encodedData = btoa(binaryString);
+
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?flow=${encodedData}`;
+
+                    App.renderModal({
+                        title: '分享您的自訂流程',
+                        body: `
+                            <p class="text-slate-600 dark:text-slate-300 mb-4">複製下方的連結並傳送給其他人。他們點開連結後即可使用您設計的流程。</p>
+                            <div class="mb-2 text-sm text-slate-500">
+                                <span>原始長度: ${flowString.length}</span> |
+                                <span>壓縮後長度: ${encodedData.length}</span> |
+                                <span class="font-bold text-green-600">節省: ${Math.round((1 - encodedData.length / flowString.length) * 100)}%</span>
+                            </div>
+                            <input type="text" readonly value="${shareUrl}" id="shareUrlInput" class="form-element w-full p-2 border rounded-md font-mono text-sm break-all">
+                        `,
+                        footer: `<button data-action="copyShareUrl" class="px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">複製連結</button>`
+                    });
+                } catch (e) {
+                    console.error("Error generating share link:", e);
+                    App.showNotification("產生分享連結時發生錯誤", "error");
                 }
             },
-
             copyShareUrl() {
                 const input = document.getElementById('shareUrlInput');
                 if (navigator.clipboard && window.isSecureContext) {
@@ -1217,14 +1231,30 @@ debateFormatGroups: {
                                 video.srcObject.getTracks().forEach(track => track.stop());
                             }
                             App.state.pip.videoElement = null;
-                            App.renderDebateControls(); // 更新按鈕狀態
+                            
+                            // [FIX START] 根據當前階段類型呼叫對應的 controls 渲染函式
+                            const currentStage = App.state.currentFlow[App.state.currentStageIndex];
+                            if (currentStage && currentStage.type === 'free_debate') {
+                                App.renderFreeDebateControls();
+                            } else {
+                                App.renderDebateControls();
+                            }
+                            // [FIX END]
                         };
 
                         await video.play();
                         const pipWindow = await video.requestPictureInPicture();
                         App.state.pip.isActive = true;
                         pipWindow.addEventListener('resize', () => App.renderPipCanvas());
-                        App.renderDebateControls(); // 更新按鈕狀態
+                        
+                        // [FIX START] 根據當前階段類型呼叫對應的 controls 渲染函式
+                        const currentStage = App.state.currentFlow[App.state.currentStageIndex];
+                        if (currentStage && currentStage.type === 'free_debate') {
+                            App.renderFreeDebateControls();
+                        } else {
+                            App.renderDebateControls();
+                        }
+                        // [FIX END]
                     }
                 } catch (error) {
                     console.error("PiP toggle error:", error);
@@ -1583,77 +1613,77 @@ debateFormatGroups: {
     // [ADD THIS NEW FUNCTION to your App object, near the other render...Controls functions]
 
     renderFreeDebateControls() {
-        const container = document.getElementById('debateControlsContainer');
-        if (!container) return;
+    const container = document.getElementById('debateControlsContainer');
+    if (!container) return;
 
-        // --- 獲取所有需要的狀態 ---
-        const { freeDebate, positiveTeamName, negativeTeamName, isAutoMode, currentStageIndex, currentFlow, recording } = this.state;
-        const { isPaused, firstSpeakerSelected, activeTeam, positiveTimeLeft, negativeTimeLeft } = freeDebate;
-        const { isMicMuted, micAudioTrack } = recording;
+    // --- 獲取所有需要的狀態 ---
+    const { freeDebate, positiveTeamName, negativeTeamName, isAutoMode, currentStageIndex, currentFlow, recording } = this.state;
+    const { isPaused, firstSpeakerSelected, activeTeam, positiveTimeLeft, negativeTimeLeft } = freeDebate;
+    const { isMicMuted, micAudioTrack } = recording;
 
-        // --- 按鈕顯示邏輯判斷 ---
-        const isTimerRunning = !!freeDebate.interval;
-        const prevBtnDisabled = currentStageIndex <= 0 || (isTimerRunning && !isPaused);
-        const nextBtnDisabled = (isTimerRunning && !isPaused);
-        const autoModeChecked = isAutoMode ? 'checked' : '';
+    // --- 按鈕顯示邏輯判斷 ---
+    const isTimerRunning = !!freeDebate.interval;
+    const prevBtnDisabled = currentStageIndex <= 0 || (isTimerRunning && !isPaused);
+    const nextBtnDisabled = (isTimerRunning && !isPaused);
+    const autoModeChecked = isAutoMode ? 'checked' : '';
 
-        // 麥克風靜音按鈕的圖示邏輯
-        const muteIcon = isMicMuted 
-            ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`
-            : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
+    // 麥克風靜音按鈕的圖示邏輯
+    const muteIcon = isMicMuted 
+        ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`
+        : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
 
-        let mainControlsHTML = '';
-        if (!firstSpeakerSelected) {
-            // 情況一：尚未選擇首位發言者
-            mainControlsHTML = `
-                <div class="grid grid-cols-2 gap-4">
-                    <button data-action="startFreeDebate" data-team="positive" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-lg transition-colors">
-                        ${positiveTeamName} 首先發言
-                    </button>
-                    <button data-action="startFreeDebate" data-team="negative" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 rounded-lg transition-colors">
-                        ${negativeTeamName} 首先發言
-                    </button>
-                </div>`;
-        } else {
-            // 情況二：比賽進行中
-            const switchBtnColor = activeTeam === 'positive' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
-            const switchBtnText = activeTeam === 'positive' ? `切換為 ${negativeTeamName}` : `切換為 ${positiveTeamName}`;
-            const canSwitch = (activeTeam === 'positive' && negativeTimeLeft > 0) || (activeTeam === 'negative' && positiveTimeLeft > 0) || activeTeam === null;
-            
-            mainControlsHTML = `
-                <div class="flex flex-wrap items-center justify-center gap-4">
-                    <button data-action="switchFreeDebate" class="flex-grow ${switchBtnColor} text-white font-bold py-4 px-8 text-xl rounded-lg transition-transform transform hover:scale-105 shadow-md ${!canSwitch || isPaused ? 'opacity-50 cursor-not-allowed' : ''}" ${!canSwitch || isPaused ? 'disabled' : ''}>
-                        ${switchBtnText}
-                    </button>
-                    <button data-action="togglePauseFreeDebate" class="text-white bg-amber-500 hover:bg-amber-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200">
-                        ${isPaused ? '繼續' : '暫停'}
-                    </button>
-                </div>`;
-        }
-
-        container.innerHTML = `
-            ${mainControlsHTML}
-
-            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
-                <button data-action="previousStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${prevBtnDisabled ? 'disabled' : ''}>&larr; 上一階段</button>
-                <button data-action="nextStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${nextBtnDisabled ? 'disabled' : ''}>下一階段 &rarr;</button>
-                
-                <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
-                    ${muteIcon}
+    let mainControlsHTML = '';
+    if (!firstSpeakerSelected) {
+        // 情況一：尚未選擇首位發言者
+        mainControlsHTML = `
+            <div class="grid grid-cols-2 gap-4">
+                <button data-action="startFreeDebate" data-team="positive" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-lg transition-colors">
+                    ${positiveTeamName} 首先發言
                 </button>
+                <button data-action="startFreeDebate" data-team="negative" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 rounded-lg transition-colors">
+                    ${negativeTeamName} 首先發言
+                </button>
+            </div>`;
+    } else {
+        // 情況二：比賽進行中
+        const switchBtnColor = activeTeam === 'positive' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
+        const switchBtnText = activeTeam === 'positive' ? `切換為 ${negativeTeamName}` : `切換為 ${positiveTeamName}`;
+        const canSwitch = (activeTeam === 'positive' && negativeTimeLeft > 0) || (activeTeam === 'negative' && positiveTimeLeft > 0) || activeTeam === null;
+        
+        mainControlsHTML = `
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <button data-action="switchFreeDebate" class="flex-grow ${switchBtnColor} text-white font-bold py-4 px-8 text-xl rounded-lg transition-transform transform hover:scale-105 shadow-md ${!canSwitch || isPaused ? 'opacity-50 cursor-not-allowed' : ''}" ${!canSwitch || isPaused ? 'disabled' : ''}>
+                    ${switchBtnText}
+                </button>
+                <button data-action="togglePauseFreeDebate" class="text-white bg-amber-500 hover:bg-amber-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200">
+                    ${isPaused ? '繼續' : '暫停'}
+                </button>
+            </div>`;
+    }
 
-                <button data-action="resetFreeDebateStage" class="text-sm text-slate-500 hover:text-red-500">重設環節</button>
-                <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
-                
-                <div class="flex items-center gap-2 text-sm font-medium">
-                    <span>自動模式</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                    </label>
-                </div>
+    container.innerHTML = `
+        ${mainControlsHTML}
+
+        <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
+            <button data-action="previousStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${prevBtnDisabled ? 'disabled' : ''}>&larr; 上一階段</button>
+            <button data-action="nextStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${nextBtnDisabled ? 'disabled' : ''}>下一階段 &rarr;</button>
+            
+            <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
+                ${muteIcon}
+            </button>
+
+            <button data-action="resetFreeDebateStage" class="text-sm text-slate-500 hover:text-red-500">重設環節</button>
+            <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
+            
+            <div class="flex items-center gap-2 text-sm font-medium">
+                <span>自動模式</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                </label>
             </div>
-        `;
+        </div>
+    `;
     },
 
     startFreeDebateTimer(team) {
@@ -1682,6 +1712,11 @@ debateFormatGroups: {
         }
 
         this.updateFreeDebateDisplay();
+        
+        // [ADD THIS LINE] 在自由辯論計時器跳動時，也更新 PiP 畫面
+        if (this.state.pip.isActive) {
+            this.renderPipCanvas();
+        }
 
         const timeLeft = freeDebate.activeTeam === 'positive' ? freeDebate.positiveTimeLeft : freeDebate.negativeTimeLeft;
         if (timeLeft <= 0) {
@@ -1694,7 +1729,6 @@ debateFormatGroups: {
             this.renderFreeDebateView();
         }
     },
-
     updateFreeDebateDisplay() {
         // 減少重繪，只更新數字
         const posTimer = this.mainContent.querySelector('.glass-card:nth-child(1) .font-mono');
@@ -2523,8 +2557,18 @@ debateFormatGroups: {
 
             if (flowData) {
                 try {
-                    const decodedString = decodeURIComponent(escape(atob(flowData))); // 處理中文字元的 Base64 解碼
-                    const sharedFlow = JSON.parse(decodedString);
+                    // [MODIFIED] 1. Base64 解碼得到二進位字串
+                    const decodedBinary = atob(flowData);
+
+                    // [NEW] 2. 將二進位字串轉回 Uint8Array
+                    const charData = decodedBinary.split('').map(c => c.charCodeAt(0));
+                    const compressedArray = new Uint8Array(charData);
+
+                    // [NEW] 3. 使用 pako.inflate 將資料解壓縮回 JSON 字串
+                    const decompressedString = pako.inflate(compressedArray, { to: 'string' });
+                    
+                    // 4. 解析還原後的 JSON 字串
+                    const sharedFlow = JSON.parse(decompressedString);
 
                     if (Array.isArray(sharedFlow)) {
                         const flowName = `分享的流程 (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
@@ -2534,17 +2578,15 @@ debateFormatGroups: {
                         }
                         App.debateFormatGroups['分享的流程'][flowName] = sharedFlow;
                         
-                        // 為了讓使用者看到效果，我們暫存名稱，待 renderSetupView 後再選定
                         this.state.pendingSharedFlow = flowName;
                         
-                        // 清理 URL，避免使用者重新整理時再次載入
                         history.replaceState(null, '', window.location.pathname);
                         App.showNotification(`已成功載入 "${flowName}"`, "success");
                     }
                 } catch (e) {
                     console.error("Error parsing shared flow:", e);
-                    App.showNotification("載入分享的流程失敗，連結可能已損毀。", "error");
-                    history.replaceState(null, '', window.location.pathname); // 載入失敗也清理 URL
+                    App.showNotification("載入分享的流程失敗，連結可能已損毀或版本不相容。", "error");
+                    history.replaceState(null, '', window.location.pathname);
                 }
             }
         },
@@ -3040,7 +3082,7 @@ debateFormatGroups: {
         },
 
         // --- PICTURE-IN-PICTURE ---
-        renderPipCanvas() { // New function to draw on the PiP canvas
+        renderPipCanvas() {
             if (!this.pipCtx) return;
 
             const ctx = this.pipCtx;
@@ -3052,75 +3094,114 @@ debateFormatGroups: {
             const bgColor = isDark ? '#0f172a' : '#f1f5f9';
             const textColor = isDark ? '#e2e8f0' : '#1e293b';
             const secondaryTextColor = isDark ? '#94a3b8' : '#475569';
-            const accentColor = '#4f46e5'; // indigo-600
-            const yellowColor = '#f59e0b'; // amber-500
-            const redColor = '#ef4444'; // red-500
-            const bodyFont = '400 28px Inter, sans-serif';
-            const monoFont = '600 128px "JetBrains Mono", monospace';
+            const posColor = '#2563eb'; // blue-600 for positive team
+            const negColor = '#dc2626'; // red-600 for negative team
+            const bodyFont = (size) => `400 ${size}px Inter, sans-serif`;
+            const monoFont = (size) => `600 ${size}px "JetBrains Mono", monospace`;
 
             // --- Clear Canvas ---
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // --- Content ---
-            let timerLabel = "辯時計 Pro";
-            let timeLeft = this.state.timer.timeLeft;
-            let initialDuration = this.state.timer.initialDuration;
-            let displayTime;
+            // --- 判斷是否為自由辯論模式 ---
+            if (stage && stage.type === 'free_debate') {
+                const { freeDebate, positiveTeamName, negativeTeamName } = this.state;
+                const { positiveTimeLeft, negativeTimeLeft, initialDuration, activeTeam, isPaused } = freeDebate;
 
-            if (stage && this.state.currentView === 'debate') {
-                const timerStatusEl = document.getElementById('timerStatus');
-                timerLabel = timerStatusEl ? timerStatusEl.textContent : this.interpolateScript(stage.timerLabel || stage.name);
+                const halfWidth = canvas.width / 2;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
 
-                if (this.state.timer.type) { // A timer is active
-                    displayTime = this.formatTime(timeLeft);
-                } else if (stage.duration) { // Timer is ready but not started
-                    displayTime = this.formatTime(stage.duration);
-                    timeLeft = stage.duration;
-                    initialDuration = stage.duration;
-                } else { // No timer for this stage
-                    displayTime = "--:--";
+                // --- 繪製正方計時器 (左側) ---
+                ctx.fillStyle = (activeTeam === 'positive' && !isPaused) ? posColor : secondaryTextColor;
+                ctx.font = bodyFont(28);
+                ctx.fillText(positiveTeamName, halfWidth / 2, 60);
+
+                ctx.fillStyle = (activeTeam === 'positive' && !isPaused) ? posColor : textColor;
+                ctx.font = monoFont(100);
+                ctx.fillText(this.formatTime(positiveTimeLeft), halfWidth / 2, canvas.height / 2 + 10);
+
+                // 正方進度條
+                const posProgress = Math.max(0, positiveTimeLeft / initialDuration);
+                ctx.fillStyle = isDark ? '#334155' : '#e2e8f0';
+                ctx.fillRect(40, canvas.height - 60, halfWidth - 80, 20);
+                ctx.fillStyle = posColor;
+                ctx.fillRect(40, canvas.height - 60, (halfWidth - 80) * posProgress, 20);
+
+                // --- 繪製反方計時器 (右側) ---
+                ctx.fillStyle = (activeTeam === 'negative' && !isPaused) ? negColor : secondaryTextColor;
+                ctx.font = bodyFont(28);
+                ctx.fillText(negativeTeamName, halfWidth + halfWidth / 2, 60);
+
+                ctx.fillStyle = (activeTeam === 'negative' && !isPaused) ? negColor : textColor;
+                ctx.font = monoFont(100);
+                ctx.fillText(this.formatTime(negativeTimeLeft), halfWidth + halfWidth / 2, canvas.height / 2 + 10);
+                
+                // 反方進度條
+                const negProgress = Math.max(0, negativeTimeLeft / initialDuration);
+                ctx.fillStyle = isDark ? '#334155' : '#e2e8f0';
+                ctx.fillRect(halfWidth + 40, canvas.height - 60, halfWidth - 80, 20);
+                ctx.fillStyle = negColor;
+                ctx.fillRect(halfWidth + 40, canvas.height - 60, (halfWidth - 80) * negProgress, 20);
+            } else {
+                // --- 原有的標準計時器繪製邏輯 ---
+                const accentColor = '#4f46e5';
+                const yellowColor = '#f59e0b';
+                const redColor = '#ef4444';
+
+                let timerLabel = "辯時計 Pro";
+                let timeLeft = this.state.timer.timeLeft;
+                let initialDuration = this.state.timer.initialDuration;
+                let displayTime;
+
+                if (stage && (this.state.currentView === 'debate' || this.state.currentView === 'free_debate')) {
+                    const timerStatusEl = document.getElementById('timerStatus');
+                    timerLabel = timerStatusEl ? timerStatusEl.textContent : this.interpolateScript(stage.timerLabel || stage.name);
+
+                    if (this.state.timer.type) {
+                        displayTime = this.formatTime(timeLeft);
+                    } else if (stage.duration) {
+                        displayTime = this.formatTime(stage.duration);
+                        timeLeft = stage.duration;
+                        initialDuration = stage.duration;
+                    } else {
+                        displayTime = "--:--";
+                        timeLeft = 0;
+                        initialDuration = 0;
+                    }
+                } else {
+                    timerLabel = "賽前準備";
+                    displayTime = this.formatTime(0);
                     timeLeft = 0;
                     initialDuration = 0;
                 }
-            } else { // Not in debate view
-                timerLabel = "賽前準備";
-                displayTime = this.formatTime(0);
-                timeLeft = 0;
-                initialDuration = 0;
-            }
 
-            // --- Drawing ---
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
 
-            // 1. Draw Timer Label
-            ctx.font = bodyFont;
-            ctx.fillStyle = secondaryTextColor;
-            ctx.fillText(timerLabel, canvas.width / 2, 60, canvas.width - 40);
+                ctx.font = bodyFont(28);
+                ctx.fillStyle = secondaryTextColor;
+                ctx.fillText(timerLabel, canvas.width / 2, 60, canvas.width - 40);
 
-            // 2. Draw Time
-            ctx.font = monoFont;
-            ctx.fillStyle = textColor;
-            if (initialDuration > 30 && timeLeft <= 30) ctx.fillStyle = redColor;
-            else if (initialDuration > 60 && timeLeft <= 60) ctx.fillStyle = yellowColor;
-            ctx.fillText(displayTime, canvas.width / 2, canvas.height / 2 + 10);
+                ctx.font = monoFont(128);
+                ctx.fillStyle = textColor;
+                if (initialDuration > 30 && timeLeft <= 30) ctx.fillStyle = redColor;
+                else if (initialDuration > 60 && timeLeft <= 60) ctx.fillStyle = yellowColor;
+                ctx.fillText(displayTime, canvas.width / 2, canvas.height / 2 + 10);
 
-            // 3. Draw Progress Bar
-            if (initialDuration > 0) {
-                const barHeight = 20;
-                const barY = canvas.height - barHeight - 30;
-                const barWidth = canvas.width - 80;
-                const barX = 40;
-                const progress = Math.max(0, timeLeft / initialDuration);
+                if (initialDuration > 0) {
+                    const barHeight = 20;
+                    const barY = canvas.height - barHeight - 30;
+                    const barWidth = canvas.width - 80;
+                    const barX = 40;
+                    const progress = Math.max(0, timeLeft / initialDuration);
 
-                // Background
-                ctx.fillStyle = isDark ? '#334155' : '#e2e8f0';
-                ctx.fillRect(barX, barY, barWidth, barHeight);
+                    ctx.fillStyle = isDark ? '#334155' : '#e2e8f0';
+                    ctx.fillRect(barX, barY, barWidth, barHeight);
 
-                // Foreground
-                ctx.fillStyle = accentColor;
-                ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+                    ctx.fillStyle = accentColor;
+                    ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+                }
             }
         },
     };
