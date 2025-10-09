@@ -3207,6 +3207,31 @@ debateFormatGroups: {
     };
 
     document.addEventListener('DOMContentLoaded', () => App.init());
+
+    const blockedIpPrefixes = ["163.14."]; 
+    async function checkIpAndBlock() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            if (!response.ok) return; 
+
+            const data = await response.json();
+            const userIp = data.ip;
+
+            const isBlocked = blockedIpPrefixes.some(prefix => userIp.startsWith(prefix));
+
+            if (isBlocked) {
+                console.warn(`Access denied for IP: ${userIp}`);
+                document.body.innerHTML = `
+                    <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+                        <h1>Access Denied</h1>
+                        <p>您所在的網路位置已被限制存取此服務。</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error("IP check failed:", error);
+        }
+    }
     </script>
 </body>
 </html>
