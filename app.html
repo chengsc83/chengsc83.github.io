@@ -30,6 +30,10 @@
             --border-color: #cbd5e1; /* slate-300 */
         }
 
+        #app {
+            display: none;
+        }
+
         html.dark {
             --bg-page: #0f172a; /* slate-900 */
             --bg-card: rgba(30, 41, 59, 0.6);
@@ -87,6 +91,14 @@
     </style>
 </head>
 <body class="transition-colors duration-300">
+    <noscript>
+        <div style="padding: 50px; text-align: center; font-family: sans-serif; color: #333; background-color: #f1f5f9;">
+            <h1>JavaScript 已被停用</h1>
+            <p>本網站的功能完全依賴 JavaScript 來運作。</p>
+            <p>請在您的瀏覽器設定中啟用 JavaScript 後，再重新整理頁面。</p>
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">This website requires JavaScript to function properly. Please enable JavaScript in your browser settings and refresh the page.</p>
+        </div>
+    </noscript>
     <div id="app" class="flex flex-col min-h-screen">
         <header class="sticky top-0 z-40 w-full glass-card border-b border-slate-900/10 dark:border-slate-300/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -555,6 +567,7 @@ debateFormatGroups: {
 
         // --- CORE METHODS ---
         init() {
+            document.getElementById('app').style.display = 'flex';
             this.mainContent = document.getElementById('main-content');
             this.pipCanvas = document.getElementById('pipCanvas'); // New
             if (this.pipCanvas) { // New
