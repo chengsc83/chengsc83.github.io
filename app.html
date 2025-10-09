@@ -75,7 +75,39 @@
         .btn-secondary:hover {
             background-color: var(--bg-button-secondary-hover);
         }
+        #prohibition-watermark {
+            /* 定位到畫面正中央 */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            
+            /* 將文字旋轉並校正置中點 */
+            transform: translate(-50%, -50%) rotate(-20deg);
+            
+            /* 讓文字大小隨螢幕寬度縮放 */
+            font-size: 5.5vw; 
+            font-weight: 800; /* 使用粗體讓淺色文字仍可辨識 */
+            font-family: var(--font-body);
 
+            /* 關鍵：設定極低的透明度，這就是「很淺」的效果 */
+            color: rgba(0, 0, 0, 0.035); 
+
+            /* 讓浮水印穿透滑鼠事件，不影響下層元件的操作 */
+            pointer-events: none; 
+
+            /* 確保浮水印在最上層，但又不會太突兀 */
+            z-index: 9999; 
+
+            /* 防止使用者選取浮水印文字 */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+
+        /* 在暗黑模式下，使用白色的極淺浮水印 */
+        html.dark #prohibition-watermark {
+            color: rgba(255, 255, 255, 0.04);
+        }
         .paragraph-avatar.team-positive { background-color: #2563eb; }
         .paragraph-avatar.team-negative { background-color: #dc2626; }
         .paragraph-avatar.team-neutral { background-color: #4b5563; }
@@ -573,6 +605,10 @@ debateFormatGroups: {
             if (this.pipCanvas) { // New
                 this.pipCtx = this.pipCanvas.getContext('2d');
             }
+            const watermark = document.createElement('div');
+            watermark.id = 'prohibition-watermark';
+            watermark.textContent = '本系統禁止東吳大學正言社及其全體成員使用';
+            document.body.appendChild(watermark);
             //this.showPromotionModal();
             this.checkForSharedFlow()
             this.initAudioRecording();
