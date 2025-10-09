@@ -6,6 +6,8 @@
     <title>辯時計 Pro - 專業辯論計時系統</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.12/dist/bundle.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -28,10 +30,6 @@
             --text-placeholder: #94a3b8; /* slate-400 */
             
             --border-color: #cbd5e1; /* slate-300 */
-        }
-
-        #app {
-            display: none;
         }
 
         html.dark {
@@ -75,39 +73,10 @@
         .btn-secondary:hover {
             background-color: var(--bg-button-secondary-hover);
         }
-        #prohibition-watermark {
-            /* 定位到畫面正中央 */
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            
-            /* 將文字旋轉並校正置中點 */
-            transform: translate(-50%, -50%) rotate(-20deg);
-            
-            /* 讓文字大小隨螢幕寬度縮放 */
-            font-size: 5.5vw; 
-            font-weight: 800; /* 使用粗體讓淺色文字仍可辨識 */
-            font-family: var(--font-body);
-
-            /* 關鍵：設定極低的透明度，這就是「很淺」的效果 */
-            color: rgba(0, 0, 0, 0.035); 
-
-            /* 讓浮水印穿透滑鼠事件，不影響下層元件的操作 */
-            pointer-events: none; 
-
-            /* 確保浮水印在最上層，但又不會太突兀 */
-            z-index: 9999; 
-
-            /* 防止使用者選取浮水印文字 */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
+        #app {
+            display: none;
         }
 
-        /* 在暗黑模式下，使用白色的極淺浮水印 */
-        html.dark #prohibition-watermark {
-            color: rgba(255, 255, 255, 0.04);
-        }
         .paragraph-avatar.team-positive { background-color: #2563eb; }
         .paragraph-avatar.team-negative { background-color: #dc2626; }
         .paragraph-avatar.team-neutral { background-color: #4b5563; }
@@ -235,6 +204,12 @@
             positiveActionCounts: { '申論': 0, '質答': 0 },
             negativeActionCounts: { '申論': 0, '質答': 0 },
             customGraceDuration: 60, // 預設準備時間為 60 秒
+            audioSourceModes: { positive: 'microphone', negative: 'microphone' },
+            audioDetection: {
+                vad: null, // 用來存放 VAD 實體
+                stream: null,
+                isActive: false,
+            },
 
             // [ADD THIS START]
             recording: {
@@ -258,6 +233,12 @@
                 isPaused: false,
                 firstSpeakerSelected: false, // 是否已選擇第一位發言者
             },
+            sharedDisplay: {
+                stream: null,       // 用來儲存完整的 getDisplayMedia 串流
+                audioTrack: null,   // 用來儲存從串流中取出的音訊軌道
+                isInitialized: false // 用來標記是否已經授權過
+            },
+            
 
         },
         // --- CONSTANTS ---
@@ -605,10 +586,6 @@ debateFormatGroups: {
             if (this.pipCanvas) { // New
                 this.pipCtx = this.pipCanvas.getContext('2d');
             }
-            const watermark = document.createElement('div');
-            watermark.id = 'prohibition-watermark';
-            watermark.textContent = '本系統禁止東吳大學正言社及其全體成員使用';
-            document.body.appendChild(watermark);
             //this.showPromotionModal();
             this.checkForSharedFlow()
             this.initAudioRecording();
@@ -632,6 +609,14 @@ debateFormatGroups: {
             const savedGraceDuration = localStorage.getItem('debateGraceDuration');
             if (savedGraceDuration) {
                 this.state.customGraceDuration = parseInt(savedGraceDuration, 10);
+            }
+            const savedModes = localStorage.getItem('debateAudioSourceModes');
+            if (savedModes) {
+                try {
+                    this.state.audioSourceModes = JSON.parse(savedModes);
+                } catch(e) {
+                    console.error("Failed to parse saved audio modes.");
+                }
             }
         },
         
@@ -790,13 +775,25 @@ debateFormatGroups: {
             stopRecording() { App.stopRecording(); },
             downloadAudio() { App.downloadAudio(); },
             downloadTranscript() { App.downloadTranscript(); },
-            startDebate(e) {
+            async startDebate(e) {
                 const selectedFormatName = document.getElementById('formatSelect').value;
                 if (!selectedFormatName) {
                     App.showNotification("請選擇一個比賽格式", "error");
                     return;
                 }
-                
+
+                // [NEW LOGIC START] 檢查是否需要分享畫面音訊，並在需要時進行初始化
+                const needsDisplayAudio = App.state.audioSourceModes.positive === 'display' || App.state.audioSourceModes.negative === 'display';
+                if (needsDisplayAudio && !App.state.sharedDisplay.isInitialized) {
+                    App.showNotification("需要擷取線上音訊，請選擇要分享的瀏覽器分頁。", "info", 4000);
+                    const success = await App.initializeDisplayAudio();
+                    if (!success) {
+                        // 如果使用者取消或擷取失敗，則中止開始辯論的流程
+                        return; 
+                    }
+                }
+                // [NEW LOGIC END]
+
                 App.state.positiveTeamName = document.getElementById('positiveTeamNameInput').value.trim() || "正方";
                 App.state.negativeTeamName = document.getElementById('negativeTeamNameInput').value.trim() || "反方";
                 App.state.debateTopic = document.getElementById('debateTopicInput').value.trim() || "（未設定辯題）";
@@ -809,13 +806,13 @@ debateFormatGroups: {
                     App.state.negativeActionCounts = { '申論': 0, '質答': 0 };
                     App.state.currentView = 'nineSquare';
                 } else {
-                const format = App.getDebateFormat(selectedFormatName);
-                App.state.currentFlow = JSON.parse(JSON.stringify(format || []));
-                App.state.currentView = 'debate';
-                App.actions.nextStage(); // Start the first stage
-            }
-            App.render();
-        },
+                    const format = App.getDebateFormat(selectedFormatName);
+                    App.state.currentFlow = JSON.parse(JSON.stringify(format || []));
+                    App.state.currentView = 'debate';
+                    App.actions.nextStage(); // Start the first stage
+                }
+                App.render();
+            },
             confirmNineSquare() {
                 const posGrid = {}, negGrid = {};
                 let isValid = true;
@@ -1126,20 +1123,13 @@ debateFormatGroups: {
             },
             startDraw() {
                 App.playSound('drawSound');
-                App.state.rebuttalOrder = Math.random() < 0.5 ? 'positive' : 'negative';
-                
-                // Render the result on screen immediately
-                App.renderDebateStage(); 
-
-                const drawnTeamName = App.state.rebuttalOrder === 'positive' ? App.state.positiveTeamName : App.state.negativeTeamName;
-                const resultText = `抽籤結果：${drawnTeamName} 先結辯`;
-                
-                // Speak the result, and only auto-advance after speaking is done
-                App.speak(resultText, () => {
-                    if (App.state.isAutoMode) {
-                        App.state.autoAdvanceTimeout = setTimeout(() => App.actions.nextStage(), 2000);
-                    }
-                });
+                const team = Math.random() < 0.5 ? 'positive' : 'negative';
+                App.finalizeRebuttalOrder(team);
+            },
+            manualSetRebuttalOrder(e) {
+                const team = e.target.closest('[data-team]').dataset.team;
+                App.playSound('stageAdvanceSound'); // 使用一個不同的音效以區分操作
+                App.finalizeRebuttalOrder(team);
             },
             manualStartTimer() {
                 const stage = App.state.currentFlow[App.state.currentStageIndex];
@@ -1356,6 +1346,17 @@ debateFormatGroups: {
         },
         
         changeActions: {
+            setTeamAudioSource(e) {
+                const team = e.target.dataset.team;
+                const mode = e.target.value;
+                if (team && (mode === 'microphone' || mode === 'display')) {
+                    App.state.audioSourceModes[team] = mode;
+                    localStorage.setItem('debateAudioSourceModes', JSON.stringify(App.state.audioSourceModes));
+                    const teamName = team === 'positive' ? '正方' : '反方';
+                    const modeName = mode === 'microphone' ? '實體麥克風' : '線上音訊';
+                    App.showNotification(`${teamName} 偵測來源已設為: ${modeName}`, 'success');
+                }
+            },
             toggleAutoMode(e) {
                 App.state.isAutoMode = e.target.checked;
                 localStorage.setItem('debateAutoMode', App.state.isAutoMode);
@@ -1417,8 +1418,8 @@ debateFormatGroups: {
             }
         },
 
-    renderSetupView() {
-    // Generate categorized options
+renderSetupView() {
+    // 產生分類化的流程選項
     let formatOptions = `
         <optgroup label="自訂流程">
             <option value="CUSTOM_EMPTY">從零開始新增一個空白流程</option>
@@ -1462,7 +1463,7 @@ debateFormatGroups: {
                     <label for="formatSelect" class="block text-sm font-medium mb-1">比賽流程範本</label>
                     <select id="formatSelect" data-change-action="formatChanged" class="form-element w-full p-2 border rounded-md">${formatOptions}</select>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     <div>
                         <label for="positiveTeamNameInput" class="block text-sm font-medium mb-1 text-green-600">正方隊名</label>
                         <input type="text" id="positiveTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.positiveTeamName}">
@@ -1471,40 +1472,53 @@ debateFormatGroups: {
                         <label for="negativeTeamNameInput" class="block text-sm font-medium mb-1 text-red-600">反方隊名</label>
                         <input type="text" id="negativeTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.negativeTeamName}">
                     </div>
+                    <div>
+                        <label for="positiveAudioSource" class="block text-sm font-medium mb-1 text-green-600">正方偵測來源</label>
+                        <select id="positiveAudioSource" data-change-action="setTeamAudioSource" data-team="positive" class="form-element w-full p-2 border rounded-md">
+                            <option value="microphone" ${this.state.audioSourceModes.positive === 'microphone' ? 'selected' : ''}>實體麥克風</option>
+                            <option value="display" ${this.state.audioSourceModes.positive === 'display' ? 'selected' : ''}>網頁音訊 (Discord/google meet)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="negativeAudioSource" class="block text-sm font-medium mb-1 text-red-600">反方偵測來源</label>
+                        <select id="negativeAudioSource" data-change-action="setTeamAudioSource" data-team="negative" class="form-element w-full p-2 border rounded-md">
+                            <option value="microphone" ${this.state.audioSourceModes.negative === 'microphone' ? 'selected' : ''}>實體麥克風</option>
+                            <option value="display" ${this.state.audioSourceModes.negative === 'display' ? 'selected' : ''}>網頁音訊 (Discord/google meet)</option>
+                        </select>
+                    </div>
                 </div>
-                  <div id="playersSection" class="space-y-4" style="display: none;">
-                      <h3 class="text-md font-semibold border-b pb-2">辯革盃選手設定</h3>
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div class="space-y-2">
-                              <h4 class="font-medium text-green-600">正方選手 (A, B, C)</h4>
-                              ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
-                          </div>
-                          <div class="space-y-2">
-                              <h4 class="font-medium text-red-600">反方選手 (A, B, C)</h4>
-                              ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
-                          </div>
-                      </div>
-                  </div>
-                  <div>
-                      <label class="block text-sm font-medium mb-1">進階設定</label>
-                      <div class="p-3 rounded-md settings-box">
-                          <div class="w-full text-left flex items-center justify-between">
-                              <span class="text-sm">啟用準備時間語音偵測</span>
-                              <label class="relative inline-flex items-center cursor-pointer">
-                                  <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
-                                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                              </label>
-                          </div>
-                          <p class="text-xs text-slate-500 mt-1">開啟後，在準備時間結束後會自動偵測選手發言並開始計時。</p>
-                          
-                          <div class="mt-4 w-full text-left flex items-center justify-between">
-                              <span class="text-sm">發言準備時間 (秒)</span>
-                              <input type="number" id="graceDurationInput" data-change-action="setGraceDuration" class="form-element w-24 p-2 border rounded-md text-center" value="${this.state.customGraceDuration}">
-                          </div>
-                          <p class="text-xs text-slate-500 mt-1">設定選手上台後、主要計時開始前的準備/緩衝時間。</p>
-
-                      </div>
-                  </div>
+                <div id="playersSection" class="space-y-4" style="display: none;">
+                    <h3 class="text-md font-semibold border-b pb-2">辯革盃選手設定</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-green-600">正方選手 (A, B, C)</h4>
+                            ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-red-600">反方選手 (A, B, C)</h4>
+                            ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">進階設定</label>
+                    <div class="p-3 rounded-md settings-box">
+                        <div class="w-full text-left flex items-center justify-between">
+                            <span class="text-sm">啟用準備時間語音偵測</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">開啟後,在準備時間結束後會自動偵測選手發言並開始計時.</p>
+                        
+                        <div class="mt-4 w-full text-left flex items-center justify-between">
+                            <span class="text-sm">發言準備時間 (秒)</span>
+                            <input type="number" id="graceDurationInput" data-change-action="setGraceDuration" class="form-element w-24 p-2 border rounded-md text-center" value="${this.state.customGraceDuration}">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">設定選手上台後,主要計時開始前的準備/緩衝時間.</p>
+                    </div>
+                </div>
             </div>
             <div class="flex justify-center items-center space-x-4">
                 <button data-action="openEditor" class="btn-secondary px-6 py-2 rounded-lg transition-colors">自定義流程</button>
@@ -1514,7 +1528,7 @@ debateFormatGroups: {
         ${this.renderPromotionArea()}
     `;
     
-    // 渲染後，檢查是否有待處理的分享流程需要被選定
+    // 渲染後,檢查是否有待處理的分享流程需要被選定
     if (this.state.pendingSharedFlow) {
         setTimeout(() => {
             const formatSelect = document.getElementById('formatSelect');
@@ -1525,7 +1539,7 @@ debateFormatGroups: {
         }, 0);
     }
 
-    // Trigger change event to show/hide player section correctly
+    // 觸發 change 事件以正確顯示/隱藏選手設定區塊
     const formatSelect = document.getElementById('formatSelect');
     if (formatSelect) {
         formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1845,10 +1859,26 @@ debateFormatGroups: {
 
             // Timer display and controls
             if (stage.type === 'draw_rebuttal_order') {
-                 timerContent = `<div class="text-center glass-card p-6 rounded-2xl shadow-lg">
-                     <p class="text-lg font-semibold mb-4">${this.state.rebuttalOrder ? `抽籤結果：${this.state.rebuttalOrder === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName} 先結辯` : '待抽籤...'}</p>
-                     <button data-action="startDraw" class="px-6 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors" ${this.state.rebuttalOrder ? 'disabled' : ''}>開始抽籤</button>
-                </div>`;
+                timerContent = `
+                    <div class="text-center glass-card p-6 rounded-2xl shadow-lg">
+                        <p class="text-lg font-semibold mb-4">
+                            ${this.state.rebuttalOrder 
+                                ? `設定結果：<span class="font-bold ${this.state.rebuttalOrder === 'positive' ? 'text-green-600' : 'text-red-600'}">${this.state.rebuttalOrder === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName}</span> 優先結辯` 
+                                : '請設定結辯順序...'
+                            }
+                        </p>
+                        <div class="flex flex-wrap justify-center gap-4 mt-4">
+                            <button data-action="startDraw" class="px-6 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors disabled:bg-slate-400" ${this.state.rebuttalOrder ? 'disabled' : ''}>
+                                🎲 隨機抽籤
+                            </button>
+                            <button data-action="manualSetRebuttalOrder" data-team="positive" class="px-6 py-3 rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors disabled:bg-slate-400" ${this.state.rebuttalOrder ? 'disabled' : ''}>
+                                ${this.state.positiveTeamName} 先
+                            </button>
+                            <button data-action="manualSetRebuttalOrder" data-team="negative" class="px-6 py-3 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors disabled:bg-slate-400" ${this.state.rebuttalOrder ? 'disabled' : ''}>
+                                ${this.state.negativeTeamName} 先
+                            </button>
+                        </div>
+                    </div>`;
             } else if (stage.duration) {
                 timerContent = `
                     <div class="glass-card p-6 rounded-2xl shadow-lg text-center">
@@ -2338,12 +2368,7 @@ debateFormatGroups: {
 
                 this.recognition.onresult = (event) => {
                     // Handle main timer speech detection
-                    if (this.state.enableSpeechDetection && !this.state.isSpeaking && this.state.timer.type === 'grace' && this.state.timer.graceInterval && !this.state.mainSpeechTimerStartedByGrace && !this.state.timer.isPaused) {
-                        clearInterval(this.state.timer.graceInterval);
-                        this.playSound('speechDetectedSound');
-                        this.state.mainSpeechTimerStartedByGrace = true;
-                        this.speak("開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
-                    }
+
 
                     // Handle transcription panel results
                     if (this.state.transcription.active) {
@@ -2537,6 +2562,151 @@ debateFormatGroups: {
             }
         },
 
+        async startAudioDetection(team) {
+            if (!team) {
+                console.warn("startAudioDetection called without a team. Aborting.");
+                return;
+            }
+            const mode = this.state.audioSourceModes[team];
+            if (!mode) {
+                console.warn(`No audio source mode found for team: ${team}. Aborting.`);
+                return;
+            }
+            if (typeof vad === "undefined") {
+                this.showNotification("VAD 函式庫載入失敗，語音偵測無法使用。", "error");
+                return;
+            }
+            if (this.state.audioDetection.isActive || !this.state.enableSpeechDetection) return;
+
+            this.stopAudioDetection(); // Clean up previous instance
+
+            try {
+                let stream;
+                if (mode === 'display') {
+                    if (!this.state.sharedDisplay.audioTrack || this.state.sharedDisplay.audioTrack.readyState === 'ended') {
+                        this.showNotification("網頁音訊來源已中斷或未設定，無法偵測。", "error", 5000);
+                        return;
+                    }
+                    // 從已儲存的音訊軌道建立一個新的 MediaStream 給 VAD 使用
+                    stream = new MediaStream([this.state.sharedDisplay.audioTrack.clone()]);
+                } else {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000 } });
+                }
+
+                if (!stream.getAudioTracks().length) {
+                    this.showNotification("選擇的來源沒有音訊，無法進行偵測。", "error");
+                    stream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+
+                const myvad = await vad.MicVAD.new({
+                    stream: stream,
+                    onSpeechStart: () => {
+                        // [FIX START] --- 加入保護機制，防止重複觸發 ---
+                        // 如果計時器已經因為語音偵測而啟動，就直接返回，不再執行後續操作
+                        if (this.state.mainSpeechTimerStartedByGrace) {
+                            return;
+                        }
+                        // [FIX END]
+
+                        const { timer } = this.state;
+                        if (timer.type === 'grace' && timer.graceInterval && !timer.isPaused) {
+                            this.state.mainSpeechTimerStartedByGrace = true; // ★★★ 立刻設定旗標，防止重複進入
+                            
+                            console.log("Speech detected by VAD!");
+                            
+                            this.stopAudioDetection();
+                            
+                            clearInterval(this.state.timer.graceInterval);
+                            this.playSound('speechDetectedSound');
+                            this.speak("開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
+                        }
+                    },
+                });
+
+                this.state.audioDetection = {
+                    vad: myvad,
+                    stream: stream,
+                    isActive: true,
+                };
+
+                myvad.start();
+                console.log("VAD (Voice Activity Detection) started.");
+
+            } catch (err) {
+                console.error("Failed to start VAD:", err);
+                this.showNotification("無法啟動語音偵測，請檢查權限或裝置。", "error");
+                this.stopAudioDetection();
+            }
+        },
+
+        stopAudioDetection() {
+            const { audioDetection } = this.state;
+
+            // 增加防禦性檢查：確認 vad 物件存在，且 .destroy 是一個函式
+            if (audioDetection.vad && typeof audioDetection.vad.destroy === 'function') {
+                try {
+                    audioDetection.vad.destroy();
+                } catch (e) {
+                    console.error("Error while calling VAD destroy:", e);
+                }
+            } else {
+                // 如果 .destroy 不是函式，則在控制台印出警告，幫助我們了解 vad 物件到底是什麼
+                console.warn("VAD object did not have a callable .destroy function. VAD object:", audioDetection.vad);
+            }
+
+            // 這是確保麥克風圖示關閉的關鍵程式碼，無論如何都要執行
+            if (audioDetection.stream) {
+                audioDetection.stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // 重設狀態
+            this.state.audioDetection = {
+                vad: null,
+                stream: null,
+                isActive: false,
+            };
+            console.log("VAD (Voice Activity Detection) cleanup process completed.");
+        },
+        audioCheckLoop() {
+            const { audioDetection, timer, mainSpeechTimerStartedByGrace } = this.state;
+            if (!audioDetection.isActive || !audioDetection.analyser) return;
+
+            // Schedule next check
+            audioDetection.animationFrameId = requestAnimationFrame(this.audioCheckLoop.bind(this));
+            
+            // Get audio data
+            const dataArray = new Uint8Array(audioDetection.analyser.frequencyBinCount);
+            audioDetection.analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate average volume
+            let sum = 0;
+            for(let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const average = sum / dataArray.length;
+
+            // Check if volume is above threshold
+            if (average > audioDetection.threshold) {
+                audioDetection.activationCounter++;
+            } else {
+                audioDetection.activationCounter = 0;
+            }
+
+            // If volume has been consistently high, trigger the timer
+            if (audioDetection.activationCounter >= audioDetection.requiredActivations) {
+                 if (timer.type === 'grace' && timer.graceInterval && !mainSpeechTimerStartedByGrace && !timer.isPaused) {
+                    // This is the trigger!
+                    this.stopAudioDetection(); // Stop listening once triggered
+                    
+                    clearInterval(this.state.timer.graceInterval);
+                    this.playSound('speechDetectedSound');
+                    this.state.mainSpeechTimerStartedByGrace = true;
+                    this.speak("開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
+                 }
+            }
+        },
+
         playSound(soundId) {
             const sound = document.getElementById(soundId);
             if(sound) {
@@ -2575,10 +2745,25 @@ debateFormatGroups: {
 
             play(); // 開始播放序列
         },
-        // --- HELPERS ---
-        // [ADD] 請將這兩個新函式加到 App 物件中，例如 HELPERS 區塊
+        finalizeRebuttalOrder(team) {
+            // 防止重複觸發
+            if (this.state.rebuttalOrder) return; 
 
-// [ADD] 請將這兩個新函式加到 App 物件中，例如 HELPERS 區塊
+            this.state.rebuttalOrder = team;
+            
+            // 重新渲染畫面，這會讓按鈕變成 disabled 並顯示設定結果
+            this.renderDebateStage(); 
+
+            const chosenTeamName = team === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName;
+            const resultText = `設定結果：由 ${chosenTeamName} 優先結辯`;
+            
+            // 語音播報結果，並在播報完畢後，於自動模式下準備進入下一階段
+            this.speak(resultText, () => {
+                if (this.state.isAutoMode) {
+                    this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
+                }
+            });
+        },
 
         getDebateFormat(formatName) {
             for (const groupName in this.debateFormatGroups) {
@@ -2673,10 +2858,88 @@ debateFormatGroups: {
             return script.replace(/\{\{(\w+)\}\}/g, (match, key) => replacements[key] || match);
         },
 
-        formatTime(seconds) {
-            const m = Math.floor(seconds / 60);
-            const s = seconds % 60;
-            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+                getTeamForStage(stage) {
+                    if (!stage) return null;
+                    if (stage.choosingTeam) return stage.choosingTeam; // 處理辯革盃等有 choosingTeam 的賽制
+                    
+                    const name = stage.name || '';
+                    
+                    // [FIX] 使用更嚴謹的正則表達式，確保只匹配開頭的隊伍名稱
+                    // (?:...) 是一個非捕獲組，^ 確保從字串開頭進行匹配
+                    const posRegex = new RegExp(`^(?:${this.state.positiveTeamName}|正方)`);
+                    const negRegex = new RegExp(`^(?:${this.state.negativeTeamName}|反方)`);
+
+                    // 順序很重要：先測試正方，再測試反方
+                    if (posRegex.test(name)) return 'positive';
+                    if (negRegex.test(name)) return 'negative';
+                    
+                    // 處理結辯抽籤後的特殊情況
+                    if (name.includes('先結辯方')) return this.state.rebuttalOrder;
+                    if (name.includes('後結辯方')) {
+                        return this.state.rebuttalOrder === 'positive' ? 'negative' : (this.state.rebuttalOrder === 'negative' ? 'positive' : null);
+                    }
+                    
+                    // 處理風雩盃對辯/自由辯 (預設由正方開始)
+                    if (stage.type === 'free_debate' && (name.includes('對辯') || name.includes('自由辯論'))) {
+                        return 'positive'; // 根據賽制，這些環節通常由正方先發言
+                    }
+
+                    return null; // 如果都找不到，則不進行偵測
+                },
+                formatTime(seconds) {
+                    const m = Math.floor(seconds / 60);
+                    const s = seconds % 60;
+                    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                },
+                async initializeDisplayAudio() {
+            if (this.state.sharedDisplay.isInitialized) {
+                return true; // 如果已經初始化過，直接返回成功
+            }
+
+            try {
+                // 瀏覽器必須請求 video: true 才會跳出包含「分享分頁音訊」的選項
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: { sampleRate: 16000 }
+                });
+
+                const audioTracks = stream.getAudioTracks();
+                if (audioTracks.length === 0) {
+                    this.showNotification("您分享的內容沒有音訊，無法偵測。請確認分享時已勾選「分享分頁音訊」。", "error", 6000);
+                    stream.getTracks().forEach(track => track.stop()); // 清理無用的串流
+                    return false;
+                }
+                
+                // 儲存原始串流與音訊軌道
+                this.state.sharedDisplay.stream = stream;
+                this.state.sharedDisplay.audioTrack = audioTracks[0];
+                this.state.sharedDisplay.isInitialized = true;
+                
+                // 監聽使用者是否從瀏覽器UI停止了分享
+                this.state.sharedDisplay.audioTrack.onended = () => {
+                    console.log("Display audio track ended by user.");
+                    this.state.sharedDisplay.stream = null;
+                    this.state.sharedDisplay.audioTrack = null;
+                    this.state.sharedDisplay.isInitialized = false;
+                    
+                    if (this.state.currentView === 'debate') {
+                        this.showNotification("畫面分享已停止，線上音訊偵測將會失效。", "warning", 5000);
+                    }
+                };
+
+                this.showNotification("已成功擷取網頁音訊。", "success");
+                return true;
+
+            } catch (err) {
+                console.error("getDisplayMedia error:", err);
+                if (err.name === "NotAllowedError" || err.name === "AbortError") {
+                    this.showNotification("您取消了畫面分享，將無法使用線上音訊偵測。", "warning", 5000);
+                } else {
+                    this.showNotification("無法擷取畫面音訊，請檢查瀏覽器權限或設定。", "error", 5000);
+                }
+                return false;
+            }
         },
         
         updateTimerDisplay(time) {
@@ -2695,6 +2958,7 @@ debateFormatGroups: {
 
         // --- TIMER LOGIC ---
         clearAllTimers() {
+            this.stopAudioDetection();
             clearInterval(this.state.timer.interval);
             clearInterval(this.state.timer.graceInterval);
             this.state.timer.interval = null;
@@ -2705,7 +2969,10 @@ debateFormatGroups: {
                 clearTimeout(this.state.autoAdvanceTimeout);
                 this.state.autoAdvanceTimeout = null;
             }
-
+            
+            if (this.state.sharedDisplay.audioTrack) {
+                this.state.sharedDisplay.audioTrack.enabled = true;
+            }
         },
 
         runTimerInterval() {
@@ -2745,10 +3012,10 @@ debateFormatGroups: {
             }
         },
         
+
         startGracePeriodTimer(stage, timerLabel) {
             this.clearAllTimers();
             this.state.timer.type = 'grace';
-            // [FIX] 優先使用賽制流程中定義的 graceDuration，若無則使用使用者在設定頁面自訂的值
             const graceDuration = stage.graceDuration ?? this.state.customGraceDuration;
             this.state.timer.timeLeft = graceDuration;
             this.state.timer.initialDuration = graceDuration;
@@ -2761,14 +3028,39 @@ debateFormatGroups: {
             }
             
             this.updateTimerDisplay(this.state.timer.timeLeft);
-            // [FIX] 只有在準備時間大於 0 秒時才啟用語音偵測
-            if (this.state.enableSpeechDetection && graceDuration > 0) { 
-                this.startRecognition();
-            }
 
-            // 如果準備時間為 0，則直接開始主要計時
+            // --- [NEW LOGIC START] ---
+            if (graceDuration > 0 && this.state.enableSpeechDetection) {
+                const team = this.getTeamForStage(stage);
+                if (team) {
+                    const listeningMode = this.state.audioSourceModes[team];
+                    
+                    // 如果準備要監聽「麥克風」，則暫時「靜音」網頁音訊以防止聲音迴圈
+                    if (listeningMode === 'microphone' && this.state.sharedDisplay.audioTrack) {
+                        console.log("Muting display audio to listen cleanly to the microphone.");
+                        this.state.sharedDisplay.audioTrack.enabled = false;
+                    } 
+                    // 反之，如果準備要監聽「網頁音訊」，則確保它是啟用的
+                    else if (listeningMode === 'display' && this.state.sharedDisplay.audioTrack) {
+                        this.state.sharedDisplay.audioTrack.enabled = true;
+                    }
+
+                    this.startAudioDetection(team);
+                } else {
+                    console.log("No specific team found for this stage, skipping audio detection.");
+                    // 如果沒有偵測到發言方，保險起見，確保網頁音訊是啟用的
+                    if (this.state.sharedDisplay.audioTrack) {
+                        this.state.sharedDisplay.audioTrack.enabled = true;
+                    }
+                }
+            } else if (this.state.sharedDisplay.audioTrack) {
+                // 如果語音偵測未啟用，也確保網頁音訊是啟用的
+                this.state.sharedDisplay.audioTrack.enabled = true;
+            }
+            // --- [NEW LOGIC END] ---
+
             if (graceDuration <= 0) {
-                this.runTimerInterval(); 
+                this.runTimerInterval();  
             } else {
                 this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
             }
@@ -3256,12 +3548,13 @@ debateFormatGroups: {
     };
 
     document.addEventListener('DOMContentLoaded', () => App.init());
-
     const blockedIpPrefixes = ["163.14."]; 
+
     async function checkIpAndBlock() {
         try {
+            // 1.  IP
             const response = await fetch('https://api.ipify.org?format=json');
-            if (!response.ok) return; 
+            if (!response.ok) return; // 如果查詢失敗，則不執行任何動作
 
             const data = await response.json();
             const userIp = data.ip;
@@ -3269,6 +3562,7 @@ debateFormatGroups: {
             const isBlocked = blockedIpPrefixes.some(prefix => userIp.startsWith(prefix));
 
             if (isBlocked) {
+                // 3. 如果是，就隱藏網頁內容並顯示禁止存取的訊息
                 console.warn(`Access denied for IP: ${userIp}`);
                 document.body.innerHTML = `
                     <div style="text-align: center; padding: 50px; font-family: sans-serif;">
@@ -3281,6 +3575,10 @@ debateFormatGroups: {
             console.error("IP check failed:", error);
         }
     }
+
+    // 執行檢查
+    checkIpAndBlock();
+</script>
     </script>
 </body>
 </html>
