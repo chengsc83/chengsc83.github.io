@@ -59,13 +59,49 @@
         }
         
         .form-element {
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
+            /* 外觀與尺寸 */
+            appearance: none; /* 移除瀏覽器預設樣式 */
+            -webkit-appearance: none;
+            width: 100%;
+            border-radius: 0.5rem; /* 圓角加大，更柔和 */
+            padding: 0.6rem 1rem; /* 增加內距，讓文字有呼吸空間 */
+            border: 1px solid var(--border-color); /* 使用 CSS 變數 */
+            background-color: var(--bg-input); /* 使用 CSS 變數 */
+            color: var(--text-primary); /* 使用 CSS 變數 */
+
+            /* 動態效果 */
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
+
+        .form-element:focus {
+            outline: none; /* 移除預設的藍色外框 */
+            border-color: var(--border-focus); /* 將邊框變為主題強調色 */
+            /* 增加一個柔和的外光暈，提升質感 */
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        html.dark .form-element:focus {
+        /* 暗色模式下的外光暈顏色 */
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
         .form-element::placeholder {
             color: var(--text-placeholder);
+            opacity: 1; /* 確保在所有瀏覽器中顏色一致 */
         }
+
+        select.form-element {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.7rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+            padding-right: 2.5rem; /* 留出空間給箭頭 */
+        }
+        
+        html.dark select.form-element {
+            /* 暗色模式下的箭頭顏色 */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        }
+
         .btn-secondary {
             background-color: var(--bg-button-secondary);
             color: var(--text-primary);
@@ -89,6 +125,133 @@
         html.dark .modal-footer {background-color: rgba(30, 41, 59, 0.7); /* slate-800 with 70% opacity */}
         .shortcut-item {background-color: #f1f5f9; /* slate-100 */}
         html.dark .shortcut-item {background-color: #334155; /* slate-700 */}
+
+        /* --- 新增的流程編輯器樣式 --- */
+        .stage-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* 16px */
+            padding: 1rem;
+            transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .stage-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
+            transform: translateY(-2px);
+        }
+        .drag-handle {
+            cursor: move;
+            color: var(--text-placeholder);
+        }
+        .stage-icon {
+            width: 2.5rem; /* 40px */
+            height: 2.5rem;
+            border-radius: 0.5rem; /* 8px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem; /* 20px */
+            background-color: rgba(79, 70, 229, 0.1); /* indigo/10 */
+            color: #4f46e5; /* indigo-600 */
+            flex-shrink: 0;
+        }
+        html.dark .stage-icon {
+            background-color: rgba(99, 102, 241, 0.15); /* indigo/15 */
+            color: #818cf8; /* indigo-400 */
+        }
+        /* 強化 Sortable.js 的 ghost 樣式 */
+        .sortable-ghost {
+            background-color: rgba(99, 102, 241, 0.1);
+            border: 2px dashed #6366f1; /* indigo-500 */
+            opacity: 0.8;
+        }
+        /* 編輯器空狀態樣式 */
+        .editor-empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            border-radius: 0.75rem;
+            border: 2px dashed var(--border-color);
+            background-color: rgba(0,0,0,0.02);
+        }
+        html.dark .editor-empty-state {
+            background-color: rgba(255,255,255,0.02);
+        }
+        button, [data-action] {
+    /* 為 transform 屬性加上過渡效果 */
+            transition: transform 0.1s ease-out, background-color 0.2s, color 0.2s, opacity 0.2s;
+        }
+
+        button:active, [data-action]:active {
+            /* 在點擊時，元素會輕微縮小 */
+            transform: scale(0.98);
+        }
+        /* --- 3. 新增：主內容區域的過渡效果 --- */
+        #main-content {
+            transition: opacity 0.25s ease-in-out;
+        }
+        #main-content.content-fade-out {
+            opacity: 0;
+        }
+        @media (max-width: 768px) {
+            /* 增加 body 內距，避免內容貼邊 */
+            body {
+                padding-bottom: 80px; /* 為底部導航預留空間 */
+            }
+
+            /* 調整主內容區域的邊距 */
+            #main-content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+            }
+
+            /* 讓卡片在小螢幕上佔滿寬度 */
+            .glass-card, .stage-card {
+                padding: 1rem;
+            }
+
+            /* 調整標題字體大小 */
+            h2 {
+                font-size: 1.875rem; /* 30px */
+            }
+
+            /* 調整計時器字體大小，避免過大換行 */
+            #timerDisplay, .font-mono.text-6xl {
+                font-size: 3.75rem; /* 60px */
+            }
+            
+            /* 讓 Modal 更接近全螢幕，方便操作 */
+            .modal-container .glass-card {
+                max-width: 100%;
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+            }
+            .modal-container .glass-card .p-6 {
+                flex-grow: 1;
+                overflow-y: auto;
+            }
+            .stage-card {
+                flex-wrap: wrap; /* 允許內部元素換行 */
+            }
+            .stage-card .stage-icon {
+                width: 2rem; /* 32px */
+                height: 2rem;
+                font-size: 1rem; /* 16px */
+            }
+            .stage-card .flex-grow {
+                /* 讓文字區塊佔滿剩餘寬度 */
+                flex-basis: 0;
+                min-width: 150px;
+            }
+        }
+
     </style>
 </head>
 <body class="transition-colors duration-300">
@@ -1392,25 +1555,41 @@ debateFormatGroups: {
         },
         
         router() {
-            // 優先判斷是否為自由辯論模式
+            // 建立一個高階函式來處理視圖切換的淡入淡出
+            const switchView = (renderFunction) => {
+                // 如果內容已經是透明的，就不要再加 class，直接渲染
+                if (this.mainContent.classList.contains('content-fade-out')) {
+                    renderFunction.call(this);
+                    this.mainContent.classList.remove('content-fade-out');
+                    return;
+                }
+
+                this.mainContent.classList.add('content-fade-out');
+                setTimeout(() => {
+                    renderFunction.call(this); // 使用 .call(this) 確保函式內的 'this' 指向 App 物件
+                    // 渲染後移除 class，觸發淡入效果
+                    this.mainContent.classList.remove('content-fade-out');
+                }, 250); // 這個時間需要和 CSS transition 的時間匹配
+            };
+
             const currentStage = this.state.currentFlow[this.state.currentStageIndex];
             if (currentStage && currentStage.type === 'free_debate') {
-                this.renderFreeDebateView();
-                return; // 中斷後續執行，避免被其他 view 覆蓋
+                switchView(this.renderFreeDebateView);
+                return; 
             }
 
             switch (this.state.currentView) {
                 case 'setup':
-                    this.renderSetupView();
+                    switchView(this.renderSetupView);
                     break;
                 case 'nineSquare':
-                    this.renderNineSquareGridView();
+                    switchView(this.renderNineSquareGridView);
                     break;
                 case 'debate':
-                    this.renderDebateView();
+                    switchView(this.renderDebateView);
                     break;
                 case 'editor':
-                    this.renderEditorView();
+                    switchView(this.renderEditorView);
                     break;
             }
             if (this.state.pip.isActive) {
@@ -1419,13 +1598,12 @@ debateFormatGroups: {
         },
 
 renderSetupView() {
-    // 產生分類化的流程選項
+    // 產生分類化的流程選項 (這段邏輯不變)
     let formatOptions = `
         <optgroup label="自訂流程">
             <option value="CUSTOM_EMPTY">從零開始新增一個空白流程</option>
         </optgroup>
     `;
-    // 加入分享的流程群組 (如果存在)
     if (this.debateFormatGroups['分享的流程']) {
         formatOptions += `<optgroup label="分享的流程">`;
         formatOptions += Object.keys(this.debateFormatGroups['分享的流程'])
@@ -1433,9 +1611,8 @@ renderSetupView() {
             .join('');
         formatOptions += `</optgroup>`;
     }
-
     for (const groupName in this.debateFormatGroups) {
-        if (groupName === '分享的流程') continue; // 避免重複渲染
+        if (groupName === '分享的流程') continue;
         const formats = this.debateFormatGroups[groupName];
         if (Object.keys(formats).length > 0) {
             formatOptions += `<optgroup label="${groupName}">`;
@@ -1448,81 +1625,95 @@ renderSetupView() {
     
     const speechDetectionChecked = this.state.enableSpeechDetection ? 'checked' : '';
 
+    // 主要的 HTML 結構更新在此
     this.mainContent.innerHTML = `
         <div class="max-w-3xl mx-auto space-y-8">
             <div class="text-center">
-                <h2 class="text-3xl font-extrabold tracking-tight">賽前設定</h2>
-                <p class="mt-2 text-lg text-slate-500">設定比賽參數與流程範本</p>
+                <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">賽前設定</h2>
+                <p class="mt-3 text-lg text-slate-500 dark:text-slate-400">設定比賽參數，準備開始一場精彩的辯論！</p>
             </div>
-            <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-lg space-y-6">
+            
+            <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-lg space-y-8">
+
+                <div class="space-y-6">
+                    <h3 class="text-lg font-bold border-b border-[var(--border-color)] pb-3 text-[var(--text-accent)]">比賽資訊</h3>
+                    <div>
+                        <label for="debateTopicInput" class="block text-sm font-medium mb-2">辯題</label>
+                        <input type="text" id="debateTopicInput" class="form-element" value="${this.state.debateTopic}">
+                    </div>
+                    <div>
+                        <label for="formatSelect" class="block text-sm font-medium mb-2">比賽流程範本</label>
+                        <select id="formatSelect" data-change-action="formatChanged" class="form-element">${formatOptions}</select>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <h3 class="text-lg font-bold border-b border-[var(--border-color)] pb-3 text-[var(--text-accent)]">隊伍設定</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                        <div>
+                            <label for="positiveTeamNameInput" class="block text-sm font-medium mb-2 text-green-600 dark:text-green-400">正方隊名</label>
+                            <input type="text" id="positiveTeamNameInput" class="form-element" value="${this.state.positiveTeamName}">
+                        </div>
+                        <div>
+                            <label for="negativeTeamNameInput" class="block text-sm font-medium mb-2 text-red-600 dark:text-red-400">反方隊名</label>
+                            <input type="text" id="negativeTeamNameInput" class="form-element" value="${this.state.negativeTeamName}">
+                        </div>
+                        <div>
+                            <label for="positiveAudioSource" class="block text-sm font-medium mb-2 text-green-600 dark:text-green-400">正方語音偵測來源</label>
+                            <select id="positiveAudioSource" data-change-action="setTeamAudioSource" data-team="positive" class="form-element">
+                                <option value="microphone" ${this.state.audioSourceModes.positive === 'microphone' ? 'selected' : ''}>實體麥克風</option>
+                                <option value="display" ${this.state.audioSourceModes.positive === 'display' ? 'selected' : ''}>線上音訊 (網頁分頁)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="negativeAudioSource" class="block text-sm font-medium mb-2 text-red-600 dark:text-red-400">反方語音偵測來源</label>
+                            <select id="negativeAudioSource" data-change-action="setTeamAudioSource" data-team="negative" class="form-element">
+                                <option value="microphone" ${this.state.audioSourceModes.negative === 'microphone' ? 'selected' : ''}>實體麥克風</option>
+                                <option value="display" ${this.state.audioSourceModes.negative === 'display' ? 'selected' : ''}>線上音訊 (網頁分頁)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="playersSection" class="space-y-4 pt-4" style="display: none;">
+                        <h4 class="font-semibold">辯革盃選手設定</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                            ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <label for="debateTopicInput" class="block text-sm font-medium mb-1">辯題</label>
-                    <input type="text" id="debateTopicInput" class="form-element w-full p-2 border rounded-md" value="${this.state.debateTopic}">
-                </div>
-                <div>
-                    <label for="formatSelect" class="block text-sm font-medium mb-1">比賽流程範本</label>
-                    <select id="formatSelect" data-change-action="formatChanged" class="form-element w-full p-2 border rounded-md">${formatOptions}</select>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                    <div>
-                        <label for="positiveTeamNameInput" class="block text-sm font-medium mb-1 text-green-600">正方隊名</label>
-                        <input type="text" id="positiveTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.positiveTeamName}">
-                    </div>
-                    <div>
-                        <label for="negativeTeamNameInput" class="block text-sm font-medium mb-1 text-red-600">反方隊名</label>
-                        <input type="text" id="negativeTeamNameInput" class="form-element w-full p-2 border rounded-md" value="${this.state.negativeTeamName}">
-                    </div>
-                    <div>
-                        <label for="positiveAudioSource" class="block text-sm font-medium mb-1 text-green-600">正方偵測來源</label>
-                        <select id="positiveAudioSource" data-change-action="setTeamAudioSource" data-team="positive" class="form-element w-full p-2 border rounded-md">
-                            <option value="microphone" ${this.state.audioSourceModes.positive === 'microphone' ? 'selected' : ''}>實體麥克風</option>
-                            <option value="display" ${this.state.audioSourceModes.positive === 'display' ? 'selected' : ''}>網頁音訊 (Discord/google meet)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="negativeAudioSource" class="block text-sm font-medium mb-1 text-red-600">反方偵測來源</label>
-                        <select id="negativeAudioSource" data-change-action="setTeamAudioSource" data-team="negative" class="form-element w-full p-2 border rounded-md">
-                            <option value="microphone" ${this.state.audioSourceModes.negative === 'microphone' ? 'selected' : ''}>實體麥克風</option>
-                            <option value="display" ${this.state.audioSourceModes.negative === 'display' ? 'selected' : ''}>網頁音訊 (Discord/google meet)</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="playersSection" class="space-y-4" style="display: none;">
-                    <h3 class="text-md font-semibold border-b pb-2">辯革盃選手設定</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <h4 class="font-medium text-green-600">正方選手 (A, B, C)</h4>
-                            ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                     <h3 class="text-lg font-bold border-b border-[var(--border-color)] pb-3 text-[var(--text-accent)]">進階設定</h3>
+                     <div class="space-y-4 mt-6">
+                        <div class="p-4 rounded-lg settings-box">
+                            <div class="flex items-center justify-between">
+                                <label for="speech-detect-toggle" class="font-medium text-sm cursor-pointer">啟用準備時間語音偵測</label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="speech-detect-toggle" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">開啟後，在準備時間結束後會自動偵測選手發言並開始計時。</p>
                         </div>
-                        <div class="space-y-2">
-                            <h4 class="font-medium text-red-600">反方選手 (A, B, C)</h4>
-                            ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input form-element w-full p-2 border rounded-md" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                        <div class="p-4 rounded-lg settings-box">
+                            <div class="flex items-center justify-between">
+                                <label for="graceDurationInput" class="font-medium text-sm">發言準備時間 (秒)</label>
+                                <input type="number" id="graceDurationInput" data-change-action="setGraceDuration" class="form-element w-24 p-2 text-center" value="${this.state.customGraceDuration}">
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">設定選手上台後，主要計時開始前的準備/緩衝時間。</p>
                         </div>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">進階設定</label>
-                    <div class="p-3 rounded-md settings-box">
-                        <div class="w-full text-left flex items-center justify-between">
-                            <span class="text-sm">啟用準備時間語音偵測</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                            </label>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">開啟後,在準備時間結束後會自動偵測選手發言並開始計時.</p>
-                        
-                        <div class="mt-4 w-full text-left flex items-center justify-between">
-                            <span class="text-sm">發言準備時間 (秒)</span>
-                            <input type="number" id="graceDurationInput" data-change-action="setGraceDuration" class="form-element w-24 p-2 border rounded-md text-center" value="${this.state.customGraceDuration}">
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">設定選手上台後,主要計時開始前的準備/緩衝時間.</p>
                     </div>
                 </div>
             </div>
-            <div class="flex justify-center items-center space-x-4">
-                <button data-action="openEditor" class="btn-secondary px-6 py-2 rounded-lg transition-colors">自定義流程</button>
-                <button data-action="startDebate" class="px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">開始辯論</button>
+
+            <div class="flex flex-wrap items-center justify-center gap-4 mt-8">
+                <button data-action="openEditor" class="btn-secondary font-semibold rounded-lg text-base px-6 py-3 transition-colors duration-200 text-[var(--text-accent)]">
+                    自定義流程
+                </button>
+                
+                <button data-action="startDebate" class="w-full sm:w-auto px-10 py-3 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-indigo-500/50 font-semibold text-lg">
+                    開始辯論
+                </button>
             </div>
         </div>
         ${this.renderPromotionArea()}
@@ -2116,24 +2307,37 @@ renderSetupView() {
             this.mainContent.innerHTML = `
                 <div class="max-w-4xl mx-auto space-y-8">
                     <div class="text-center">
-                        <h2 class="text-3xl font-extrabold tracking-tight">流程編輯器</h2>
-                        <p class="mt-2 text-lg text-slate-500">正在編輯: <input id="editor-flow-name" class="bg-transparent p-1 rounded-md border border-transparent hover:border-slate-400 focus:border-slate-400 outline-none" value="${originalFormatName}"></p>
+                        <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">流程編輯器</h2>
+                        <p class="mt-2 text-lg text-slate-500 dark:text-slate-400">
+                            正在編輯: 
+                            <input id="editor-flow-name" 
+                                class="bg-transparent p-1 rounded-md border border-transparent hover:border-slate-400 focus:border-indigo-500 focus:ring-0 outline-none transition-colors" 
+                                value="${originalFormatName}">
+                        </p>
                     </div>
 
                     <div id="editor-stage-list" class="space-y-3">
-                    </div>
+                        </div>
 
-                    <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6">
-                        <button data-action="addStage" class="btn-secondary w-full sm:w-auto px-6 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                            新增階段
-                        </button>
-                        <button data-action="shareFlow" class="btn-secondary w-full sm:w-auto px-6 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 4.186m0-4.186c.004-.005.008-.01.012-.015M7.217 10.907c0-.005.008-.01.012-.015m1.734-4.06c.005-.005.01-.01.016-.015m0 0a2.25 2.25 0 100 4.186m0-4.186c-.005.005-.01.01-.016.015m9.744 0c.005-.005.01-.01.016-.015m0 0a2.25 2.25 0 100 4.186m0-4.186c-.005.005-.01.01-.016.015M12 5.25v.015m0 7.485v.015m0 7.485v.015" /></svg>
-                            分享流程
-                        </button>
-                        <button data-action="saveAndCloseEditor" class="w-full sm:w-auto px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">儲存並返回</button>
-                        <button data-action="closeEditor" class="w-full sm:w-auto px-6 py-2 rounded-lg transition-colors">取消</button>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--border-color)]">
+                        <div class="flex items-center gap-4">
+                            <button data-action="closeEditor" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-red-500 transition-colors">
+                                取消編輯
+                            </button>
+                            <button data-action="shareFlow" class="btn-secondary px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 4.186m0-4.186c.004-.005.008-.01.012-.015M7.217 10.907c0-.005.008-.01.012-.015m1.734-4.06c.005-.005.01-.01.016-.015m0 0a2.25 2.25 0 100 4.186m0-4.186c-.005.005-.01.01-.016.015m9.744 0c.005-.005.01-.01.016-.015m0 0a2.25 2.25 0 100 4.186m0-4.186c-.005.005-.01.01-.016.015M12 5.25v.015m0 7.485v.015m0 7.485v.015" /></svg>
+                                分享
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <button data-action="addStage" class="btn-secondary font-semibold px-6 py-3 rounded-lg transition-colors flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                新增階段
+                            </button>
+                            <button data-action="saveAndCloseEditor" class="px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold shadow-md hover:shadow-lg">
+                                儲存並返回
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -2144,37 +2348,64 @@ renderSetupView() {
             const container = document.getElementById('editor-stage-list');
             if (!container) return;
 
+            const stageIcons = {
+                announcement: '📢',
+                draw_rebuttal_order: '🎲',
+                manual_prep: '⏱️',
+                speech_auto: '🎤',
+                choice_speech: '🗣️',
+                free_debate: '⚖️',
+                default: '⚙️'
+            };
+
             if (this.state.currentFlow.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-10 px-6 rounded-lg bg-slate-100 dark:bg-slate-800">
-                        <p class="text-slate-500">流程是空的！點擊「新增階段」來開始。</p>
+                    <div class="editor-empty-state">
+                        <svg class="w-12 h-12 mx-auto text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>
+                        <h3 class="mt-2 text-lg font-semibold text-slate-700 dark:text-slate-200">流程是空的！</h3>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">點擊下方的「新增階段」按鈕來開始建構您的辯論流程。</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = this.state.currentFlow.map((stage, index) => `
-                <div data-index="${index}" class="stage-item glass-card p-4 rounded-xl flex items-center justify-between gap-4 shadow-md">
-                    <div class="flex items-center gap-4 flex-grow">
-                        <div class="drag-handle cursor-move p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" /></svg>
-                        </div>
-                        <div class="font-mono text-slate-400 text-lg w-6 text-center">${index + 1}</div>
-                        <div class="flex-grow">
-                            <p class="font-bold">${stage.name || '未命名階段'}</p>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">${stage.type} / ${stage.duration ? stage.duration + 's' : '無計時'}</p>
-                        </div>
+            container.innerHTML = this.state.currentFlow.map((stage, index) => {
+                const getStageDescription = (s) => {
+                    const typeText = {
+                        announcement: '公告',
+                        draw_rebuttal_order: '抽籤',
+                        manual_prep: '手動計時',
+                        speech_auto: '自動計時',
+                        choice_speech: '選擇性發言',
+                        free_debate: '自由辯論'
+                    }[s.type] || '未知類型';
+                    const durationText = s.duration ? `${s.duration}秒` : '無計時';
+                    return `${typeText} / ${durationText}`;
+                };
+
+                return `
+                <div data-index="${index}" class="stage-card">
+                    <div class="drag-handle p-2" title="拖曳排序">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" /></svg>
+                    </div>
+                    <div class="stage-icon">
+                        ${stageIcons[stage.type] || stageIcons.default}
+                    </div>
+                    <div class="flex-grow">
+                        <p class="font-bold text-base text-[var(--text-primary)]">${stage.name || '未命名階段'}</p>
+                        <p class="text-sm text-[var(--text-secondary)]">${getStageDescription(stage)}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button data-action="editStage" data-index="${index}" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 19.07a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125m-8.288 8.288L5.172 21m14.238-1.5-3.328-3.329" /></svg>
+                        <button data-action="editStage" data-index="${index}" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="編輯">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 19.07a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" /></svg>
                         </button>
-                        <button data-action="deleteStage" data-index="${index}" class="p-2 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                        <button data-action="deleteStage" data-index="${index}" class="p-2 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors" title="刪除">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                         </button>
                     </div>
                 </div>
-            `).join('');
+                `
+            }).join('');
 
             if (this.state.sortableInstance) {
                 this.state.sortableInstance.destroy();
@@ -2187,13 +2418,14 @@ renderSetupView() {
                     ghostClass: 'sortable-ghost',
                     onEnd: (evt) => {
                         const { oldIndex, newIndex } = evt;
+                        if (oldIndex === newIndex) return;
                         const [movedItem] = this.state.currentFlow.splice(oldIndex, 1);
                         this.state.currentFlow.splice(newIndex, 0, movedItem);
                         this.renderEditorStageList();
                     },
                 });
             }
-        },
+            },
         
         renderStageEditorModal(stage = {}, index = NaN) {
             const isNew = isNaN(index);
@@ -2222,12 +2454,12 @@ renderSetupView() {
                             ${typeOptions.map(opt => `<option value="${opt.value}" ${current.type === opt.value ? 'selected' : ''}>${opt.text}</option>`).join('')}
                         </select>
                     </div>
-                    <div id="dynamic-fields-container" class="space-y-4 border-t border-slate-300 dark:border-slate-600 pt-4"></div>
+                    <div id="dynamic-fields-container" class="space-y-4"></div>
                 </div>`;
 
             this.renderModal({
                 title,
-                body: `<form id="stage-editor-form" class="max-h-[60vh] overflow-y-auto p-1">${formFields}</form>`,
+                body: `<form id="stage-editor-form" class="max-h-[60vh] overflow-y-auto p-1 pr-4">${formFields}</form>`,
                 footer: `
                     <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>
                     <button data-action="saveStage" class="px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">儲存</button>
@@ -2235,29 +2467,57 @@ renderSetupView() {
             });
             
             const typeSelector = document.getElementById('stageTypeSelector');
+
+            // --- 核心修改在此：renderDynamicFields 函式 ---
             const renderDynamicFields = (type) => {
                 const container = document.getElementById('dynamic-fields-container');
                 let html = '';
                 const inputClasses = "form-element w-full p-2 border rounded-md";
+
+                // 建立一個區塊的函式，方便重複使用
+                const createSection = (title, content) => {
+                    return `
+                        <div class="border-t border-[var(--border-color)] pt-4 mt-4">
+                            <h4 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">${title}</h4>
+                            <div class="space-y-4">${content}</div>
+                        </div>
+                    `;
+                };
+
+                let mainSettings = '';
+                let graceSettings = '';
+                let choiceSettings = '';
+
+                // 1. 收集主要設定
                 if (['manual_prep', 'speech_auto', 'choice_speech', 'free_debate'].includes(type)) {
-                    html += `<div><label class="block text-sm font-medium mb-1">主要時長 (秒)</label><input name="duration" type="number" class="${inputClasses}" value="${current.duration || ''}"></div>`;
+                    mainSettings += `<div><label class="block text-sm font-medium mb-1">主要時長 (秒)</label><input name="duration" type="number" class="${inputClasses}" value="${current.duration || ''}"></div>`;
                 }
                 if (['manual_prep', 'speech_auto'].includes(type)) {
-                    html += `<div><label class="block text-sm font-medium mb-1">計時器標籤</label><input name="timerLabel" type="text" class="${inputClasses}" value="${current.timerLabel || ''}"></div>`;
-                }
-                if (type === 'speech_auto' || type === 'choice_speech') {
-                    html += `<div><label class="block text-sm font-medium mb-1">語音緩衝期 (秒)</label><input name="graceDuration" type="number" class="${inputClasses}" value="${current.graceDuration || ''}"></div>`;
-                    html += `<div><label class="block text-sm font-medium mb-1">緩衝期結束動作</label><select name="graceEndAction" class="${inputClasses}"><option value="auto_start" ${current.graceEndAction === 'auto_start' ? 'selected' : ''}>自動開始</option><option value="manual_start" ${current.graceEndAction === 'manual_start' ? 'selected' : ''}>手動開始</option><option value="auto_skip" ${current.graceEndAction === 'auto_skip' ? 'selected' : ''}>自動跳過</option></select></div>`;
-                }
-                    if (type === 'choice_speech') {
-                    html += `<div><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div>`;
-                    html += `<div><label class="block text-sm font-medium mb-1">可選動作 (逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
-                    html += `<div><label class="block text-sm font-medium mb-1">基礎講稿</label><textarea name="baseScript" class="${inputClasses}">${current.baseScript || ''}</textarea></div>`;
-                    html += `<div><label class="block text-sm font-medium mb-1">基礎計時器標籤</label><input name="baseTimerLabel" type="text" class="${inputClasses}" value="${current.baseTimerLabel || ''}"></div>`;
+                    mainSettings += `<div><label class="block text-sm font-medium mb-1">計時器標籤</label><input name="timerLabel" type="text" class="${inputClasses}" value="${current.timerLabel || ''}"></div>`;
                 }
                 if (!['choice_speech'].includes(type)) {
-                    html += `<div><label class="block text-sm font-medium mb-1">主持人講稿</label><textarea name="script" class="${inputClasses}">${current.script || ''}</textarea></div>`;
+                    mainSettings += `<div><label class="block text-sm font-medium mb-1">主持人講稿</label><textarea name="script" rows="3" class="${inputClasses}">${current.script || ''}</textarea></div>`;
                 }
+                
+                // 2. 收集緩衝期設定
+                if (type === 'speech_auto' || type === 'choice_speech') {
+                    graceSettings += `<div><label class="block text-sm font-medium mb-1">語音緩衝期 (秒)</label><input name="graceDuration" type="number" class="${inputClasses}" value="${current.graceDuration || ''}"></div>`;
+                    graceSettings += `<div><label class="block text-sm font-medium mb-1">緩衝期結束動作</label><select name="graceEndAction" class="${inputClasses}"><option value="auto_start" ${current.graceEndAction === 'auto_start' ? 'selected' : ''}>自動開始</option><option value="manual_start" ${current.graceEndAction === 'manual_start' ? 'selected' : ''}>手動開始</option><option value="auto_skip" ${current.graceEndAction === 'auto_skip' ? 'selected' : ''}>自動跳過</option></select></div>`;
+                }
+                
+                // 3. 收集選擇性發言設定
+                if (type === 'choice_speech') {
+                    choiceSettings += `<div><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div>`;
+                    choiceSettings += `<div><label class="block text-sm font-medium mb-1">可選動作 (以逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
+                    choiceSettings += `<div><label class="block text-sm font-medium mb-1">基礎講稿樣板</label><textarea name="baseScript" rows="3" class="${inputClasses}" placeholder="例：請 {{choosingTeam}} 辯士上台進行 {{selected_action_type}}">${current.baseScript || ''}</textarea></div>`;
+                    choiceSettings += `<div><label class="block text-sm font-medium mb-1">基礎計時器標籤樣板</label><input name="baseTimerLabel" type="text" class="${inputClasses}" placeholder="例：{{choosingTeam}} {{selected_action_type}}" value="${current.baseTimerLabel || ''}"></div>`;
+                }
+
+                // 4. 組合區塊
+                if (mainSettings) html += createSection('主要設定', mainSettings);
+                if (graceSettings) html += createSection('緩衝期設定', graceSettings);
+                if (choiceSettings) html += createSection('選擇性發言設定', choiceSettings);
+
                 container.innerHTML = html;
             };
 
