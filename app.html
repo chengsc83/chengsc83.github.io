@@ -18,6 +18,13 @@
         :root { 
             --font-body: 'Inter', sans-serif; 
             --font-mono: 'JetBrains Mono', monospace; 
+
+            /* --- ↓↓↓ 新增/修改此區塊 ↓↓↓ --- */
+            --color-accent: #4f46e5; /* indigo-600 */
+            --color-accent-hover: #4338ca; /* indigo-700 */
+            --color-accent-light: #6366f1; /* indigo-500 */
+            --color-focus-shadow: rgba(79, 70, 229, 0.2);
+            /* --- ↑↑↑ 新增/修改此區塊 ↑↑↑ --- */
             
             --bg-page: #f1f5f9; /* slate-100 */
             --bg-card: rgba(255, 255, 255, 0.6);
@@ -74,14 +81,13 @@
         }
 
         .form-element:focus {
-            outline: none; /* 移除預設的藍色外框 */
-            border-color: var(--border-focus); /* 將邊框變為主題強調色 */
-            /* 增加一個柔和的外光暈，提升質感 */
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px var(--color-focus-shadow); 
         }
         html.dark .form-element:focus {
         /* 暗色模式下的外光暈顏色 */
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        /* box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); */
         }
 
         .form-element::placeholder {
@@ -155,7 +161,7 @@
             justify-content: center;
             font-size: 1.25rem; /* 20px */
             background-color: rgba(79, 70, 229, 0.1); /* indigo/10 */
-            color: #4f46e5; /* indigo-600 */
+            color: var(--color-accent); /* indigo-600 */
             flex-shrink: 0;
         }
         html.dark .stage-icon {
@@ -268,7 +274,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div data-action="returnToHome" class="flex items-center space-x-4 cursor-pointer">
-                        <svg class="h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <svg class="h-8 w-8 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div>
@@ -277,7 +283,7 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                         <button data-action="showPremiumModal" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-90 transition-opacity">
+                         <button data-action="showPremiumModal" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-accent-light)] to-[var(--color-accent)] hover:opacity-90 transition-opacity">
                              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                  <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
                              </svg>
@@ -314,6 +320,12 @@
 
     <script>
     const App = {
+        themes: {
+            default: { name: '經典靛藍', colors: { accent: '#4f46e5', accentHover: '#4338ca', accentLight: '#6366f1' }},
+            rose: { name: '熱血玫瑰', colors: { accent: '#e11d48', accentHover: '#be123c', accentLight: '#f43f5e' }},
+            amber: { name: '活力暖陽', colors: { accent: '#d97706', accentHover: '#b45309', accentLight: '#f59e0b' }},
+            teal: { name: '清新青藍', colors: { accent: '#0d9488', accentHover: '#0f766e', accentLight: '#14b8a6' }},
+        },
         // --- STATE ---
         state: {
             currentView: 'setup', // 'setup', 'nineSquare', 'editor', 'debate'
@@ -373,7 +385,8 @@
                 stream: null,
                 isActive: false,
             },
-
+            history: [], // 用來存放狀態歷史紀錄
+            MAX_HISTORY_STATES: 20, // 最多保留 20 筆歷史紀錄，防止佔用過多記憶體
             // [ADD THIS START]
             recording: {
                 mediaRecorder: null,
@@ -740,7 +753,150 @@ debateFormatGroups: {
         ]
     },
 },
+        /**
+         * 將當前狀態的深拷貝存入歷史紀錄
+         * @param {string} actionName - 觸發儲存的動作名稱，方便除錯
+         */
+        
+        saveState(actionName = 'unknown') {
+            // console.log(`Saving state before: ${actionName}`);
+            try {
+                // 使用 structuredClone 進行高效的深拷貝，比 JSON.parse(JSON.stringify(...)) 更好
+                const stateSnapshot = structuredClone(this.state);
+                
+                // structuredClone 無法複製 DOM 元素或 null 原型的物件，手動排除
+                delete stateSnapshot.pip.videoElement;
+                delete stateSnapshot.sortableInstance;
+                delete stateSnapshot.audioDetection.vad;
+                delete stateSnapshot.recording.mediaRecorder;
 
+                this.state.history.push(stateSnapshot);
+
+                // 如果歷史紀錄超過上限，則移除最舊的一筆
+                if (this.state.history.length > this.state.MAX_HISTORY_STATES) {
+                    this.state.history.shift();
+                }
+            } catch (e) {
+                console.error("Failed to save state:", e);
+            }
+        },
+
+        /**
+         * 從歷史紀錄中還原上一個狀態
+         */
+        restoreState() {
+            if (this.state.history.length === 0) {
+                this.showNotification("沒有更早的操作可以復原", "info");
+                return;
+            }
+
+            // 1. 在覆蓋 state 之前，先清除目前正在運作的計時器程序
+            clearInterval(this.state.timer.interval);
+            clearInterval(this.state.timer.graceInterval);
+            if (this.state.freeDebate && this.state.freeDebate.interval) {
+                clearInterval(this.state.freeDebate.interval);
+            }
+            this.stopAudioDetection(); // 同時停止語音偵測
+
+            // 2. 從歷史紀錄中取出上一個狀態
+            const lastState = this.state.history.pop();
+            
+            // 3. 保留一些不想被完全覆蓋的當前 UI 相關物件
+            const currentPipState = this.state.pip;
+            const currentSortableInstance = this.state.sortableInstance;
+
+            // 4. 用舊狀態完整覆蓋當前狀態物件
+            Object.keys(lastState).forEach(key => {
+                this.state[key] = lastState[key];
+            });
+
+            // 5. 恢復不想被覆蓋的 UI 物件
+            this.state.pip = currentPipState;
+            this.state.sortableInstance = currentSortableInstance;
+            
+            // 6. 根據剛剛還原的狀態，重新渲染整個畫面
+            this.render();
+            
+            // 7. 檢查還原後的狀態，如果計時器應該是執行中，就為它建立一個新的計時程序
+            if ((this.state.timer.type === 'main' || this.state.timer.type === 'grace' || this.state.timer.type === 'manual_prep') && !this.state.timer.isPaused && this.state.timer.timeLeft > 0) {
+                const intervalType = this.state.timer.type === 'grace' ? 'graceInterval' : 'interval';
+                // 重新賦予一個新的 interval ID
+                this.state.timer[intervalType] = setInterval(this.runTimerInterval.bind(this), 1000);
+            }
+            
+            if (this.state.freeDebate && this.state.freeDebate.activeTeam && !this.state.freeDebate.isPaused) {
+                // 確保自由辯論計時器在還原後也能繼續
+                this.state.freeDebate.interval = setInterval(() => this.runFreeDebateInterval(), 1000);
+            }
+
+            this.showNotification("已復原上一個操作", "success");
+        },
+        /**
+         * Helper function to convert hex color to rgba
+         * @param {string} hex - The hex color code.
+         * @param {number} alpha - The alpha transparency (0 to 1).
+         * @returns {string} - The rgba color string.
+         */
+        hexToRgba(hex, alpha) {
+            let r = 0, g = 0, b = 0;
+            if (hex.length == 4) {
+                r = parseInt(hex[1] + hex[1], 16);
+                g = parseInt(hex[2] + hex[2], 16);
+                b = parseInt(hex[3] + hex[3], 16);
+            } else if (hex.length == 7) {
+                r = parseInt(hex.substring(1, 3), 16);
+                g = parseInt(hex.substring(3, 5), 16);
+                b = parseInt(hex.substring(5, 7), 16);
+            }
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        },
+
+        /**
+         * Applies a theme object to the CSS variables.
+         * @param {object} colors - An object with accent, accentHover, accentLight properties.
+         */
+        applyTheme(colors) {
+            if (!colors || !colors.accent) {
+                console.warn("applyTheme called with invalid colors object.");
+                return;
+            }
+            const root = document.documentElement;
+            root.style.setProperty('--color-accent', colors.accent);
+            root.style.setProperty('--color-accent-hover', colors.accentHover);
+            root.style.setProperty('--color-accent-light', colors.accentLight);
+            root.style.setProperty('--color-focus-shadow', this.hexToRgba(colors.accent, 0.25));
+
+            // Also update PiP if active
+            if (this.state.pip.isActive) {
+                this.renderPipCanvas();
+            }
+        },
+
+        /**
+         * Saves the custom theme colors to localStorage.
+         * @param {object} colors 
+         */
+        saveCustomTheme(colors) {
+            localStorage.setItem('debateTimerCustomTheme', JSON.stringify(colors));
+        },
+
+        /**
+         * Loads and applies theme from localStorage on startup.
+         */
+        loadTheme() {
+            const savedTheme = localStorage.getItem('debateTimerCustomTheme');
+            if (savedTheme) {
+                try {
+                    const customColors = JSON.parse(savedTheme);
+                    this.applyTheme(customColors);
+                } catch (e) {
+                    console.error("Failed to parse custom theme from localStorage", e);
+                }
+            } else {
+                // Apply default theme if no custom theme is saved
+                this.applyTheme(this.themes.default.colors);
+            }
+        },
         // --- CORE METHODS ---
         init() {
             document.getElementById('app').style.display = 'flex';
@@ -752,6 +908,7 @@ debateFormatGroups: {
             //this.showPromotionModal();
             this.checkForSharedFlow()
             this.initAudioRecording();
+            this.loadTheme();
             this.initSpeechRecognition();
             this.initSpeechSynthesis();
             this.loadState();
@@ -841,6 +998,11 @@ debateFormatGroups: {
             if (isModalOpen && e.key !== 'Escape') {
                 return;
             }
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                this.actions.undo();
+                return;
+            }
 
             // --- [新增] 自由辯論環節的專屬快捷鍵邏輯 ---
             const currentStage = this.state.currentFlow[this.state.currentStageIndex];
@@ -928,17 +1090,26 @@ debateFormatGroups: {
         actions: {
             toggleMicMute() { App.toggleMicMute(); },
             startFreeDebate(e) { 
+            App.saveState('startFreeDebate');
             const team = e.target.closest('[data-team]').dataset.team;
             App.startFreeDebateTimer(team);
                 },
-            switchFreeDebate() { App.switchFreeDebateTeam(); },
-            togglePauseFreeDebate() { App.togglePauseFreeDebate(); },
+            switchFreeDebate() {
+                App.saveState('switchFreeDebate'); // <<-- 新增這一行
+                App.switchFreeDebateTeam();
+            },
+            togglePauseFreeDebate() {
+                App.saveState('togglePauseFreeDebate'); // <<-- 新增這一行
+                App.togglePauseFreeDebate(); 
+            },
             resetFreeDebateStage() { App.resetFreeDebateStage(); },
             startRecording() { App.startRecording(); },
             stopRecording() { App.stopRecording(); },
             downloadAudio() { App.downloadAudio(); },
             downloadTranscript() { App.downloadTranscript(); },
             async startDebate(e) {
+                App.state.history = []; 
+                App.saveState('startDebate');
                 const selectedFormatName = document.getElementById('formatSelect').value;
                 if (!selectedFormatName) {
                     App.showNotification("請選擇一個比賽格式", "error");
@@ -1051,7 +1222,7 @@ debateFormatGroups: {
                             </div>
                             <input type="text" readonly value="${shareUrl}" id="shareUrlInput" class="form-element w-full p-2 border rounded-md font-mono text-sm break-all">
                         `,
-                        footer: `<button data-action="copyShareUrl" class="px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">複製連結</button>`
+                        footer: `<button data-action="copyShareUrl" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">複製連結</button>`
                     });
                 } catch (e) {
                     console.error("Error generating share link:", e);
@@ -1070,6 +1241,7 @@ debateFormatGroups: {
                     App.showNotification("連結已複製！", "success");
                 }
             },
+            undo() { App.restoreState(); },
             nextStage() {
             // 【新增】針對 iOS 抽籤後手動點擊的特殊處理
                 const currentStage = App.state.currentFlow[App.state.currentStageIndex];
@@ -1084,7 +1256,8 @@ debateFormatGroups: {
                     App.state.isSpeaking = false;
                 }
 
-                if (App.state.isAdvancingStage) return; // 防止重複點擊
+                if (App.state.isAdvancingStage) return;
+                App.saveState('nextStage'); // 防止重複點擊
                 App.state.isAdvancingStage = true;
 
                 App.clearAllTimers(); // 這個函式會清除任何已排定的自動跳轉
@@ -1114,6 +1287,7 @@ debateFormatGroups: {
             },              
             previousStage() {
                 if (App.state.isAdvancingStage) return;
+                App.saveState('previousStage');
                 if (App.state.currentStageIndex <= 0) return;
 
                 App.state.isAdvancingStage = true;
@@ -1152,6 +1326,7 @@ debateFormatGroups: {
                 }, 500);
 },            
             togglePause() {
+                App.saveState('togglePause');
                 App.state.timer.isPaused = !App.state.timer.isPaused;
                 if (App.state.timer.isPaused) {
                     if (App.state.timer.type === 'grace') clearInterval(App.state.timer.graceInterval);
@@ -1295,10 +1470,12 @@ debateFormatGroups: {
                 App.finalizeRebuttalOrder(team);
             },
             manualStartTimer() {
+                App.saveState('manualStartTimer');
                 const stage = App.state.currentFlow[App.state.currentStageIndex];
                 if (stage && stage.type === "manual_prep") App.startManualPrepTimer(stage.duration);
             },
             forceStartMainTimer() {
+                App.saveState('forceStartMainTimer');
                 const stage = App.state.currentFlow[App.state.currentStageIndex];
                 if (stage && App.state.timer.type === 'grace') {
                     clearInterval(App.state.timer.graceInterval);
@@ -1479,6 +1656,7 @@ debateFormatGroups: {
                     { key: 'F', desc: '切換全螢幕' },
                     { key: 'T', desc: '切換亮/暗主題' },
                     { key: 'Esc', desc: '關閉彈出視窗或側邊欄' },
+                    { key: 'ctrl+z', desc: '復原' },
                     { key: '? 或 /', desc: '顯示快捷鍵說明' },
                 ];
                 
@@ -1506,9 +1684,73 @@ debateFormatGroups: {
                 const modal = e.target.closest('.modal-container');
                 if (modal) modal.remove();
             },
+            showThemeEditor() {
+                const presetButtons = Object.keys(App.themes).map(key => {
+                    const theme = App.themes[key];
+                    return `<button data-action="applyPresetTheme" data-theme-key="${key}" class="p-3 rounded-lg text-sm font-semibold transition-transform hover:scale-105" style="background-color: ${theme.colors.accent}; color: white;">${theme.name}</button>`;
+                }).join('');
+
+                const currentCustomColor = JSON.parse(localStorage.getItem('debateTimerCustomTheme'))?.accent || App.themes.default.colors.accent;
+
+                const modalBody = `
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-semibold mb-3">預設主題</h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${presetButtons}
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-3">自訂主題色</h4>
+                            <div class="flex items-center gap-4 p-4 rounded-lg settings-box">
+                                <label for="colorPicker" class="text-sm font-medium">選擇主色調</label>
+                                <input type="color" id="colorPicker" data-change-action="applyCustomColor" value="${currentCustomColor}" class="w-12 h-10 p-1 bg-white border border-slate-300 rounded-md cursor-pointer dark:bg-slate-700 dark:border-slate-500">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                App.renderModal({
+                    title: '佈景主題編輯器',
+                    body: modalBody,
+                    footer: `<button data-action="resetTheme" class="btn-secondary px-4 py-2 rounded-lg">重設為預設</button>
+                            <button data-action="closeModal" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">完成</button>`
+                });
+            },
+
+            applyPresetTheme(e) {
+                const themeKey = e.target.dataset.themeKey;
+                const theme = App.themes[themeKey];
+                if (theme) {
+                    App.applyTheme(theme.colors);
+                    App.saveCustomTheme(theme.colors);
+                    // 更新顏色選擇器的顯示值
+                    const colorPicker = document.getElementById('colorPicker');
+                    if (colorPicker) colorPicker.value = theme.colors.accent;
+                }
+            },
+
+            resetTheme() {
+                localStorage.removeItem('debateTimerCustomTheme');
+                App.applyTheme(App.themes.default.colors);
+                const colorPicker = document.getElementById('colorPicker');
+                if (colorPicker) colorPicker.value = App.themes.default.colors.accent;
+                App.showNotification("主題已重設為預設", "success");
+            },
         },
         
         changeActions: {
+            applyCustomColor(e) {
+                const newColor = e.target.value;
+                // 為了簡單起見，我們基於主色調產生一個近似的 hover 和 light 顏色
+                // 注意：這是一個簡化的方法，效果不一定完美
+                const customTheme = {
+                    accent: newColor,
+                    accentHover: newColor, // 簡化處理，您也可以用 color-logic library
+                    accentLight: newColor, // 簡化處理
+                };
+                App.applyTheme(customTheme);
+                App.saveCustomTheme(customTheme);
+            },
             setTeamAudioSource(e) {
                 const team = e.target.dataset.team;
                 const mode = e.target.value;
@@ -1690,7 +1932,7 @@ renderSetupView() {
                                 <label for="speech-detect-toggle" class="font-medium text-sm cursor-pointer">啟用準備時間語音偵測</label>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" id="speech-detect-toggle" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-accent)]"></div>
                                 </label>
                             </div>
                             <p class="text-xs text-slate-500 mt-1">開啟後，在準備時間結束後會自動偵測選手發言並開始計時。</p>
@@ -1711,7 +1953,7 @@ renderSetupView() {
                     自定義流程
                 </button>
                 
-                <button data-action="startDebate" class="w-full sm:w-auto px-10 py-3 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-indigo-500/50 font-semibold text-lg">
+                <button data-action="startDebate" class="w-full sm:w-auto px-10 py-3 rounded-xl text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-indigo-500/50 font-semibold text-lg">
                     開始辯論
                 </button>
             </div>
@@ -1769,7 +2011,7 @@ renderSetupView() {
                         </div>
                     </div>
                     <div class="text-center">
-                        <button data-action="confirmNineSquare" class="px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">確認佈陣並開始比賽</button>
+                        <button data-action="confirmNineSquare" class="px-8 py-3 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors font-semibold">確認佈陣並開始比賽</button>
                     </div>
                 </div>
             `;
@@ -1919,11 +2161,15 @@ renderSetupView() {
         ${mainControlsHTML}
 
         <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
-            <button data-action="previousStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${prevBtnDisabled ? 'disabled' : ''}>&larr; 上一階段</button>
-            <button data-action="nextStage" class="text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${nextBtnDisabled ? 'disabled' : ''}>下一階段 &rarr;</button>
+            <button data-action="previousStage" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${prevBtnDisabled ? 'disabled' : ''}>&larr; 上一階段</button>
+            <button data-action="nextStage" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${nextBtnDisabled ? 'disabled' : ''}>下一階段 &rarr;</button>
             
-            <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
+            <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
                 ${muteIcon}
+            </button>
+            <button data-action="undo" title="復原上一步 (Ctrl+Z)" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+                復原
             </button>
 
             <button data-action="resetFreeDebateStage" class="text-sm text-slate-500 hover:text-red-500">重設環節</button>
@@ -1933,7 +2179,7 @@ renderSetupView() {
                 <span>自動模式</span>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
                 </label>
             </div>
         </div>
@@ -2059,7 +2305,7 @@ renderSetupView() {
                             }
                         </p>
                         <div class="flex flex-wrap justify-center gap-4 mt-4">
-                            <button data-action="startDraw" class="px-6 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors disabled:bg-slate-400" ${this.state.rebuttalOrder ? 'disabled' : ''}>
+                            <button data-action="startDraw" class="px-6 py-3 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors disabled:bg-slate-400" ${this.state.rebuttalOrder ? 'disabled' : ''}>
                                 🎲 隨機抽籤
                             </button>
                             <button data-action="manualSetRebuttalOrder" data-team="positive" class="px-6 py-3 rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors disabled:bg-slate-400" ${this.state.rebuttalOrder ? 'disabled' : ''}>
@@ -2078,7 +2324,7 @@ renderSetupView() {
                             ${this.formatTime(this.state.timer.timeLeft || stage.duration)}
                         </div>
                         <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
-                            <div id="timerProgressBar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 100%"></div>
+                            <div id="timerProgressBar" class="bg-[var(--color-accent)] h-2.5 rounded-full" style="width: 100%"></div>
                         </div>
                     </div>
                 `;
@@ -2123,7 +2369,7 @@ renderSetupView() {
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                         上一階段
                     </button>
-                    <button data-action="nextStage" class="flex-grow text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 flex items-center justify-center gap-2 ${canShowNext ? '' : 'hidden'} ${nextBtnDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${nextBtnDisabled ? 'disabled' : ''}>
+                    <button data-action="nextStage" class="flex-grow text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 flex items-center justify-center gap-2 ${canShowNext ? '' : 'hidden'} ${nextBtnDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${nextBtnDisabled ? 'disabled' : ''}>
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                         下一階段
                     </button>
@@ -2138,16 +2384,20 @@ renderSetupView() {
                     </button>
                 </div>
                 <div class="flex items-center justify-center gap-6 pt-4">
-                    <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600 disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
+                    <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
                         ${muteIcon} ${isMicMuted ? '取消靜音' : '靜音'}
                     </button>
-                    <button data-action="togglePip" title="畫中畫模式" class="text-sm font-medium text-slate-500 hover:text-indigo-600">畫中畫</button>
+                    <button data-action="undo" title="復原上一步 (Ctrl+Z)" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+                        復原
+                    </button>
+                    <button data-action="togglePip" title="畫中畫模式" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)]">畫中畫</button>
                     <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
                     <div class="flex items-center gap-2 text-sm font-medium">
                         <span>自動模式</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
                         </label>
                     </div>
                 </div>
@@ -2220,9 +2470,9 @@ renderSetupView() {
                     </div>
                     ${(speechStatus === 'unavailable' || speechStatus === 'error') ? '<p class="text-xs text-red-500 mt-1">您的瀏覽器或環境不支援轉錄功能。</p>' : ''}
                     <div class="grid grid-cols-2 gap-2">
-                        ${!active ? `<button data-action="startTranscription" class="col-span-2 w-full text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">開始轉錄</button>` : ''}
+                        ${!active ? `<button data-action="startTranscription" class="col-span-2 w-full text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">開始轉錄</button>` : ''}
                         ${(active && !paused) ? `<button data-action="pauseTranscription" class="btn-secondary w-full font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">暫停轉錄</button>` : ''}
-                        ${(active && paused) ? `<button data-action="resumeTranscription" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">繼續轉錄</button>` : ''}
+                        ${(active && paused) ? `<button data-action="resumeTranscription" class="w-full text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">繼續轉錄</button>` : ''}
                         ${active ? `<button data-action="stopTranscription" class="w-full text-white bg-red-600 hover:bg-red-700 font-semibold rounded-lg text-sm px-4 py-2 text-center transition-colors">停止轉錄</button>` : ''}
                     </div>
                 </div>
@@ -2298,7 +2548,7 @@ renderSetupView() {
             this.renderModal({
                 title: '🎉 歡迎來到辯時計 Pro 🎉',
                 body: modalBody,
-                footer: `<button data-action="closeModal" class="px-6 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">開始使用</button>`
+                footer: `<button data-action="closeModal" class="px-6 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">開始使用</button>`
             });
         },
         renderEditorView() {
@@ -2334,7 +2584,7 @@ renderSetupView() {
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                                 新增階段
                             </button>
-                            <button data-action="saveAndCloseEditor" class="px-8 py-3 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold shadow-md hover:shadow-lg">
+                            <button data-action="saveAndCloseEditor" class="px-8 py-3 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors font-semibold shadow-md hover:shadow-lg">
                                 儲存並返回
                             </button>
                         </div>
@@ -2462,7 +2712,7 @@ renderSetupView() {
                 body: `<form id="stage-editor-form" class="max-h-[60vh] overflow-y-auto p-1 pr-4">${formFields}</form>`,
                 footer: `
                     <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>
-                    <button data-action="saveStage" class="px-4 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">儲存</button>
+                    <button data-action="saveStage" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">儲存</button>
                 `
             });
             
@@ -2547,7 +2797,7 @@ renderSetupView() {
                             <p class="text-slate-600 dark:text-slate-300 mb-4">
                                 感謝您使用本系統！我們致力於提供最專業的辯論計時體驗。點擊下方按鈕與我們合作或贊助我們的開發。
                             </p>
-                            <a href="#" data-action="showPremiumModal" class="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow">
+                            <a href="#" data-action="showPremiumModal" class="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors shadow">
                                 了解更多
                             </a>
                         </div>
@@ -2569,16 +2819,17 @@ renderSetupView() {
                          <span>自動模式</span>
                          <label class="relative inline-flex items-center cursor-pointer">
                              <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
                          </label>
                      </div>
                      <button data-action="toggleFullscreen" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">全螢幕</button>
                      <button data-action="togglePip" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">畫中畫模式</button>
                      <button data-action="showShortcutHelp" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">快捷鍵說明</button>
+                     <button data-action="showThemeEditor" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">主題編輯</button>
                      <button data-action="resetDebate" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-red-500 transition-colors">重設辯論</button>
                  </div>
                  <div class="p-4 absolute bottom-0 w-full">
-                     <button data-action="showPremiumModal" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-90 transition-opacity">
+                     <button data-action="showPremiumModal" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-accent-light)] to-[var(--color-accent)] hover:opacity-90 transition-opacity">
                          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                              <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
                          </svg>
@@ -3481,7 +3732,7 @@ renderSetupView() {
                     const isDisabled = (action === '申論' && count >= 3) || (action === '質答' && count >= 3);
                     const remaining = (action === '申論') ? (3 - count) : (3 - count);
 
-                    return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-6 py-3 rounded-lg text-white font-semibold ${isDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} transition-colors" ${isDisabled ? 'disabled' : ''}>${action} (${remaining}次)</button>`
+                    return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-6 py-3 rounded-lg text-white font-semibold ${isDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]'} transition-colors" ${isDisabled ? 'disabled' : ''}>${action} (${remaining}次)</button>`
                 }).join('');
 
                 this.renderModal({
