@@ -257,6 +257,87 @@
                 min-width: 150px;
             }
         }
+        /* --- ↓↓↓ 新增 投影模式 (Presentation Mode) 樣式 ↓↓↓ --- */
+        body.presentation-mode header,
+        body.presentation-mode #sidebar,
+        body.presentation-mode #transcriptionPanel,
+        body.presentation-mode #debateControlsContainer,
+        body.presentation-mode #promotionWrapper {
+            display: none;
+        }
+
+        body.presentation-mode #main-content {
+            /* 覆蓋原有的 padding 和 max-width */
+            max-width: 100%;
+            padding: 2rem;
+            margin: 0;
+
+            /*
+            * 因為 main-content 是 flex-grow，它會自動填滿 #app 的剩餘空間。
+            * 我們需要讓 main-content *本身* 成為一個 flex 容器來置中 *它的子元素*。
+            */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 垂直置中 its children */
+        }
+
+        /* 覆蓋 lg:grid-cols-3 佈局，讓內容區塊置中 */
+        body.presentation-mode #main-content .lg\:grid-cols-3 {
+            grid-template-columns: 1fr;
+            width: 100%;
+            max-width: 1200px; /* 限制一個最大寬度，避免在超寬螢幕上太分散 */
+            margin: 0 auto; /* 水平置中 */
+        }
+        body.presentation-mode #main-content .lg\:col-span-2 {
+            grid-column: 1 / -1;
+        }
+
+        /* 放大字體 */
+        body.presentation-mode #debateInfoContainer p {
+            font-size: 1.5rem; /* 24px */
+        }
+        body.presentation-mode #stageContainer h3 {
+            font-size: 2.25rem; /* 36px */
+            margin-bottom: 1rem;
+        }
+        body.presentation-mode #stageContainer p {
+            font-size: 1.25rem; /* 20px */
+        }
+        body.presentation-mode #timerContainer #timerDisplay {
+            font-size: 15vw; /* 根據視窗寬度縮放 */
+            line-height: 1;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 自由辯論的字體 */
+        body.presentation-mode #timerContainer .font-mono.text-6xl {
+            font-size: 10vw;
+            line-height: 1;
+        }
+        body.presentation-mode #timerContainer .text-green-600,
+        body.presentation-mode #timerContainer .text-red-600 {
+            font-size: 2rem;
+        }
+        /* --- ↑↑↑ 新增 投影模式 (Presentation Mode) 樣式 ↑↑↑ --- */
+        #presentation-hint {
+    display: none; /* 預設隱藏 */
+    }
+    body.presentation-mode #presentation-hint {
+        display: block;
+        position: fixed;
+        bottom: 1rem; /* 16px */
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.4);
+        color: rgba(255, 255, 255, 0.7);
+        padding: 0.3rem 0.8rem;
+        border-radius: 9999px; /* 膠囊形狀 */
+        font-size: 1.275rem; /* 14px */
+        z-index: 9998; /* 確保在頂層，但低於 modal */
+        pointer-events: none; /* 避免擋住滑鼠點擊 */
+    }
+
 
     </style>
 </head>
@@ -316,6 +397,7 @@
         <audio id="speechDetectedSound" preload="auto" src="sounds/speech_detected.mp3"></audio>
         <audio id="drawSound" preload="auto" src="sounds/draw.mp3"></audio>
         <canvas id="pipCanvas" width="640" height="360" class="hidden"></canvas>
+        <div id="presentation-hint">按 M 退出投影模式</div>
     </div>
 
     <script>
@@ -342,6 +424,7 @@
             rebuttalOrder: null,
             isAutoMode: false,
             enableSpeechDetection: true,
+            enableSpeech: true,
             mainSpeechTimerStartedByGrace: false,
             recognitionManuallyStopped: false,
             isRecognizing: false,
@@ -386,7 +469,8 @@
                 isActive: false,
             },
             history: [], // 用來存放狀態歷史紀錄
-            MAX_HISTORY_STATES: 20, // 最多保留 20 筆歷史紀錄，防止佔用過多記憶體
+            MAX_HISTORY_STATES: 20,
+            isPresentationMode: false, // 是否為簡報模式
             // [ADD THIS START]
             recording: {
                 mediaRecorder: null,
@@ -415,7 +499,7 @@
                 isInitialized: false // 用來標記是否已經授權過
             },
             
-
+            
         },
         // --- CONSTANTS ---
 
@@ -926,6 +1010,7 @@ debateFormatGroups: {
             }
             this.state.isAutoMode = localStorage.getItem('debateAutoMode') === 'true';
             this.state.enableSpeechDetection = localStorage.getItem('debateSpeechDetection') !== 'false';
+            this.state.enableSpeech = localStorage.getItem('debateSpeech') !== 'false';
             const savedGraceDuration = localStorage.getItem('debateGraceDuration');
             if (savedGraceDuration) {
                 this.state.customGraceDuration = parseInt(savedGraceDuration, 10);
@@ -1045,6 +1130,9 @@ debateFormatGroups: {
                         // 觸發標準計時器的暫停/繼續
                         document.querySelector('[data-action="togglePause"]')?.click();
                         break;
+                    case 'M':
+                        this.actions.togglePresentationMode();
+                        break;  
                     case 'A':
                         const autoModeToggle = document.querySelector('[data-change-action="toggleAutoMode"]');
                         if (autoModeToggle) {
@@ -1583,6 +1671,8 @@ debateFormatGroups: {
                     });
                 }
             },
+
+            togglePresentationMode() { App.togglePresentationMode(); },
             async togglePip() {
                 if (!App.pipCanvas) {
                     App.showNotification("畫中畫畫布不存在", "error");
@@ -1786,9 +1876,31 @@ debateFormatGroups: {
             formatChanged(e) {
                 const isBianGeBei = e.target.value === '辯革盃 (九辯位自由排序制)';
                 document.getElementById('playersSection').style.display = isBianGeBei ? '' : 'none';
-            }
-        },
+            },
+            toggleSpeech(e) {
+                App.state.enableSpeech = e.target.checked;
+                localStorage.setItem('debateSpeech', App.state.enableSpeech);
 
+                // [BUG FIX START]
+                if (!App.state.enableSpeech && App.synth && App.synth.speaking) {
+                    // 如果使用者是「關閉」朗讀，且當前正在朗讀中
+                    console.log("Speech canceled by user toggle.");
+                    App.synth.cancel(); // 立刻中斷朗讀
+                    // cancel() 會觸發 onend/onerror，進而呼叫 onDone()
+                    // onDone() 會執行 processSpeechQueue()
+                    // 下方的 processSpeechQueue() 檢查會接手處理
+                }
+                // [BUG FIX END]
+
+                // 尋找所有同功能的開關並同步它們的狀態
+                const allToggles = document.querySelectorAll('[data-change-action="toggleSpeech"]');
+                allToggles.forEach(toggle => {
+                    if (toggle !== e.target) {
+                        toggle.checked = App.state.enableSpeech;
+                    }
+                });
+            },
+            },
         // --- RENDERING ---
         render() {
             this.router();
@@ -1958,7 +2070,7 @@ renderSetupView() {
                 </button>
             </div>
         </div>
-        ${this.renderPromotionArea()}
+       <div id="promotionWrapper"><div id="promotionWrapper">${this.renderPromotionArea()}</div></div>
     `;
     
     // 渲染後,檢查是否有待處理的分享流程需要被選定
@@ -2031,7 +2143,7 @@ renderSetupView() {
                     </div>
                 </div>
 
-                ${this.renderPromotionArea()}
+                <div id="promotionWrapper">${this.renderPromotionArea()}</div>
             `;
             this.renderDebateStage();
             this.renderTranscriptionPanel();
@@ -2061,7 +2173,7 @@ renderSetupView() {
                     <div id="transcriptionPanel" class="glass-card rounded-2xl shadow-lg overflow-hidden"></div>
                 </div>
             </div>
-            ${this.renderPromotionArea()} 
+            <div id="promotionWrapper">${this.renderPromotionArea()}</div> 
         `; // <-- 已在此處加入宣傳區塊
 
         // 填充各個容器
@@ -2109,82 +2221,92 @@ renderSetupView() {
     // [ADD THIS NEW FUNCTION to your App object, near the other render...Controls functions]
 
     renderFreeDebateControls() {
-    const container = document.getElementById('debateControlsContainer');
-    if (!container) return;
+        const container = document.getElementById('debateControlsContainer');
+        if (!container) return;
 
-    // --- 獲取所有需要的狀態 ---
-    const { freeDebate, positiveTeamName, negativeTeamName, isAutoMode, currentStageIndex, currentFlow, recording } = this.state;
-    const { isPaused, firstSpeakerSelected, activeTeam, positiveTimeLeft, negativeTimeLeft } = freeDebate;
-    const { isMicMuted, micAudioTrack } = recording;
+        // --- 獲取所有需要的狀態 ---
+        const { freeDebate, positiveTeamName, negativeTeamName, isAutoMode, currentStageIndex, currentFlow, recording, enableSpeech } = this.state; // <-- [MODIFIED] 新增 enableSpeech
+        const { isPaused, firstSpeakerSelected, activeTeam, positiveTimeLeft, negativeTimeLeft } = freeDebate;
+        const { isMicMuted, micAudioTrack } = recording;
 
-    // --- 按鈕顯示邏輯判斷 ---
-    const isTimerRunning = !!freeDebate.interval;
-    const prevBtnDisabled = currentStageIndex <= 0 || (isTimerRunning && !isPaused);
-    const nextBtnDisabled = (isTimerRunning && !isPaused);
-    const autoModeChecked = isAutoMode ? 'checked' : '';
+        // --- 按鈕顯示 logic 判斷 ---
+        const isTimerRunning = !!freeDebate.interval;
+        const prevBtnDisabled = currentStageIndex <= 0 || (isTimerRunning && !isPaused);
+        const nextBtnDisabled = (isTimerRunning && !isPaused);
+        const autoModeChecked = isAutoMode ? 'checked' : '';
+        const speechEnabledChecked = enableSpeech ? 'checked' : ''; // <-- [NEW]
 
-    // 麥克風靜音按鈕的圖示邏輯
-    const muteIcon = isMicMuted 
-        ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`
-        : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
+        // 麥克風靜音按鈕的圖示邏輯
+        const muteIcon = isMicMuted
+            ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`
+            : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
 
-    let mainControlsHTML = '';
-    if (!firstSpeakerSelected) {
-        // 情況一：尚未選擇首位發言者
-        mainControlsHTML = `
-            <div class="grid grid-cols-2 gap-4">
-                <button data-action="startFreeDebate" data-team="positive" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-lg transition-colors">
-                    ${positiveTeamName} 首先發言
+        let mainControlsHTML = '';
+        if (!firstSpeakerSelected) {
+            // 情況一：尚未選擇首位發言者
+            mainControlsHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <button data-action="startFreeDebate" data-team="positive" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-lg transition-colors">
+                        ${positiveTeamName} 首先發言
+                    </button>
+                    <button data-action="startFreeDebate" data-team="negative" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 rounded-lg transition-colors">
+                        ${negativeTeamName} 首先發言
+                    </button>
+                </div>`;
+        } else {
+            // 情況二：比賽進行中
+            const switchBtnColor = activeTeam === 'positive' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
+            const switchBtnText = activeTeam === 'positive' ? `切換為 ${negativeTeamName}` : `切換為 ${positiveTeamName}`;
+            const canSwitch = (activeTeam === 'positive' && negativeTimeLeft > 0) || (activeTeam === 'negative' && positiveTimeLeft > 0) || activeTeam === null;
+
+            mainControlsHTML = `
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <button data-action="switchFreeDebate" class="flex-grow ${switchBtnColor} text-white font-bold py-4 px-8 text-xl rounded-lg transition-transform transform hover:scale-105 shadow-md ${!canSwitch || isPaused ? 'opacity-50 cursor-not-allowed' : ''}" ${!canSwitch || isPaused ? 'disabled' : ''}>
+                        ${switchBtnText}
+                    </button>
+                    <button data-action="togglePauseFreeDebate" class="text-white bg-amber-500 hover:bg-amber-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200">
+                        ${isPaused ? '繼續' : '暫停'}
+                    </button>
+                </div>`;
+        }
+
+        container.innerHTML = `
+            ${mainControlsHTML}
+
+            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
+                <button data-action="previousStage" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${prevBtnDisabled ? 'disabled' : ''}>&larr; 上一階段</button>
+                <button data-action="nextStage" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${nextBtnDisabled ? 'disabled' : ''}>下一階段 &rarr;</button>
+
+                <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
+                    ${muteIcon}
                 </button>
-                <button data-action="startFreeDebate" data-team="negative" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 rounded-lg transition-colors">
-                    ${negativeTeamName} 首先發言
+                <button data-action="undo" title="復原上一步 (Ctrl+Z)" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+                    復原
                 </button>
-            </div>`;
-    } else {
-        // 情況二：比賽進行中
-        const switchBtnColor = activeTeam === 'positive' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
-        const switchBtnText = activeTeam === 'positive' ? `切換為 ${negativeTeamName}` : `切換為 ${positiveTeamName}`;
-        const canSwitch = (activeTeam === 'positive' && negativeTimeLeft > 0) || (activeTeam === 'negative' && positiveTimeLeft > 0) || activeTeam === null;
-        
-        mainControlsHTML = `
-            <div class="flex flex-wrap items-center justify-center gap-4">
-                <button data-action="switchFreeDebate" class="flex-grow ${switchBtnColor} text-white font-bold py-4 px-8 text-xl rounded-lg transition-transform transform hover:scale-105 shadow-md ${!canSwitch || isPaused ? 'opacity-50 cursor-not-allowed' : ''}" ${!canSwitch || isPaused ? 'disabled' : ''}>
-                    ${switchBtnText}
-                </button>
-                <button data-action="togglePauseFreeDebate" class="text-white bg-amber-500 hover:bg-amber-600 font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200">
-                    ${isPaused ? '繼續' : '暫停'}
-                </button>
-            </div>`;
-    }
+                <button data-action="togglePip" title="畫中畫模式" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)]">畫中畫</button>
+                <button data-action="togglePresentationMode" title="投影模式 (M)" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)]">投影模式</button>
+                <button data-action="resetFreeDebateStage" class="text-sm text-slate-500 hover:text-red-500">重設環節</button>
+                <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
 
-    container.innerHTML = `
-        ${mainControlsHTML}
-
-        <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
-            <button data-action="previousStage" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${prevBtnDisabled ? 'disabled' : ''}>&larr; 上一階段</button>
-            <button data-action="nextStage" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${nextBtnDisabled ? 'disabled' : ''}>下一階段 &rarr;</button>
-            
-            <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
-                ${muteIcon}
-            </button>
-            <button data-action="undo" title="復原上一步 (Ctrl+Z)" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
-                復原
-            </button>
-
-            <button data-action="resetFreeDebateStage" class="text-sm text-slate-500 hover:text-red-500">重設環節</button>
-            <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
-            
-            <div class="flex items-center gap-2 text-sm font-medium">
-                <span>自動模式</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
-                </label>
+                <div class="flex items-center gap-2 text-sm font-medium">
+                    <span>朗讀</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" ${speechEnabledChecked} data-change-action="toggleSpeech" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
+                    </label>
+                </div>
+                <div class="flex items-center gap-2 text-sm font-medium">
+                    <span>自動模式</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
+                    </label>
+                </div>
             </div>
-        </div>
-    `;
+        `;
     },
+
 
     startFreeDebateTimer(team) {
         const { freeDebate } = this.state;
@@ -2339,10 +2461,10 @@ renderSetupView() {
             if (!container) return;
 
             // --- 獲取所有需要的狀態 ---
-            const { timer, currentStageIndex, currentFlow, isAutoMode, recording } = this.state;
+            const { timer, currentStageIndex, currentFlow, isAutoMode, recording, enableSpeech } = this.state; // <-- [MODIFIED] 新增 enableSpeech
             const isPaused = timer.isPaused;
             const stage = currentFlow[currentStageIndex];
-            
+
             // 錄音與靜音相關狀態
             const { isMicMuted, micAudioTrack } = recording;
 
@@ -2353,13 +2475,14 @@ renderSetupView() {
             const isLastStage = currentStageIndex >= currentFlow.length - 1;
             const isTimerRunning = timer.interval || timer.graceInterval;
             const drawNotCompleted = stage && stage.type === 'draw_rebuttal_order' && !this.state.rebuttalOrder;
-            
+
             const nextBtnDisabled = (isTimerRunning && !isPaused) || isLastStage || drawNotCompleted;
             const prevBtnDisabled = currentStageIndex <= 0 || (isTimerRunning && !isPaused);
             const autoModeChecked = isAutoMode ? 'checked' : '';
+            const speechEnabledChecked = enableSpeech ? 'checked' : ''; // <-- [NEW]
 
             // [新增] 麥克風靜音按鈕的圖示邏輯
-            const muteIcon = isMicMuted 
+            const muteIcon = isMicMuted
                 ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`
                 : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
 
@@ -2383,7 +2506,7 @@ renderSetupView() {
                         強制開始計時
                     </button>
                 </div>
-                <div class="flex items-center justify-center gap-6 pt-4">
+                <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4">
                     <button data-action="toggleMicMute" title="麥克風靜音" class="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-[var(--color-accent)] disabled:text-slate-400 dark:disabled:text-slate-600" ${!micAudioTrack ? 'disabled' : ''}>
                         ${muteIcon} ${isMicMuted ? '取消靜音' : '靜音'}
                     </button>
@@ -2392,7 +2515,15 @@ renderSetupView() {
                         復原
                     </button>
                     <button data-action="togglePip" title="畫中畫模式" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)]">畫中畫</button>
+                    <button data-action="togglePresentationMode" title="投影模式 (M)" class="text-sm font-medium text-slate-500 hover:text-[var(--color-accent)]">投影模式</button>
                     <button data-action="resetDebate" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">重設比賽</button>
+                    <div class="flex items-center gap-2 text-sm font-medium">
+                        <span>朗讀</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" ${speechEnabledChecked} data-change-action="toggleSpeech" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
+                        </label>
+                    </div>
                     <div class="flex items-center gap-2 text-sm font-medium">
                         <span>自動模式</span>
                         <label class="relative inline-flex items-center cursor-pointer">
@@ -2403,6 +2534,8 @@ renderSetupView() {
                 </div>
             `;
         },
+
+
         
         renderTranscriptionPanel() {
             const container = document.getElementById('transcriptionPanel');
@@ -2809,33 +2942,43 @@ renderSetupView() {
             const sidebarPanel = document.getElementById('sidebar-panel');
             if (!sidebarPanel) return;
             const autoModeChecked = this.state.isAutoMode ? 'checked' : '';
+            const speechEnabledChecked = this.state.enableSpeech ? 'checked' : ''; // <-- 新增此變數
+
             sidebarPanel.innerHTML = `
-                 <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                     <h2 class="font-bold text-lg">選單</h2>
-                     <button data-action="toggleSidebar" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-2xl leading-none">&times;</button>
-                 </div>
-                 <div class="p-4 space-y-2">
-                     <div class="w-full text-left p-3 flex items-center justify-between hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">
-                         <span>自動模式</span>
-                         <label class="relative inline-flex items-center cursor-pointer">
-                             <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
-                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
-                         </label>
-                     </div>
-                     <button data-action="toggleFullscreen" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">全螢幕</button>
-                     <button data-action="togglePip" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">畫中畫模式</button>
-                     <button data-action="showShortcutHelp" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">快捷鍵說明</button>
-                     <button data-action="showThemeEditor" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">主題編輯</button>
-                     <button data-action="resetDebate" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-red-500 transition-colors">重設辯論</button>
-                 </div>
-                 <div class="p-4 absolute bottom-0 w-full">
-                     <button data-action="showPremiumModal" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-accent-light)] to-[var(--color-accent)] hover:opacity-90 transition-opacity">
-                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                             <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
-                         </svg>
-                         升級 Premium
-                     </button>
-                 </div>
+                <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                    <h2 class="font-bold text-lg">選單</h2>
+                    <button data-action="toggleSidebar" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-2xl leading-none">&times;</button>
+                </div>
+                <div class="p-4 space-y-2">
+                    <div class="w-full text-left p-3 flex items-center justify-between hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">
+                        <span>自動模式</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" ${autoModeChecked} data-change-action="toggleAutoMode" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
+                        </label>
+                    </div>
+                    <div class="w-full text-left p-3 flex items-center justify-between hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">
+                        <span>朗讀主席稿</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" ${speechEnabledChecked} data-change-action="toggleSpeech" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-accent)]"></div>
+                        </label>
+                    </div>
+                    <button data-action="toggleFullscreen" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">全螢幕</button>
+                    <button data-action="togglePip" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">畫中畫模式</button>
+                    <button data-action="togglePresentationMode" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">投影模式</button>
+                    <button data-action="showShortcutHelp" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">快捷鍵說明</button>
+                    <button data-action="showThemeEditor" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">主題編輯</button>
+                    <button data-action="resetDebate" class="w-full text-left p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-red-500 transition-colors">重設辯論</button>
+                </div>
+                <div class="p-4 absolute bottom-0 w-full">
+                    <button data-action="showPremiumModal" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-accent-light)] to-[var(--color-accent)] hover:opacity-90 transition-opacity">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.69 2.69a.75.75 0 01.912 0l1.25 1.042a.75.75 0 00.842.044l1.341-.536a.75.75 0 01.942.603l.25 1.503a.75.75 0 00.575.575l1.503.25a.75.75 0 01.603.942l-.536 1.341a.75.75 0 00.044.842l1.042 1.25a.75.75 0 010 .912l-1.042 1.25a.75.75 0 00-.044.842l.536 1.341a.75.75 0 01-.603.942l-1.503.25a.75.75 0 00-.575.575l-.25 1.503a.75.75 0 01-.942.603l-1.341-.536a.75.75 0 00-.842.044l-1.25 1.042a.75.75 0 01-.912 0l-1.25-1.042a.75.75 0 00-.842-.044l-1.341.536a.75.75 0 01-.942-.603l-.25-1.503a.75.75 0 00-.575-.575l-1.503-.25a.75.75 0 01-.603-.942l.536-1.341a.75.75 0 00-.044-.842L2.69 10.5a.75.75 0 010-.912l1.042-1.25a.75.75 0 00.044-.842L3.236 6.154a.75.75 0 01.603-.942l1.503-.25a.75.75 0 00.575-.575l.25-1.503a.75.75 0 01.942-.603l1.341.536a.75.75 0 00.842-.044l1.25-1.042zM10 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" clip-rule="evenodd" />
+                        </svg>
+                        升級 Premium
+                    </button>
+                </div>
             `;
         },
 
@@ -3014,10 +3157,26 @@ renderSetupView() {
             if (this.state.isSpeaking || this.state.speechQueue.length === 0) {
                 return;
             }
-            
+
+            // [BUG FIX START]
+            // 檢查朗讀是否在任務排入佇列後，但在執行前被禁用了
+            if (!this.state.enableSpeech) {
+                console.log("Speech disabled, clearing queue and running callbacks.");
+                // 立即執行並清空佇列中所有任務的回調，以確保流程繼續
+                while (this.state.speechQueue.length > 0) {
+                    const { onEndCallback } = this.state.speechQueue.shift();
+                    if (onEndCallback) {
+                        try { onEndCallback(); } catch (e) { console.error("Error in queue-clearing callback:", e); }
+                    }
+                }
+                this.state.isSpeaking = false; // 確保狀態被重置
+                return; // 終止執行
+            }
+            // [BUG FIX END]
+
             this.state.isSpeaking = true;
             const { text, onEndCallback } = this.state.speechQueue.shift();
-            
+
             if (!this.synth) {
                 if (onEndCallback) onEndCallback();
                 this.state.isSpeaking = false;
@@ -4056,6 +4215,26 @@ renderSetupView() {
                 }
             }
         },
+        togglePresentationMode() {
+            this.state.isPresentationMode = !this.state.isPresentationMode;
+            document.body.classList.toggle('presentation-mode', this.state.isPresentationMode);
+
+            // 重新渲染 PiP，因為佈局變了
+            if (this.state.pip.isActive) {
+                this.renderPipCanvas();
+            }
+
+            // 確保在退出模式時，控制按鈕能重新顯示
+            if (!this.state.isPresentationMode) {
+                const currentStage = this.state.currentFlow[this.state.currentStageIndex];
+                if (currentStage && currentStage.type === 'free_debate') {
+                    this.renderFreeDebateControls();
+                } else {
+                    this.renderDebateControls();
+                }
+            }
+        },
+
     };
 
     document.addEventListener('DOMContentLoaded', () => App.init());
