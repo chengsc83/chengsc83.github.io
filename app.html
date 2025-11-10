@@ -1281,42 +1281,69 @@ debateFormatGroups: {
                 App.actions.nextStage();
             },
             shareFlow() {
-                if (App.state.currentFlow.length === 0) {
-                    App.showNotification("流程是空的，無法分享", "error");
+                let flowToShare = null;
+                let flowName = "自訂流程";
+
+                if (App.state.currentView === 'editor') {
+                    // 情況一：如果在編輯器中，分享當前正在編輯的流程
+                    flowToShare = App.state.currentFlow;
+                    flowName = document.getElementById('editor-flow-name')?.value || '編輯中的流程';
+                } else if (App.state.currentView === 'setup') {
+                    // 情況二：如果在設定頁面，分享下拉選單中選定的流程
+                    const flowSelect = document.getElementById('formatSelect');
+                    if (!flowSelect) {
+                        App.showNotification("找不到流程選單", "error");
+                        return;
+                    }
+                    flowName = flowSelect.value;
+                    
+                    if (flowName === "CUSTOM_EMPTY") {
+                        App.showNotification("無法分享一個空白流程", "info");
+                        return;
+                    }
+                    
+                    flowToShare = App.getDebateFormat(flowName);
+                }
+
+                if (!flowToShare || flowToShare.length === 0) {
+                    App.showNotification("沒有可分享的流程內容", "error");
                     return;
                 }
+
                 try {
-                    const flowString = JSON.stringify(App.state.currentFlow);
-
-                    // [NEW] 1. 使用 pako.deflate 壓縮 JSON 字串
+                    const flowString = JSON.stringify(flowToShare);
                     const compressed = pako.deflate(flowString);
-
-                    // [NEW] 2. 將壓縮後的二進位數據轉換為 btoa 可以處理的字串
                     const binaryString = String.fromCharCode.apply(null, new Uint8Array(compressed));
-
-                    // [MODIFIED] 3. 對轉換後的二進位字串進行 Base64 編碼
                     const encodedData = btoa(binaryString);
 
-                    const shareUrl = `${window.location.origin}${window.location.pathname}?flow=${encodedData}`;
-
-                    App.renderModal({
-                        title: '分享您的自訂流程',
-                        body: `
-                            <p class="text-slate-600 dark:text-slate-300 mb-4">複製下方的連結並傳送給其他人。他們點開連結後即可使用您設計的流程。</p>
-                            <div class="mb-2 text-sm text-slate-500">
-                                <span>原始長度: ${flowString.length}</span> |
-                                <span>壓縮後長度: ${encodedData.length}</span> |
-                                <span class="font-bold text-green-600">節省: ${Math.round((1 - encodedData.length / flowString.length) * 100)}%</span>
-                            </div>
-                            <input type="text" readonly value="${shareUrl}" id="shareUrlInput" class="form-element w-full p-2 border rounded-md font-mono text-sm break-all">
-                        `,
-                        footer: `<button data-action="copyShareUrl" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">複製連結</button>`
+                    // --- [修改] 統一使用剪貼簿 ---
+                    navigator.clipboard.writeText(encodedData).then(() => {
+                        App.renderModal({
+                            title: '分享碼已複製',
+                            body: `
+                                <p class="text-slate-600 dark:text-slate-300 mb-2">
+                                    您分享的流程: <strong class="text-[var(--color-accent)]">${flowName}</strong>
+                                </p>
+                                <p class="text-slate-600 dark:text-slate-300 mb-4">
+                                    我們已將「分享碼」複製到您的剪貼簿。請將這串文字碼貼給您的朋友。
+                                </p>
+                                <p class="text-sm text-slate-500">
+                                    對方需要在「辯時計」的設定頁面點擊「匯入流程」按鈕，並貼上此分享碼。
+                                </p>
+                            `,
+                            footer: `<button data-action="closeModal" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">我瞭解了</button>`
+                        });
+                    }).catch(err => {
+                        App.showNotification("複製分享碼失敗", "error");
                     });
+                    // --- [結束修改] ---
+                    
                 } catch (e) {
-                    console.error("Error generating share link:", e);
-                    App.showNotification("產生分享連結時發生錯誤", "error");
+                    console.error("Error generating share code:", e);
+                    App.showNotification("產生分享資料時發生錯誤", "error");
                 }
             },
+
             copyShareUrl() {
                 const input = document.getElementById('shareUrlInput');
                 if (navigator.clipboard && window.isSecureContext) {
@@ -1496,6 +1523,16 @@ debateFormatGroups: {
                     App.debateFormatGroups['自訂流程'] = {};
                 }
                 App.debateFormatGroups['自訂流程'][newFlowName] = JSON.parse(JSON.stringify(App.state.currentFlow));
+                
+                // --- [新增] 永久儲存自訂流程 ---
+                try {
+                    localStorage.setItem('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']));
+                } catch (e) {
+                    console.error("Failed to save custom flows to localStorage:", e);
+                    App.showNotification("儲存自訂流程失敗", "error");
+                }
+                // --- [結束] ---
+                
                 App.state.currentView = 'setup';
                 App.render();
                 // After render, set the new value
@@ -1505,6 +1542,7 @@ debateFormatGroups: {
                     App.showNotification(`流程 "${newFlowName}" 已儲存`, "success");
                 }, 0);
             },
+
             addStage() {
                 App.renderStageEditorModal(); 
             },
@@ -1745,6 +1783,7 @@ debateFormatGroups: {
                     { key: 'R', desc: '重設辯論' },
                     { key: 'F', desc: '切換全螢幕' },
                     { key: 'T', desc: '切換亮/暗主題' },
+                    { key: 'M', desc: '切換投影模式' },
                     { key: 'Esc', desc: '關閉彈出視窗或側邊欄' },
                     { key: 'ctrl+z', desc: '復原' },
                     { key: '? 或 /', desc: '顯示快捷鍵說明' },
@@ -1826,6 +1865,102 @@ debateFormatGroups: {
                 if (colorPicker) colorPicker.value = App.themes.default.colors.accent;
                 App.showNotification("主題已重設為預設", "success");
             },
+            deleteCustomFlow(e) {
+                const flowSelect = document.getElementById('formatSelect');
+                if (!flowSelect) return;
+                const flowName = flowSelect.value;
+                
+                // 檢查這是否為一個可刪除的「自訂流程」
+                if (!App.debateFormatGroups['自訂流程'] || !App.debateFormatGroups['自訂流程'][flowName]) {
+                    App.showNotification("無法刪除: 這不是您儲存的自訂流程。", "info");
+                    return;
+                }
+
+                // 顯示確認彈窗
+                App.renderModal({
+                    title: '確認刪除',
+                    body: `<p class="text-slate-600 dark:text-slate-300">您確定要永久刪除自訂流程 "${flowName}" 嗎？<br><strong class="text-red-500">此操作無法復原。</strong></p>`,
+                    footer: `
+                        <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg transition-colors">取消</button>
+                        <button data-action="confirmDeleteCustomFlow" class="px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors">確定刪除</button>
+                    `
+                });
+            },
+            
+            confirmDeleteCustomFlow(e) {
+                const flowSelect = document.getElementById('formatSelect');
+                if (!flowSelect) {
+                    App.actions.closeModal(e);
+                    return;
+                }
+                const flowName = flowSelect.value;
+
+                if (App.debateFormatGroups['自訂流程'] && App.debateFormatGroups['自訂流程'][flowName]) {
+                    // 1. 從物件中刪除
+                    delete App.debateFormatGroups['自訂流程'][flowName];
+                    
+                    // 2. 將更新後的物件存回 localStorage
+                    try {
+                        localStorage.setItem('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']));
+                        App.showNotification(`流程 "${flowName}" 已成功刪除。`, "success");
+                    } catch (err) {
+                        console.error("Failed to update localStorage after deletion:", err);
+                        App.showNotification("刪除時發生錯誤", "error");
+                    }
+
+                    // 3. 關閉彈窗並重新渲染設定頁面
+                    App.actions.closeModal(e);
+                    App.render(); // 這將會呼叫 renderSetupView 並更新下拉選單
+
+                } else {
+                    App.showNotification("找不到要刪除的流程。", "error");
+                    App.actions.closeModal(e);
+                }
+            },
+            showImportModal() {
+                App.renderModal({
+                    title: '匯入流程',
+                    body: `
+                        <p class="text-slate-600 dark:text-slate-300 mb-4">請在下方貼上您收到的「流程分享碼」。</p>
+                        <textarea id="import-flow-textarea" class="form-element w-full h-32 font-mono text-xs" placeholder="在此貼上分享碼..."></textarea>
+                    `,
+                    footer: `
+                        <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>
+                        <button data-action="importFromText" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">匯入</button>
+                    `
+                });
+            },
+
+            importFromText(e) {
+                const textarea = document.getElementById('import-flow-textarea');
+                if (!textarea) return;
+                
+                const encodedData = textarea.value.trim();
+                if (!encodedData) {
+                    App.showNotification("沒有內容", "info");
+                    return;
+                }
+
+                const flowName = App.decodeFlow(encodedData);
+                
+                if (flowName) {
+                    App.showNotification(`已成功匯入 "${flowName}"`, "success");
+                    App.actions.closeModal(e); // 關閉匯入彈窗
+                    App.render(); // 重新渲染設定頁面
+                    
+                    // 延遲一點點，確保 DOM 更新完畢
+                    setTimeout(() => {
+                        const formatSelect = document.getElementById('formatSelect');
+                        if (formatSelect) {
+                            formatSelect.value = flowName; // 自動選中剛匯入的流程
+                            // 手動觸發 change 事件，來更新按鈕狀態
+                            formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }, 0);
+                } else {
+                    App.showNotification("匯入失敗：分享碼無效或已損毀。", "error");
+                }
+            },
         },
         
         changeActions: {
@@ -1874,25 +2009,28 @@ debateFormatGroups: {
                 }
             },              
             formatChanged(e) {
-                const isBianGeBei = e.target.value === '辯革盃 (九辯位自由排序制)';
+                const selectedValue = e.target.value;
+                const isBianGeBei = selectedValue === '辯革盃 (九辯位自由排序制)';
                 document.getElementById('playersSection').style.display = isBianGeBei ? '' : 'none';
+                const isCustomFlow = App.debateFormatGroups['自訂流程'] && App.debateFormatGroups['自訂流程'][selectedValue];
+                const deleteBtn = document.querySelector('[data-action="deleteCustomFlow"]');
+                
+                if (deleteBtn) {
+                    // 只有當選中的是自訂流程時，才啟用刪除按鈕
+                    deleteBtn.disabled = !isCustomFlow;
+                    deleteBtn.classList.toggle('opacity-50', !isCustomFlow);
+                    deleteBtn.classList.toggle('cursor-not-allowed', !isCustomFlow);
+                }
             },
             toggleSpeech(e) {
                 App.state.enableSpeech = e.target.checked;
                 localStorage.setItem('debateSpeech', App.state.enableSpeech);
-
-                // [BUG FIX START]
                 if (!App.state.enableSpeech && App.synth && App.synth.speaking) {
                     // 如果使用者是「關閉」朗讀，且當前正在朗讀中
                     console.log("Speech canceled by user toggle.");
-                    App.synth.cancel(); // 立刻中斷朗讀
-                    // cancel() 會觸發 onend/onerror，進而呼叫 onDone()
-                    // onDone() 會執行 processSpeechQueue()
-                    // 下方的 processSpeechQueue() 檢查會接手處理
+                    App.synth.cancel(); 
                 }
-                // [BUG FIX END]
 
-                // 尋找所有同功能的開關並同步它們的狀態
                 const allToggles = document.querySelectorAll('[data-change-action="toggleSpeech"]');
                 allToggles.forEach(toggle => {
                     if (toggle !== e.target) {
@@ -1952,12 +2090,35 @@ debateFormatGroups: {
         },
 
 renderSetupView() {
-    // 產生分類化的流程選項 (這段邏輯不變)
-    let formatOptions = `
-        <optgroup label="自訂流程">
-            <option value="CUSTOM_EMPTY">從零開始新增一個空白流程</option>
-        </optgroup>
-    `;
+    // --- [新增] 載入永久儲存的自訂流程 ---
+    try {
+        const savedCustomFlows = localStorage.getItem('customDebateFlows');
+        if (savedCustomFlows) {
+            // 確保 '自訂流程' 鍵存在
+            if (!App.debateFormatGroups['自訂流程']) {
+                App.debateFormatGroups['自訂流程'] = {};
+            }
+            // 將儲存的流程合併到現有物件中
+            const parsedFlows = JSON.parse(savedCustomFlows);
+            Object.assign(App.debateFormatGroups['自訂流程'], parsedFlows);
+        } else {
+            // 如果 localStorage 中沒有，也要確保 '自訂流程' 鍵存在
+            if (!App.debateFormatGroups['自訂流程']) {
+                App.debateFormatGroups['自訂流程'] = {};
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load custom flows from localStorage:", e);
+        if (!App.debateFormatGroups['自訂流程']) {
+            App.debateFormatGroups['自訂流程'] = {};
+        }
+    }
+    // --- [結束 載入] ---
+
+    // --- [修改] 修正原先的 formatOptions 產生邏輯 ---
+    let formatOptions = ''; // 從空字串開始
+
+    // 1. 優先處理「分享的流程」(如果有的話)
     if (this.debateFormatGroups['分享的流程']) {
         formatOptions += `<optgroup label="分享的流程">`;
         formatOptions += Object.keys(this.debateFormatGroups['分享的流程'])
@@ -1965,8 +2126,23 @@ renderSetupView() {
             .join('');
         formatOptions += `</optgroup>`;
     }
+
+    // 2. 處理「自訂流程」
+    formatOptions += `<optgroup label="自訂流程">`;
+    formatOptions += `<option value="CUSTOM_EMPTY">從零開始新增一個空白流程</option>`;
+    // 載入所有已儲存的自訂流程
+    if (this.debateFormatGroups['自訂流程']) {
+        formatOptions += Object.keys(this.debateFormatGroups['自訂流程'])
+            .map(name => `<option value="${name}">${name}</option>`)
+            .join('');
+    }
+    formatOptions += `</optgroup>`;
+
+    // 3. 處理所有其他預設群組
     for (const groupName in this.debateFormatGroups) {
-        if (groupName === '分享的流程') continue;
+        // 跳過已經處理過的群組
+        if (groupName === '分享的流程' || groupName === '自訂流程') continue;
+        
         const formats = this.debateFormatGroups[groupName];
         if (Object.keys(formats).length > 0) {
             formatOptions += `<optgroup label="${groupName}">`;
@@ -1976,6 +2152,7 @@ renderSetupView() {
             formatOptions += `</optgroup>`;
         }
     }
+    // --- [結束修改] ---
     
     const speechDetectionChecked = this.state.enableSpeechDetection ? 'checked' : '';
 
@@ -1997,7 +2174,12 @@ renderSetupView() {
                     </div>
                     <div>
                         <label for="formatSelect" class="block text-sm font-medium mb-2">比賽流程範本</label>
-                        <select id="formatSelect" data-change-action="formatChanged" class="form-element">${formatOptions}</select>
+                        <div class="flex items-center gap-2">
+                            <select id="formatSelect" data-change-action="formatChanged" class="form-element flex-grow">${formatOptions}</select>
+                            <button data-action="deleteCustomFlow" title="刪除選定的自訂流程" class="flex-shrink-0 p-2 h-[2.75rem] aspect-square rounded-lg btn-secondary text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <svg class="w-5 h-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -2037,8 +2219,8 @@ renderSetupView() {
                 </div>
 
                 <div>
-                     <h3 class="text-lg font-bold border-b border-[var(--border-color)] pb-3 text-[var(--text-accent)]">進階設定</h3>
-                     <div class="space-y-4 mt-6">
+                    <h3 class="text-lg font-bold border-b border-[var(--border-color)] pb-3 text-[var(--text-accent)]">進階設定</h3>
+                    <div class="space-y-4 mt-6">
                         <div class="p-4 rounded-lg settings-box">
                             <div class="flex items-center justify-between">
                                 <label for="speech-detect-toggle" class="font-medium text-sm cursor-pointer">啟用準備時間語音偵測</label>
@@ -2061,8 +2243,16 @@ renderSetupView() {
             </div>
 
             <div class="flex flex-wrap items-center justify-center gap-4 mt-8">
-                <button data-action="openEditor" class="btn-secondary font-semibold rounded-lg text-base px-6 py-3 transition-colors duration-200 text-[var(--text-accent)]">
+                <button data-action="openEditor" class="btn-secondary font-semibold rounded-lg text-base px-6 py-3 transition-colors duration-200 text-[var(--color-accent)]">
                     自定義流程
+                </button>
+                
+                <button data-action="showImportModal" class="btn-secondary font-semibold rounded-lg text-base px-6 py-3 transition-colors duration-200">
+                    匯入流程
+                </button>
+                
+                <button data-action="shareFlow" class="btn-secondary font-semibold rounded-lg text-base px-6 py-3 transition-colors duration-200">
+                    分享流程
                 </button>
                 
                 <button data-action="startDebate" class="w-full sm:w-auto px-10 py-3 rounded-xl text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-indigo-500/50 font-semibold text-lg">
@@ -2070,9 +2260,9 @@ renderSetupView() {
                 </button>
             </div>
         </div>
-       <div id="promotionWrapper"><div id="promotionWrapper">${this.renderPromotionArea()}</div></div>
+        <div id="promotionWrapper"><div id="promotionWrapper">${this.renderPromotionArea()}</div></div>
     `;
-    
+
     // 渲染後,檢查是否有待處理的分享流程需要被選定
     if (this.state.pendingSharedFlow) {
         setTimeout(() => {
@@ -2084,12 +2274,16 @@ renderSetupView() {
         }, 0);
     }
 
-    // 觸發 change 事件以正確顯示/隱藏選手設定區塊
+    // [新增] 觸發 change 事件以正確顯示/隱藏選手設定區塊，並設定刪除按鈕的初始狀態
     const formatSelect = document.getElementById('formatSelect');
     if (formatSelect) {
-        formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        const changeEvent = new Event('change', { bubbles: true });
+        Object.defineProperty(changeEvent, 'target', { value: formatSelect, writable: false });
+        this.changeActions.formatChanged(changeEvent);
     }
 },
+
+
         renderNineSquareGridView() {
              const renderGrid = (team, players) => {
                  let gridHtml = `<div class="space-y-4"><h3 class="text-xl font-bold text-center ${team === 'positive' ? 'text-green-600' : 'text-red-600'}">${team === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName}</h3><div class="grid grid-cols-3 gap-1 bg-slate-300 dark:bg-slate-600 p-1 rounded-lg">`;
@@ -2942,7 +3136,7 @@ renderSetupView() {
             const sidebarPanel = document.getElementById('sidebar-panel');
             if (!sidebarPanel) return;
             const autoModeChecked = this.state.isAutoMode ? 'checked' : '';
-            const speechEnabledChecked = this.state.enableSpeech ? 'checked' : ''; // <-- 新增此變數
+            const speechEnabledChecked = this.state.enableSpeech ? 'checked' : ''; 
 
             sidebarPanel.innerHTML = `
                 <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -3455,45 +3649,59 @@ renderSetupView() {
             }
             return null;
         },
+        /**
+         * 解碼分享的流程字串 (無論是來自 URL 還是文字貼上)
+         * @param {string} encodedData - 經過 btoa 和 pako 壓縮的字串
+         * @returns {string | null} - 成功時返回新流程的名稱，失敗時返回 null
+         */
+        decodeFlow(encodedData) {
+            try {
+                const decodedBinary = atob(encodedData);
+                const charData = decodedBinary.split('').map(c => c.charCodeAt(0));
+                const compressedArray = new Uint8Array(charData);
+                const decompressedString = pako.inflate(compressedArray, { to: 'string' });
+                const sharedFlow = JSON.parse(decompressedString);
+                
+                if (Array.isArray(sharedFlow)) {
+                    const flowName = `匯入的流程 (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+                    
+                    // [重要] 將匯入的流程視為「自訂流程」
+                    if (!App.debateFormatGroups['自訂流程']) {
+                        App.debateFormatGroups['自訂流程'] = {};
+                    }
+                    App.debateFormatGroups['自訂流程'][flowName] = sharedFlow;
+                    
+                    // [重要] 匯入後立刻存到 localStorage，使其永久保存
+                    localStorage.setItem('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']));
+                    
+                    return flowName; // 返回新流程的名稱
+                }
+                return null;
+            } catch (e) {
+                console.error("Error parsing shared flow:", e);
+                return null;
+            }
+        },
+        
         checkForSharedFlow() {
             const params = new URLSearchParams(window.location.search);
             const flowData = params.get('flow');
 
             if (flowData) {
-                try {
-                    // [MODIFIED] 1. Base64 解碼得到二進位字串
-                    const decodedBinary = atob(flowData);
-
-                    // [NEW] 2. 將二進位字串轉回 Uint8Array
-                    const charData = decodedBinary.split('').map(c => c.charCodeAt(0));
-                    const compressedArray = new Uint8Array(charData);
-
-                    // [NEW] 3. 使用 pako.inflate 將資料解壓縮回 JSON 字串
-                    const decompressedString = pako.inflate(compressedArray, { to: 'string' });
-                    
-                    // 4. 解析還原後的 JSON 字串
-                    const sharedFlow = JSON.parse(decompressedString);
-
-                    if (Array.isArray(sharedFlow)) {
-                        const flowName = `分享的流程 (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
-                        
-                        if (!App.debateFormatGroups['分享的流程']) {
-                            App.debateFormatGroups['分享的流程'] = {};
-                        }
-                        App.debateFormatGroups['分享的流程'][flowName] = sharedFlow;
-                        
-                        this.state.pendingSharedFlow = flowName;
-                        
-                        history.replaceState(null, '', window.location.pathname);
-                        App.showNotification(`已成功載入 "${flowName}"`, "success");
-                    }
-                } catch (e) {
-                    console.error("Error parsing shared flow:", e);
+                const flowName = this.decodeFlow(flowData);
+                
+                if (flowName) {
+                    // 將新匯入的流程名稱設為待選中
+                    this.state.pendingSharedFlow = flowName;
+                    history.replaceState(null, '', window.location.pathname);
+                    App.showNotification(`已成功載入 "${flowName}"`, "success");
+                } else {
                     App.showNotification("載入分享的流程失敗，連結可能已損毀或版本不相容。", "error");
                     history.replaceState(null, '', window.location.pathname);
                 }
             }
         },
+
         showNotification(message, type = 'info', duration = 3000) {
             const container = document.getElementById('notification-container');
             const a = { info: 'bg-blue-500', success: 'bg-green-500', error: 'bg-red-500' };
