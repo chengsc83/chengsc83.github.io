@@ -38,37 +38,16 @@
   - **Fullscreen API** 用於全螢幕功能。
 - **輔助函式庫**：[Sortable.js](https://github.com/SortableJS/Sortable) 用於流程編輯器的拖曳排序功能。
 
-## 🚀 安裝與啟動
+## 🚀 使用
 
 本專案為純前端應用，無需複雜的安裝步驟。
 
-#### 方法一：直接開啟（適用於基本功能）
+#### 方法:直接開啟（適用於基本功能）
 
 1.  複製或下載此專案的所有檔案。
 2.  直接在支援現代網頁標準的瀏覽器（如 Chrome, Edge, Firefox）中開啟[辯時計](https:/chengsc83.github.io/) 。
 
-#### 方法二：透過本地伺服器（建議，以啟用所有功能）
 
-部分瀏覽器對於直接從本地檔案系統 (`file:///...`) 存取麥克風等敏感權限有較嚴格的限制。為了確保錄音、語音辨識等功能正常，建議透過本地伺服器來運行。
-
-1.  確保您的電腦已安裝 [Node.js](https://nodejs.org/) 或 [Python](https://www.python.org/)。
-2.  在專案的根目錄下，打開您的終端機 (Terminal)。
-3.  執行以下任一指令：
-
-    **使用 Python:**
-    ```bash
-    # Python 3.x
-    python -m http.server
-    ```
-
-    **使用 Node.js (需先安裝 `http-server`):**
-    ```bash
-    npm install -g http-server
-    http-server
-    ```
-4.  打開瀏覽器，訪問終端機中顯示的網址（通常是 `http://localhost:8000` 或 `http://127.0.0.1:8080`）。
-
-## 📝 使用指南
 
 1.  **賽前設定**：
     - 填寫辯題、正反方隊名。
@@ -111,7 +90,3 @@
 - **[鄭世駿 James Cheng]** - *主要開發者* - (https://github.com/chengsc83)
 
 若有任何合作邀約或問題，歡迎聯繫：`james830.sc@gmail.com`
-
-## 📄 授權
-
-本專案採用 MIT 授權 - 詳情請見 [LICENSE.md](LICENSE.md) 檔案。
