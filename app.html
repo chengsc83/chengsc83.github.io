@@ -2113,12 +2113,25 @@ debateFormatGroups: {
                 case 'ESCAPE':
                     const modal = document.querySelector('.modal-container');
                     const sidebar = document.getElementById('sidebar');
+                    
+                    // 優先級 1: 關閉彈出視窗
                     if (modal) {
                         modal.remove();
-                    } else if (!sidebar.classList.contains('hidden')) {
+                        return; // 處理完就離開
+                    } 
+                    
+                    // 優先級 2: 關閉側邊欄
+                    if (!sidebar.classList.contains('hidden')) {
                         this.actions.toggleSidebar();
+                        return;
                     }
-                    break;
+
+                    // 優先級 3: [新增] 退出投影模式 (無論是全螢幕還是視窗版)
+                    if (App.state.isPresentationMode) {
+                        this.actions.toggleFullscreen(); // 呼叫上面的函式來處理退出邏輯
+                        return;
+                    }
+                    break;;
             }
         },
         
@@ -2688,30 +2701,57 @@ debateFormatGroups: {
             toggleFullscreen() {
                 // 判斷目前是否處於比賽進行中 (辯論或自由辯論)
                 const isDebateActive = App.state.currentView === 'debate' || App.state.currentView === 'free_debate';
+                const body = document.body;
 
-                if (!document.fullscreenElement) {
-                    // --- 進入全螢幕 ---
-                    document.documentElement.requestFullscreen().then(() => {
-                        // 只有在比賽進行中，才自動開啟「投影模式樣式」(隱藏控制列、放大字體)
-                        if (isDebateActive) {
-                            document.body.classList.add('presentation-mode');
-                            App.state.isPresentationMode = true;
-                            // 如果有開啟 PiP，更新畫布
-                            if (App.state.pip.isActive) App.renderPipCanvas();
-                            
-                            App.showNotification("已進入投影模式 (按 Esc 退出)", "success");
-                        } else {
-                            App.showNotification("已進入全螢幕", "success");
-                        }
-                    }).catch(err => {
-                        console.error("Fullscreen error:", err);
-                        App.showNotification("無法進入全螢幕", "error");
-                    });
-                } else {
-                    // --- 退出全螢幕 ---
-                    document.exitFullscreen().catch(err => console.error("Exit fullscreen error:", err));
-                    // 退出時的狀態清理邏輯由 addEventListeners 中的 fullscreenchange 統一處理
+                // 邏輯更新：如果已經是全螢幕 OR 已經有投影模式樣式，則執行「退出」
+                if (document.fullscreenElement || body.classList.contains('presentation-mode')) {
+                    
+                    // 1. 嘗試退出瀏覽器全螢幕 (如果有的話)
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(err => console.log("Exit fullscreen handled silently"));
+                    }
+
+                    // 2. 強制移除樣式與狀態 (處理視窗模式的情況)
+                    body.classList.remove('presentation-mode');
+                    App.state.isPresentationMode = false;
+
+                    // 3. 恢復 UI 控制列
+                    if (App.state.currentView === 'debate') App.renderDebateControls();
+                    if (App.state.currentView === 'free_debate') App.renderFreeDebateControls();
+                    App.renderHeader(); // 確保標題列回來
+
+                    App.showNotification("已退出投影模式", "info");
+                    return;
                 }
+
+                // --- 進入全螢幕邏輯 ---
+                // 先嘗試請求瀏覽器原生全螢幕
+                document.documentElement.requestFullscreen().then(() => {
+                    // [成功] 瀏覽器進入全螢幕
+                    if (isDebateActive) {
+                        body.classList.add('presentation-mode');
+                        App.state.isPresentationMode = true;
+                        if (App.state.pip.isActive) App.renderPipCanvas();
+                        App.showNotification("已進入投影模式 (按 Esc 退出)", "success");
+                    } else {
+                        App.showNotification("已進入全螢幕", "success");
+                    }
+                }).catch(err => {
+                    // [失敗/被拒絕] 瀏覽器無法全螢幕 (例如 iOS Safari 或權限不足)
+                    console.warn("Fullscreen API denied, falling back to Windowed Mode.", err);
+
+                    // ★★★ 關鍵修改：即使失敗，只要在比賽中，依然強制開啟投影介面 ★★★
+                    if (isDebateActive) {
+                        body.classList.add('presentation-mode');
+                        App.state.isPresentationMode = true;
+                        if (App.state.pip.isActive) App.renderPipCanvas();
+                        
+                        // 這裡特別提示是用視窗模式
+                        App.showNotification("已進入投影模式 (視窗版)", "success");
+                    } else {
+                        App.showNotification("您的裝置不支援全螢幕", "warning");
+                    }
+                });
             },
 
             // 保留此函式但將其導向 toggleFullscreen，以相容快捷鍵 'M'
