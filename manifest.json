@@ -1,0 +1,16 @@
+{
+  "name": "辯時計",
+  "short_name": "辯時計",
+  "start_url": "./app.html",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#4f46e5",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
