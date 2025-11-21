@@ -1044,57 +1044,61 @@
     html:not(.dark) #sidebar-panel .menu-item:hover {
         background-color: rgba(255, 255, 255, 0.8) !important;
     }
-    /* =========================================
-       🚨 最終強力修復 (Final Anchor Fix)
+/* =========================================
+       ⚓️ 底部按鈕終極修復 (Position & Layer Final Fix)
+       請貼在 CSS 最下方，這會同時修復「位置固定」與「層級遮擋」問題
        ========================================= */
 
-    /* 1. 徹底解除主容器的圖層鎖定 */
-    /* 這是關鍵！必須強制移除 filter 和 transform，否則 fixed 絕對無效 */
+    /* 1. 底部行動列 (包含：開始比賽、儲存流程) */
+    .sticky-action-bar, 
+    .editor-sticky-bar {
+        /* --- 定位設定 (確保它釘在底部) --- */
+        position: fixed !important;
+        bottom: 30px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important; /* 絕對置中 */
+        width: 95% !important;
+        max-width: 900px !important;
+        margin: 0 !important;
+        
+        /* --- 層級設定 (關鍵修改) --- */
+        /* 設為 50：比普通內容高，但比側邊欄(90)和視窗(110)低 */
+        z-index: 50 !important; 
+        
+        /* --- 確保不做多餘的變形，避免定位失效 --- */
+        perspective: none !important;
+        backface-visibility: hidden;
+    }
+
+    /* 2. 辯論控制 Dock (包含：暫停、計時按鈕) */
+    .control-dock-wrapper {
+        /* Dock 也需要同樣的層級邏輯 */
+        z-index: 50 !important; 
+        /* 確保 Dock 也是固定的 */
+        position: fixed !important;
+        bottom: 2rem !important;
+    }
+
+    /* 3. 側邊欄 (Sidebar) - 提升層級 */
+    #sidebar {
+        z-index: 90 !important; /* 確保蓋過底部按鈕 (50) */
+    }
+    
+    #sidebar-panel {
+        z-index: 91 !important;
+    }
+
+    /* 4. 彈出視窗 (Modal) - 最高層級 */
+    .modal-container {
+        z-index: 110 !important; /* 確保蓋過一切 */
+    }
+
+    /* 5. 防呆機制：確保主容器不會因為動畫屬性而破壞 Fixed 定位 */
     #main-content {
         transform: none !important;
         filter: none !important;
         perspective: none !important;
         contain: none !important;
-        /* 保持不透明度過場即可，不要位移 */
-        transition: opacity 0.3s ease !important;
-    }
-
-    /* 只有在「切換動畫進行中」才允許變形，動畫結束後立刻移除 */
-    .content-fade-out {
-        opacity: 0 !important;
-        /* 這裡可以加回變形，因為切換時使用者不會去按按鈕 */
-        transform: translateY(10px) scale(0.98) !important;
-        filter: blur(4px) !important;
-    }
-
-    /* 2. 強制釘選底部 (Action Bar & Editor Bar) */
-    .sticky-action-bar, 
-    .editor-sticky-bar {
-        /* 確保定位屬性最高優先權 */
-        position: fixed !important; 
-        bottom: 30px !important; /* 離底部稍微遠一點，比較美觀 */
-        
-        /* 絕對置中定位法 */
-        left: 50% !important;
-        transform: translateX(-50%) !important; /* 只有這裡可以使用 transform */
-        
-        /* 寬度與層級 */
-        width: 95% !important;
-        max-width: 900px !important;
-        z-index: 9999 !important; /* 最頂層，防止被其他毛玻璃遮擋 */
-        
-        /* 確保 margin 不會干擾定位 */
-        margin: 0 !important;
-        right: auto !important;
-        top: auto !important;
-    }
-
-    /* 3. 確保頁面底部有足夠空間，不被按鈕遮住內容 */
-    /* 增加 padding，讓使用者可以滾動到最下面 */
-    .setup-container, 
-    .form-container,
-    #editor-stage-list {
-        padding-bottom: 150px !important; 
     }
     /* =========================================
        🎥 投影模式特效升級 (Presentation FX)
