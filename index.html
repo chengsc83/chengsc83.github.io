@@ -29,6 +29,8 @@
     <meta name="twitter:image" content="https://chengsc83.github.io/og-image.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" integrity="sha384-wILdp22jSfD0E7s9+/SqzSzlN7hI7M4m2vfvvQ4kV2HgA/XRi6HeIC/UBlSlN4rB" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -103,7 +105,7 @@
                 </div>
             </header>
 
-            <main class="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
+            <main class="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4" data-aos="fade-up" data-aos-duration="800">
                 <h1 class="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white mb-6">
                     專業、安全、<span class="text-gradient">現代化</span>
                     <br>
@@ -126,11 +128,11 @@
                     <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-400">根據我們的觀察，市場上的計時軟體，存在兩個難以忽視的核心問題：</p>
                 </div>
                 <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-                    <div class="card-bg border border-red-500/30 rounded-2xl p-8">
+                    <div class="card-bg border border-red-500/30 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="0">
                         <h3 class="text-xl font-semibold text-white">1. 中資背景的資訊安全疑慮</h3>
                         <p class="mt-4 text-gray-400">在網路攻擊日益加劇的今天，即使是計時器，其背後的數據流向也應被重視。我們需要一個乾淨、透明且值得信賴的台灣本土工具。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="150">
                         <h3 class="text-xl font-semibold text-white">2. 功能單一，治標不治本</h3>
                         <p class="mt-4 text-gray-400">現行工具更像是「多個碼錶的集合」，仍需人力緊盯螢幕、手動操作、照稿念誦。它並未真正結構性地降低主計的負擔，只是將碼錶搬上螢幕。</p>
                     </div>
@@ -145,35 +147,113 @@
                     <p class="mt-4 text-lg text-gray-400">不只是計時，更是賽事助理，專為辯論比賽設計的每一個細節設計打造</p>
                 </div>
                 <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="0">
                         <h3 class="text-xl font-semibold text-white">🤖 自動化主席稿</h3>
                         <p class="mt-2 text-gray-400">系統能根據賽制，在指定時間點自動朗讀主席稿、提醒辯士，大幅解放主計人員的心力。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="100">
                         <h3 class="text-xl font-semibold text-white">🎤 智慧語音偵測</h3>
                         <p class="mt-2 text-gray-400">透過麥克風或分享的網頁音訊自動開始計時，完美解決線上、線下混合比賽的計時難題。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="200">
                         <h3 class="text-xl font-semibold text-white">📂 整合式賽制管理</h3>
                         <p class="mt-2 text-gray-400">內建多種常見辯論賽制範本，並支援高度自訂，滿足各種比賽的彈性需求。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="300">
                         <h3 class="text-xl font-semibold text-white">✍️ 語音即時轉錄</h3>
                         <p class="mt-2 text-gray-400">需要賽後逐字稿？辯時計能將比賽發言即時轉錄為文字，方便賽後覆盤、評分與紀錄。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="400">
                         <h3 class="text-xl font-semibold text-white">🛡️ 絕對安全與隱私</h3>
                         <p class="mt-2 text-gray-400">所有操作均在您的瀏覽器本地完成，無任何資料上傳，徹底杜絕資安與隱私風險。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="500">
                         <h3 class="text-xl font-semibold text-white">💻 現代化的網頁介面</h3>
                         <p class="mt-2 text-gray-400">無需安裝，打開瀏覽器即可使用。介面設計直觀簡潔，讓您能快速上手，專注於比賽。</p>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- FAQ Section -->
+        <section class="py-20 sm:py-24">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center" data-aos="fade-up" data-aos-duration="600">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white">常見問題</h2>
+                    <p class="mt-4 text-lg text-gray-400">有任何疑問嗎？這裡可能有您需要的答案</p>
+                </div>
+                <div class="mt-12 space-y-4" id="faq-accordion">
+                    <div class="card-bg border border-gray-700 rounded-2xl overflow-hidden" data-aos="fade-up" data-aos-duration="600" data-aos-delay="100">
+                        <button class="faq-toggle w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset" aria-expanded="false">
+                            <span class="text-lg font-semibold text-white">辯時計是免費的嗎？</span>
+                            <svg class="faq-icon w-6 h-6 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-5">
+                            <p class="text-gray-400">是的，辯時計完全免費使用，無需註冊、無廣告，也沒有任何隱藏費用。</p>
+                        </div>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl overflow-hidden" data-aos="fade-up" data-aos-duration="600" data-aos-delay="150">
+                        <button class="faq-toggle w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset" aria-expanded="false">
+                            <span class="text-lg font-semibold text-white">我的資料會被上傳嗎？</span>
+                            <svg class="faq-icon w-6 h-6 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-5">
+                            <p class="text-gray-400">不會。辯時計的所有功能都在您的瀏覽器本地運行，沒有任何資料會被傳送到伺服器，確保您的隱私安全。</p>
+                        </div>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl overflow-hidden" data-aos="fade-up" data-aos-duration="600" data-aos-delay="200">
+                        <button class="faq-toggle w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset" aria-expanded="false">
+                            <span class="text-lg font-semibold text-white">辯時計支援哪些辯論賽制？</span>
+                            <svg class="faq-icon w-6 h-6 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-5">
+                            <p class="text-gray-400">辯時計內建多種常見辯論賽制範本，包括奧瑞岡制、政策辯論、新加坡制等，並支援完全自訂，您可以根據需求調整時間與流程。</p>
+                        </div>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl overflow-hidden" data-aos="fade-up" data-aos-duration="600" data-aos-delay="250">
+                        <button class="faq-toggle w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset" aria-expanded="false">
+                            <span class="text-lg font-semibold text-white">語音偵測功能如何運作？</span>
+                            <svg class="faq-icon w-6 h-6 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-5">
+                            <p class="text-gray-400">辯時計透過您授權的麥克風或網頁分享的音訊，自動偵測發言開始與結束，讓計時更加精準，特別適合線上或混合形式的比賽。</p>
+                        </div>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl overflow-hidden" data-aos="fade-up" data-aos-duration="600" data-aos-delay="300">
+                        <button class="faq-toggle w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset" aria-expanded="false">
+                            <span class="text-lg font-semibold text-white">需要安裝任何軟體嗎？</span>
+                            <svg class="faq-icon w-6 h-6 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-5">
+                            <p class="text-gray-400">不需要。辯時計是一個純網頁應用程式，只要打開瀏覽器即可使用，支援所有主流瀏覽器（Chrome、Firefox、Safari、Edge）。</p>
+                        </div>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl overflow-hidden" data-aos="fade-up" data-aos-duration="600" data-aos-delay="350">
+                        <button class="faq-toggle w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset" aria-expanded="false">
+                            <span class="text-lg font-semibold text-white">我可以貢獻程式碼或回報問題嗎？</span>
+                            <svg class="faq-icon w-6 h-6 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-5">
+                            <p class="text-gray-400">當然可以！辯時計是開源專案，歡迎在 GitHub 上提交 Issue 或 Pull Request，一起讓這個工具變得更好。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         
-        <section class="bg-gradient-to-b from-gray-900 to-indigo-900/20 py-28 sm:py-36">
+        <section class="bg-gradient-to-b from-gray-900 to-indigo-900/20 py-28 sm:py-36" data-aos="fade-in" data-aos-duration="800">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h2 class="text-3xl sm:text-4xl font-bold text-gradient">技術，為了更好的思辯</h2>
                 <p class="mt-6 text-lg text-gray-400 leading-relaxed">
@@ -222,6 +302,63 @@
         "完全本地運行"
       ]
     }
+    </script>
+
+    <!-- AOS Animation Library -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js" integrity="sha384-X8xEdUmNYCTx2GQ8M7SO5d81ySgT/1Wg+mUDTnNYR/20/MPNVvsJO6An+Mr0JQKY" crossorigin="anonymous"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            once: true,
+            easing: 'ease-out-cubic'
+        });
+
+        // FAQ Accordion functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqAccordion = document.getElementById('faq-accordion');
+            let currentlyOpen = null;
+            
+            if (faqAccordion) {
+                faqAccordion.addEventListener('click', function(e) {
+                    const toggle = e.target.closest('.faq-toggle');
+                    if (!toggle) return;
+                    
+                    const faqItem = toggle.closest('[data-aos]');
+                    if (!faqItem) return;
+                    
+                    const content = faqItem.querySelector('.faq-content');
+                    const icon = toggle.querySelector('.faq-icon');
+                    if (!content || !icon) return;
+                    
+                    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                    
+                    // Close currently open item if different from clicked
+                    if (currentlyOpen && currentlyOpen !== faqItem) {
+                        const openToggle = currentlyOpen.querySelector('.faq-toggle');
+                        const openContent = currentlyOpen.querySelector('.faq-content');
+                        const openIcon = currentlyOpen.querySelector('.faq-icon');
+                        if (openToggle && openContent && openIcon) {
+                            openToggle.setAttribute('aria-expanded', 'false');
+                            openContent.classList.add('hidden');
+                            openIcon.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                    
+                    // Toggle current FAQ item
+                    if (isExpanded) {
+                        toggle.setAttribute('aria-expanded', 'false');
+                        content.classList.add('hidden');
+                        icon.style.transform = 'rotate(0deg)';
+                        currentlyOpen = null;
+                    } else {
+                        toggle.setAttribute('aria-expanded', 'true');
+                        content.classList.remove('hidden');
+                        icon.style.transform = 'rotate(180deg)';
+                        currentlyOpen = faqItem;
+                    }
+                });
+            }
+        });
     </script>
 
 </body>
