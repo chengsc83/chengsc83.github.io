@@ -197,7 +197,7 @@
 
     /* 選單項目樣式 [遺失樣式修復] */
     .menu-group-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-sub); margin-bottom: 0.75rem; padding-left: 0.5rem; }
-    .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; margin-bottom: 0.5rem; background: var(--surface-2); border-radius: 0.75rem; border: 1px solid transparent; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+    .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; margin-bottom: 0.5rem; background: var(--surface-2); border-radius: 0.75rem; border: 1px solid transparent; transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease; cursor: pointer; }
     .menu-item:hover { background: var(--surface-1); border-color: var(--color-primary); transform: translateX(4px); box-shadow: var(--shadow-sm); }
     .menu-item:hover .menu-icon { transform: scale(1.1); }
     
@@ -205,13 +205,13 @@
     .menu-icon { width: 2rem; height: 2rem; border-radius: 0.5rem; background: rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s ease, background-color 0.2s ease; }
     html.dark .menu-icon { background: rgba(255,255,255,0.1); color: white; }
     
-    /* 選單項目顏色區分 */
-    .menu-icon--blue { background: rgba(59, 130, 246, 0.15) !important; color: #3b82f6 !important; }
-    .menu-icon--purple { background: rgba(139, 92, 246, 0.15) !important; color: #8b5cf6 !important; }
-    .menu-icon--gray { background: rgba(100, 116, 139, 0.15) !important; color: #64748b !important; }
-    html.dark .menu-icon--blue { background: rgba(59, 130, 246, 0.2) !important; color: #60a5fa !important; }
-    html.dark .menu-icon--purple { background: rgba(139, 92, 246, 0.2) !important; color: #a78bfa !important; }
-    html.dark .menu-icon--gray { background: rgba(100, 116, 139, 0.2) !important; color: #94a3b8 !important; }
+    /* 選單項目顏色區分 - 使用高優先級確保覆蓋基礎樣式 */
+    .menu-icon.menu-icon--blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .menu-icon.menu-icon--purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .menu-icon.menu-icon--gray { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+    html.dark .menu-icon.menu-icon--blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    html.dark .menu-icon.menu-icon--purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    html.dark .menu-icon.menu-icon--gray { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
     
     /* 選單分組分隔線 */
     .menu-group-divider { height: 1px; background: var(--border-color); margin: 1rem 0; opacity: 0.5; }
@@ -221,7 +221,7 @@
 
     /* Premium Card [遺失樣式修復] - 精簡橫向佈局 */
     .premium-card { 
-        background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%); 
+        background: linear-gradient(135deg, var(--color-primary, #4f46e5) 0%, #9333ea 100%); 
         color: white; 
         padding: 0.75rem 1rem; 
         border-radius: 0.75rem; 
@@ -307,10 +307,14 @@
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
+    /* Accessibility: Pause animation for users who prefer reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .brand-logo-text { animation: none; }
+    }
     
     /* 輸入框 placeholder 優化 */
     .modern-input::placeholder {
-        color: var(--text-placeholder) !important;
+        color: var(--text-placeholder);
         opacity: 1;
     }
     html.dark .modern-input::placeholder {
@@ -3574,9 +3578,9 @@ debateFormatGroups: {
                 const previewContainer = document.getElementById('formatPreview');
                 if (previewContainer) {
                     const flow = App.getDebateFormat(selectedValue);
+                    const MAX_PREVIEW_STAGES = 5; // 預覽顯示的最大階段數
                     if (flow && flow.length > 0) {
-                        // 取前5個階段作為預覽
-                        const previewStages = flow.slice(0, 5);
+                        const previewStages = flow.slice(0, MAX_PREVIEW_STAGES);
                         const stageNames = previewStages.map(s => {
                             const name = s.name || '';
                             // 簡化階段名稱，只取關鍵字
@@ -3593,7 +3597,7 @@ debateFormatGroups: {
                             `<span class="format-preview-tag">${name}</span>`
                         ).join('<span class="format-preview-arrow">→</span>');
                         
-                        if (flow.length > 5) {
+                        if (flow.length > MAX_PREVIEW_STAGES) {
                             previewHTML += `<span class="format-preview-tag">...共${flow.length}階段</span>`;
                         }
                         
