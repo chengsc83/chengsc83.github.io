@@ -197,20 +197,50 @@
 
     /* 選單項目樣式 [遺失樣式修復] */
     .menu-group-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-sub); margin-bottom: 0.75rem; padding-left: 0.5rem; }
-    .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; margin-bottom: 0.5rem; background: var(--surface-2); border-radius: 0.75rem; border: 1px solid transparent; transition: all 0.2s; cursor: pointer; }
+    .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; margin-bottom: 0.5rem; background: var(--surface-2); border-radius: 0.75rem; border: 1px solid transparent; transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease; cursor: pointer; }
     .menu-item:hover { background: var(--surface-1); border-color: var(--color-primary); transform: translateX(4px); box-shadow: var(--shadow-sm); }
+    .menu-item:hover .menu-icon { transform: scale(1.1); }
     
     .menu-toggle-wrapper { display: flex; align-items: center; gap: 0.75rem; }
-    .menu-icon { width: 2rem; height: 2rem; border-radius: 0.5rem; background: rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-main); }
+    .menu-icon { width: 2rem; height: 2rem; border-radius: 0.5rem; background: rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s ease, background-color 0.2s ease; }
     html.dark .menu-icon { background: rgba(255,255,255,0.1); color: white; }
+    
+    /* 選單項目顏色區分 - 使用高優先級確保覆蓋基礎樣式 */
+    .menu-icon.menu-icon--blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .menu-icon.menu-icon--purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .menu-icon.menu-icon--gray { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+    html.dark .menu-icon.menu-icon--blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    html.dark .menu-icon.menu-icon--purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    html.dark .menu-icon.menu-icon--gray { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+    
+    /* 選單分組分隔線 */
+    .menu-group-divider { height: 1px; background: var(--border-color); margin: 1rem 0; opacity: 0.5; }
     
     .sidebar-close-btn { background-color: var(--surface-2); color: var(--text-sub); }
     .sidebar-close-btn:hover { background-color: var(--surface-3); color: var(--text-main); }
 
-    /* Premium Card [遺失樣式修復] */
-    .premium-card { background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%); color: white; padding: 1.25rem; border-radius: 1rem; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3); transition: transform 0.2s; margin-bottom: 1.5rem; }
-    .premium-card:hover { transform: scale(1.02); }
+    /* Premium Card [遺失樣式修復] - 精簡橫向佈局 */
+    .premium-card { 
+        background: linear-gradient(135deg, var(--color-primary, #4f46e5) 0%, #9333ea 100%); 
+        color: white; 
+        padding: 0.75rem 1rem; 
+        border-radius: 0.75rem; 
+        position: relative; 
+        overflow: hidden; 
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); 
+        transition: transform 0.2s, box-shadow 0.2s; 
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .premium-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35); }
     .premium-card * { color: #ffffff !important; } /* 強制白色 */
+    .premium-card-icon { flex-shrink: 0; }
+    .premium-card-content { flex-grow: 1; min-width: 0; }
+    .premium-card-content h3 { font-size: 0.875rem; font-weight: 700; margin: 0; line-height: 1.3; }
+    .premium-card-content p { font-size: 0.7rem; opacity: 0.85; margin: 0.125rem 0 0; line-height: 1.3; }
+    .premium-card-arrow { flex-shrink: 0; opacity: 0.8; }
 
     /* --- 5. 流程編輯器 (Flow Editor) [遺失樣式修復] --- */
     .editor-header-input { font-size: 1.5rem; font-weight: 800; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-main); width: 100%; padding: 0.5rem; transition: all 0.2s; }
@@ -242,7 +272,82 @@
 
     /* --- 6. 賽前設定頁面 (Setup Page) --- */
     .setup-container { padding-bottom: 140px; }
+    .setup-container .space-y-6 > * { margin-bottom: 1rem; }
+    .setup-container .glass-panel { padding: 1.25rem !important; }
+    @media (min-width: 768px) { .setup-container .glass-panel { padding: 1.5rem !important; } }
     .settings-row, .promo-card { background-color: var(--surface-2) !important; border: 1px solid var(--border-color) !important; color: var(--text-main) !important; transition: all 0.3s; }
+    
+    /* 賽制流程預覽標籤 */
+    .format-preview { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.5rem; align-items: center; }
+    .format-preview-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--surface-2); border: 1px solid var(--border-color); border-radius: 0.375rem; color: var(--text-sub); font-weight: 500; }
+    .format-preview-arrow { color: var(--text-sub); opacity: 0.5; font-size: 0.7rem; }
+    
+    /* Toggle 開關平滑過渡 */
+    .toggle-switch { 
+        transition: background-color 0.3s ease, box-shadow 0.2s ease;
+    }
+    .toggle-switch::after {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease !important;
+    }
+    .toggle-switch:hover::after {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Header 品牌區域 Logo 漸層效果 */
+    .brand-logo-text {
+        background: linear-gradient(135deg, var(--color-primary) 0%, #9333ea 50%, var(--color-primary) 100%);
+        background-size: 200% auto;
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: logoGradient 4s linear infinite;
+    }
+    @keyframes logoGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    /* Accessibility: Pause animation for users who prefer reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .brand-logo-text { animation: none; }
+    }
+    
+    /* 輸入框 placeholder 優化 */
+    .modern-input::placeholder {
+        color: var(--text-placeholder);
+        opacity: 1;
+    }
+    html.dark .modern-input::placeholder {
+        color: #64748b !important;
+    }
+    
+    /* 空白狀態樣式 */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-sub);
+    }
+    .empty-state-icon {
+        width: 4rem;
+        height: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+        animation: floating 3s ease-in-out infinite;
+    }
+    .empty-state-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        color: var(--text-main);
+    }
+    .empty-state-desc {
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
     
     /* --- 7. 計時器介面 (Timer UI) --- */
     .hero-timer-card { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 3rem 2rem; position: relative; overflow: hidden; background: var(--surface-1); }
@@ -801,11 +906,16 @@
     .team-setup-card.team-positive {
         animation: slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
         animation-delay: 0.1s;
+        border-left: 3px solid #3b82f6 !important;
     }
+    .team-setup-card.team-positive h3 { color: #3b82f6 !important; }
+    
     .team-setup-card.team-negative {
         animation: slideInRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
         animation-delay: 0.2s;
+        border-left: 3px solid #ef4444 !important;
     }
+    .team-setup-card.team-negative h3 { color: #ef4444 !important; }
 
     @keyframes slideInLeft {
         from { opacity: 0; transform: translateX(-30px); }
@@ -1384,7 +1494,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div>
-                            <h1 class="text-lg font-bold">辯時計</h1>
+                            <h1 class="text-lg font-bold brand-logo-text">辯時計</h1>
                             <p class="text-xs text-slate-500 dark:text-slate-400">新世代辯論主計系統</p>
                         </div>
                     </div>
@@ -3463,6 +3573,41 @@ debateFormatGroups: {
                     deleteBtn.classList.toggle('opacity-30', !isCustomFlow);
                     deleteBtn.classList.toggle('cursor-not-allowed', !isCustomFlow);
                 }
+                
+                // 更新賽制流程預覽
+                const previewContainer = document.getElementById('formatPreview');
+                if (previewContainer) {
+                    const flow = App.getDebateFormat(selectedValue);
+                    const MAX_PREVIEW_STAGES = 5; // 預覽顯示的最大階段數
+                    if (flow && flow.length > 0) {
+                        const previewStages = flow.slice(0, MAX_PREVIEW_STAGES);
+                        const stageNames = previewStages.map(s => {
+                            const name = s.name || '';
+                            // 簡化階段名稱，只取關鍵字
+                            if (name.includes('申論')) return '申論';
+                            if (name.includes('質詢') || name.includes('質答')) return '質詢';
+                            if (name.includes('結辯')) return '結辯';
+                            if (name.includes('自由辯') || name.includes('對辯')) return '自由辯';
+                            if (name.includes('抽籤')) return '抽籤';
+                            if (name.includes('準備')) return '準備';
+                            return name.replace(/正方|反方/g, '').trim().slice(0, 4);
+                        }).filter(n => n);
+                        
+                        let previewHTML = stageNames.map(name => 
+                            `<span class="format-preview-tag">${name}</span>`
+                        ).join('<span class="format-preview-arrow">→</span>');
+                        
+                        if (flow.length > MAX_PREVIEW_STAGES) {
+                            previewHTML += `<span class="format-preview-tag">...共${flow.length}階段</span>`;
+                        }
+                        
+                        previewContainer.innerHTML = previewHTML;
+                        previewContainer.style.display = 'flex';
+                    } else {
+                        previewContainer.innerHTML = '<span class="format-preview-tag">請選擇賽制或建立自訂流程</span>';
+                        previewContainer.style.display = 'flex';
+                    }
+                }
             },
             toggleSpeech(e) {
                 App.state.enableSpeech = e.target.checked;
@@ -3579,7 +3724,7 @@ debateFormatGroups: {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="md:col-span-2">
                                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">辯題</label>
-                                    <input type="text" id="debateTopicInput" class="modern-input text-lg font-bold" placeholder="例如：我國應廢除死刑" value="${this.state.debateTopic}">
+                                    <input type="text" id="debateTopicInput" class="modern-input text-lg font-bold" placeholder="例如：大學生應該強制服兵役" value="${this.state.debateTopic}">
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">比賽賽制</label>
@@ -3596,6 +3741,7 @@ debateFormatGroups: {
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </div>
+                                    <div id="formatPreview" class="format-preview" style="display: none;"></div>
                                 </div>
                             </div>
                         </div>
@@ -4835,38 +4981,98 @@ switchFreeDebateTeam() {
                     </button>
                 </div>
 
-                <div class="p-6 overflow-y-auto flex-grow space-y-8">
+                <div class="p-6 overflow-y-auto flex-grow space-y-6">
                     <div class="premium-card cursor-pointer" data-action="showPremiumModal">
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="bg-white/20 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm text-white">PRO</span>
-                            <svg class="w-5 h-5 opacity-80 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                        <div class="premium-card-icon">
+                            <svg class="w-8 h-8 text-white opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
                         </div>
-                        <h3 class="text-lg font-bold mb-1 text-white">升級辯時計 Premium</h3>
-                        <p class="text-xs opacity-90 mb-3 text-white">解鎖雲端同步、自訂背景與更多專業功能。</p>
-                        <div class="text-xs font-bold flex items-center gap-1 text-white">查看方案 &rarr;</div>
+                        <div class="premium-card-content">
+                            <h3>升級 Premium</h3>
+                            <p>解鎖雲端同步與更多專業功能</p>
+                        </div>
+                        <div class="premium-card-arrow">
+                            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </div>
                     </div>
 
-                    <button data-action="restartTour" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-all font-semibold">
+                    <button data-action="restartTour" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-all font-semibold text-sm">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
                         開始教學
                     </button>
 
+                    <div class="menu-group-divider"></div>
+
                     <div>
                         <div class="menu-group-title">比賽設定</div>
-                        ${renderToggle('自動模式', 'toggleAutoMode', isAutoMode, `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`)}
-                        ${renderToggle('語音朗讀', 'toggleSpeech', enableSpeech, `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`)}
+                        <div class="menu-item" onclick="document.querySelector('input[data-change-action=\\'toggleAutoMode\\']').click()">
+                            <div class="menu-toggle-wrapper">
+                                <div class="menu-icon menu-icon--blue"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
+                                <span class="font-semibold text-sm">自動模式</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                                <input type="checkbox" ${isAutoMode ? 'checked' : ''} data-change-action="toggleAutoMode" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all toggle-switch dark:border-gray-600 peer-checked:bg-[var(--color-primary)]"></div>
+                            </label>
+                        </div>
+                        <div class="menu-item" onclick="document.querySelector('input[data-change-action=\\'toggleSpeech\\']').click()">
+                            <div class="menu-toggle-wrapper">
+                                <div class="menu-icon menu-icon--blue"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg></div>
+                                <span class="font-semibold text-sm">語音朗讀</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                                <input type="checkbox" ${enableSpeech ? 'checked' : ''} data-change-action="toggleSpeech" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all toggle-switch dark:border-gray-600 peer-checked:bg-[var(--color-primary)]"></div>
+                            </label>
+                        </div>
                     </div>
+
+                    <div class="menu-group-divider"></div>
 
                     <div>
                         <div class="menu-group-title">顯示與外觀</div>
-                        ${renderAction('切換主題', 'toggleTheme', isDark ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>` : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`, isDark ? '目前：深色模式' : '目前：淺色模式')}
-                        ${renderAction('全螢幕 / 投影模式', 'toggleFullscreen', `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>`, '比賽中將自動隱藏介面')}
+                        <button data-action="toggleTheme" class="menu-item w-full text-left group">
+                            <div class="menu-toggle-wrapper">
+                                <div class="menu-icon menu-icon--purple group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">${isDark ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>` : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`}</div>
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-sm">切換主題</span>
+                                    <span class="text-xs text-slate-500">${isDark ? '目前：深色模式' : '目前：淺色模式'}</span>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                        <button data-action="toggleFullscreen" class="menu-item w-full text-left group">
+                            <div class="menu-toggle-wrapper">
+                                <div class="menu-icon menu-icon--purple group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg></div>
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-sm">全螢幕 / 投影模式</span>
+                                    <span class="text-xs text-slate-500">比賽中將自動隱藏介面</span>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
                     </div>
+
+                    <div class="menu-group-divider"></div>
 
                     <div>
                         <div class="menu-group-title">系統</div>
-                        ${renderAction('快捷鍵說明', 'showShortcutHelp', `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`)}
-                        ${renderAction('重新觀看教學', 'restartTour', `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>`, '了解各項功能')}
+                        <button data-action="showShortcutHelp" class="menu-item w-full text-left group">
+                            <div class="menu-toggle-wrapper">
+                                <div class="menu-icon menu-icon--gray group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                                <span class="font-semibold text-sm">快捷鍵說明</span>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                        <button data-action="restartTour" class="menu-item w-full text-left group">
+                            <div class="menu-toggle-wrapper">
+                                <div class="menu-icon menu-icon--gray group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg></div>
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-sm">重新觀看教學</span>
+                                    <span class="text-xs text-slate-500">了解各項功能</span>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
                         <button data-action="resetDebate" class="menu-item w-full text-left group border-red-500/20">
                             <div class="menu-toggle-wrapper text-red-500">
                                 <div class="menu-icon bg-red-500/10 group-hover:bg-red-500 group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></div>
