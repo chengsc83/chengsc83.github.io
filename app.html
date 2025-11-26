@@ -1165,6 +1165,205 @@
         0% { background-position: 100% 0; }
         100% { background-position: -100% 0; }
     }
+
+    /* =========================================
+       🎓 互動式教學引導 (Onboarding Tour)
+       ========================================= */
+    
+    /* 1. 遮罩層 */
+    .onboarding-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    .onboarding-overlay.active {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+    
+    .onboarding-overlay .backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+    
+    /* 2. 高亮元素框 */
+    .onboarding-highlight {
+        position: absolute;
+        border-radius: 1rem;
+        box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.6);
+        z-index: 1001;
+        pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .onboarding-highlight::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border: 2px solid var(--color-primary);
+        border-radius: inherit;
+        animation: highlightPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes highlightPulse {
+        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+        50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+    }
+    
+    /* 3. 提示卡片 */
+    .onboarding-tooltip {
+        position: absolute;
+        z-index: 1002;
+        width: 320px;
+        max-width: calc(100vw - 2rem);
+        background: var(--surface-1);
+        border: 1px solid var(--border-color);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: auto;
+    }
+    
+    .onboarding-overlay.active .onboarding-tooltip {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .onboarding-tooltip .step-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+        background: rgba(99, 102, 241, 0.1);
+        padding: 0.25rem 0.75rem;
+        border-radius: 99px;
+        margin-bottom: 0.75rem;
+    }
+    
+    .onboarding-tooltip h4 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+    
+    .onboarding-tooltip p {
+        font-size: 0.875rem;
+        color: var(--text-sub);
+        line-height: 1.6;
+        margin-bottom: 1.25rem;
+    }
+    
+    .onboarding-tooltip .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .onboarding-tooltip .btn-skip {
+        font-size: 0.8rem;
+        color: var(--text-sub);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        transition: color 0.2s;
+    }
+    
+    .onboarding-tooltip .btn-skip:hover {
+        color: var(--text-main);
+    }
+    
+    .onboarding-tooltip .nav-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .onboarding-tooltip .btn-prev,
+    .onboarding-tooltip .btn-next {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+    
+    .onboarding-tooltip .btn-prev {
+        background: var(--surface-2);
+        color: var(--text-main);
+    }
+    
+    .onboarding-tooltip .btn-prev:hover {
+        background: var(--surface-3);
+    }
+    
+    .onboarding-tooltip .btn-prev:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    
+    .onboarding-tooltip .btn-next {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .onboarding-tooltip .btn-next:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    }
+    
+    /* 4. 進度指示器 */
+    .onboarding-tooltip .progress-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .onboarding-tooltip .progress-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--surface-3);
+        transition: all 0.3s;
+    }
+    
+    .onboarding-tooltip .progress-dot.active {
+        background: var(--color-primary);
+        width: 24px;
+        border-radius: 4px;
+    }
+    
+    /* 5. 響應式調整 */
+    @media (max-width: 640px) {
+        .onboarding-tooltip {
+            width: calc(100vw - 2rem);
+            left: 1rem !important;
+            right: 1rem !important;
+        }
+    }
 </style>
 </head>
 <body class="transition-colors duration-300">
@@ -1217,6 +1416,24 @@
 
         <div id="notification-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
         
+        <!-- 教學引導 (Onboarding Tour) -->
+        <div id="onboarding-overlay" class="onboarding-overlay">
+            <div class="backdrop"></div>
+            <div id="onboarding-highlight" class="onboarding-highlight"></div>
+            <div id="onboarding-tooltip" class="onboarding-tooltip">
+                <span class="step-badge" id="tour-step-badge">步驟 1 / 5</span>
+                <h4 id="tour-title">歡迎使用辯時計</h4>
+                <p id="tour-description">讓我們快速了解一下主要功能。</p>
+                <div class="actions">
+                    <button class="btn-skip" id="tour-skip">跳過教學</button>
+                    <div class="nav-buttons">
+                        <button class="btn-prev" id="tour-prev">上一步</button>
+                        <button class="btn-next" id="tour-next">下一步</button>
+                    </div>
+                </div>
+                <div class="progress-dots" id="tour-progress"></div>
+            </div>
+        </div>
         
         <audio id="ringSound" preload="auto" src="ring.m4a"></audio>
         <audio id="stageAdvanceSound" preload="auto" src="sounds/stage_advance.mp3"></audio>
@@ -1325,8 +1542,216 @@
                 isInitialized: false // 用來標記是否已經授權過
             },
             
-            
+            // 教學引導狀態
+            onboarding: {
+                isActive: false,
+                currentStep: 0,
+            },
         },
+        
+        // --- 教學引導系統 (Onboarding Tour) ---
+        tourSteps: [
+            {
+                target: '#debateTopicInput',
+                title: '設定辯題',
+                description: '在這裡輸入本場比賽的辯論題目，例如「我國應廢除死刑」。',
+            },
+            {
+                target: '.team-setup-card.team-positive',
+                title: '正方隊伍設定',
+                description: '設定正方隊伍的名稱。您也可以選擇音訊來源，讓系統偵測辯士發言。',
+            },
+            {
+                target: '.team-setup-card.team-negative',
+                title: '反方隊伍設定',
+                description: '設定反方隊伍的名稱與音訊來源，讓比賽資訊更清晰完整。',
+            },
+            {
+                target: '#formatSelect',
+                title: '選擇比賽賽制',
+                description: '從下拉選單中選擇預設的比賽流程，或建立自訂流程。支援多種常見賽制。',
+            },
+            {
+                target: '.btn-start-match',
+                title: '開始比賽',
+                description: '一切就緒後，點擊此按鈕即可開始辯論計時！祝您比賽順利！',
+            },
+        ],
+        
+        initOnboarding() {
+            // 檢查是否為首次訪問
+            const hasSeenTour = localStorage.getItem('debateTourCompleted');
+            if (!hasSeenTour && this.state.currentView === 'setup') {
+                // 延遲啟動，確保頁面完全渲染
+                setTimeout(() => this.startTour(), 500);
+            }
+            
+            // 綁定事件監聽器
+            const overlay = document.getElementById('onboarding-overlay');
+            if (overlay) {
+                document.getElementById('tour-next').addEventListener('click', () => this.nextTourStep());
+                document.getElementById('tour-prev').addEventListener('click', () => this.prevTourStep());
+                document.getElementById('tour-skip').addEventListener('click', () => this.endTour());
+            }
+        },
+        
+        startTour() {
+            if (this.state.currentView !== 'setup') {
+                this.showNotification('請先回到賽前設定頁面再開始教學', 'info');
+                return;
+            }
+            
+            this.state.onboarding.isActive = true;
+            this.state.onboarding.currentStep = 0;
+            
+            const overlay = document.getElementById('onboarding-overlay');
+            if (overlay) {
+                overlay.classList.add('active');
+            }
+            
+            this.updateTourStep();
+        },
+        
+        endTour() {
+            this.state.onboarding.isActive = false;
+            
+            const overlay = document.getElementById('onboarding-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+            
+            // 儲存已完成狀態
+            localStorage.setItem('debateTourCompleted', 'true');
+        },
+        
+        nextTourStep() {
+            if (this.state.onboarding.currentStep < this.tourSteps.length - 1) {
+                this.state.onboarding.currentStep++;
+                this.updateTourStep();
+            } else {
+                this.endTour();
+                this.showNotification('教學完成！開始您的第一場辯論吧！', 'success');
+            }
+        },
+        
+        prevTourStep() {
+            if (this.state.onboarding.currentStep > 0) {
+                this.state.onboarding.currentStep--;
+                this.updateTourStep();
+            }
+        },
+        
+        updateTourStep() {
+            const step = this.tourSteps[this.state.onboarding.currentStep];
+            const totalSteps = this.tourSteps.length;
+            const currentIdx = this.state.onboarding.currentStep;
+            
+            // 取得 DOM 元素並檢查是否存在
+            const stepBadge = document.getElementById('tour-step-badge');
+            const titleEl = document.getElementById('tour-title');
+            const descEl = document.getElementById('tour-description');
+            const prevBtn = document.getElementById('tour-prev');
+            const nextBtn = document.getElementById('tour-next');
+            const progressContainer = document.getElementById('tour-progress');
+            
+            // 確保所有必要元素都存在
+            if (!stepBadge || !titleEl || !descEl || !prevBtn || !nextBtn || !progressContainer) {
+                console.error('Onboarding tour: Missing DOM elements');
+                return;
+            }
+            
+            // 更新內容
+            stepBadge.textContent = `步驟 ${currentIdx + 1} / ${totalSteps}`;
+            titleEl.textContent = step.title;
+            descEl.textContent = step.description;
+            
+            // 更新按鈕狀態
+            prevBtn.disabled = currentIdx === 0;
+            nextBtn.textContent = currentIdx === totalSteps - 1 ? '完成' : '下一步';
+            
+            // 更新進度指示器 (使用 DOM 方法而非 innerHTML)
+            progressContainer.innerHTML = '';
+            this.tourSteps.forEach((_, i) => {
+                const dot = document.createElement('span');
+                dot.className = `progress-dot${i === currentIdx ? ' active' : ''}`;
+                progressContainer.appendChild(dot);
+            });
+            
+            // 定位高亮框和提示卡片
+            this.positionTourElements(step.target);
+        },
+        
+        // 滾動動畫延遲常數 (毫秒)
+        TOUR_SCROLL_DELAY: 300,
+        
+        positionTourElements(targetSelector) {
+            const target = document.querySelector(targetSelector);
+            const highlight = document.getElementById('onboarding-highlight');
+            const tooltip = document.getElementById('onboarding-tooltip');
+            
+            if (!target || !highlight || !tooltip) {
+                console.warn('Onboarding tour: Target element or tour elements not found', targetSelector);
+                return;
+            }
+            
+            // 滾動目標元素進入視野
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 延遲計算位置，等待滾動完成
+            setTimeout(() => {
+                const rect = target.getBoundingClientRect();
+                const padding = 8;
+                
+                // 設定高亮框位置
+                highlight.style.left = `${rect.left - padding}px`;
+                highlight.style.top = `${rect.top - padding}px`;
+                highlight.style.width = `${rect.width + padding * 2}px`;
+                highlight.style.height = `${rect.height + padding * 2}px`;
+                
+                // 取得提示卡片的預估尺寸
+                const tooltipWidth = tooltip.offsetWidth || 320;
+                const tooltipHeight = tooltip.offsetHeight || 200;
+                const viewportHeight = window.innerHeight;
+                const viewportWidth = window.innerWidth;
+                
+                let tooltipTop, tooltipLeft;
+                
+                // 優先嘗試放在元素下方
+                if (rect.bottom + tooltipHeight + 20 < viewportHeight) {
+                    tooltipTop = rect.bottom + 16;
+                } else if (rect.top - tooltipHeight - 20 > 0) {
+                    // 放在元素上方
+                    tooltipTop = rect.top - tooltipHeight - 16;
+                } else {
+                    // 放在視窗中央
+                    tooltipTop = Math.max(20, (viewportHeight - tooltipHeight) / 2);
+                }
+                
+                // 水平置中對齊目標元素
+                tooltipLeft = rect.left + (rect.width - tooltipWidth) / 2;
+                
+                // 確保不超出螢幕邊界
+                tooltipLeft = Math.max(16, Math.min(tooltipLeft, viewportWidth - tooltipWidth - 16));
+                
+                tooltip.style.top = `${tooltipTop}px`;
+                tooltip.style.left = `${tooltipLeft}px`;
+            }, this.TOUR_SCROLL_DELAY);
+        },
+        
+        restartTour() {
+            // 重置完成狀態
+            localStorage.removeItem('debateTourCompleted');
+            
+            // 關閉側邊欄
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && !sidebar.classList.contains('hidden')) {
+                sidebar.classList.add('hidden');
+            }
+            
+            // 啟動教學
+            this.startTour();
+        },
+        
         // --- CONSTANTS ---
         initAmbientBackground() {
         // 檢查是否已經存在，避免重複添加
@@ -1931,6 +2356,7 @@ debateFormatGroups: {
             this.addEventListeners();
             this.initAmbientBackground();
             this.initSpotlightEffect();
+            this.initOnboarding();
         },
         
         loadState() {
@@ -2854,6 +3280,9 @@ debateFormatGroups: {
                     body: body,
                     footer: `<button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">關閉</button>`
                 });
+            },
+            restartTour() {
+                App.restartTour();
             },
             showPremiumModal() {
                 App.showNotification("開發中，敬請期待。 歡迎洽談開發團隊", "info", 5000);
@@ -4417,6 +4846,11 @@ switchFreeDebateTeam() {
                         <div class="text-xs font-bold flex items-center gap-1 text-white">查看方案 &rarr;</div>
                     </div>
 
+                    <button data-action="restartTour" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-all font-semibold">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                        開始教學
+                    </button>
+
                     <div>
                         <div class="menu-group-title">比賽設定</div>
                         ${renderToggle('自動模式', 'toggleAutoMode', isAutoMode, `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`)}
@@ -4432,6 +4866,7 @@ switchFreeDebateTeam() {
                     <div>
                         <div class="menu-group-title">系統</div>
                         ${renderAction('快捷鍵說明', 'showShortcutHelp', `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`)}
+                        ${renderAction('重新觀看教學', 'restartTour', `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>`, '了解各項功能')}
                         <button data-action="resetDebate" class="menu-item w-full text-left group border-red-500/20">
                             <div class="menu-toggle-wrapper text-red-500">
                                 <div class="menu-icon bg-red-500/10 group-hover:bg-red-500 group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></div>
