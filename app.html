@@ -1646,33 +1646,53 @@
             const totalSteps = this.tourSteps.length;
             const currentIdx = this.state.onboarding.currentStep;
             
-            // 更新內容
-            document.getElementById('tour-step-badge').textContent = `步驟 ${currentIdx + 1} / ${totalSteps}`;
-            document.getElementById('tour-title').textContent = step.title;
-            document.getElementById('tour-description').textContent = step.description;
-            
-            // 更新按鈕狀態
+            // 取得 DOM 元素並檢查是否存在
+            const stepBadge = document.getElementById('tour-step-badge');
+            const titleEl = document.getElementById('tour-title');
+            const descEl = document.getElementById('tour-description');
             const prevBtn = document.getElementById('tour-prev');
             const nextBtn = document.getElementById('tour-next');
+            const progressContainer = document.getElementById('tour-progress');
+            
+            // 確保所有必要元素都存在
+            if (!stepBadge || !titleEl || !descEl || !prevBtn || !nextBtn || !progressContainer) {
+                console.error('Onboarding tour: Missing DOM elements');
+                return;
+            }
+            
+            // 更新內容
+            stepBadge.textContent = `步驟 ${currentIdx + 1} / ${totalSteps}`;
+            titleEl.textContent = step.title;
+            descEl.textContent = step.description;
+            
+            // 更新按鈕狀態
             prevBtn.disabled = currentIdx === 0;
             nextBtn.textContent = currentIdx === totalSteps - 1 ? '完成' : '下一步';
             
-            // 更新進度指示器
-            const progressContainer = document.getElementById('tour-progress');
-            progressContainer.innerHTML = this.tourSteps.map((_, i) => 
-                `<span class="progress-dot ${i === currentIdx ? 'active' : ''}"></span>`
-            ).join('');
+            // 更新進度指示器 (使用 DOM 方法而非 innerHTML)
+            progressContainer.innerHTML = '';
+            this.tourSteps.forEach((_, i) => {
+                const dot = document.createElement('span');
+                dot.className = `progress-dot${i === currentIdx ? ' active' : ''}`;
+                progressContainer.appendChild(dot);
+            });
             
             // 定位高亮框和提示卡片
             this.positionTourElements(step.target);
         },
+        
+        // 滾動動畫延遲常數 (毫秒)
+        TOUR_SCROLL_DELAY: 300,
         
         positionTourElements(targetSelector) {
             const target = document.querySelector(targetSelector);
             const highlight = document.getElementById('onboarding-highlight');
             const tooltip = document.getElementById('onboarding-tooltip');
             
-            if (!target || !highlight || !tooltip) return;
+            if (!target || !highlight || !tooltip) {
+                console.warn('Onboarding tour: Target element or tour elements not found', targetSelector);
+                return;
+            }
             
             // 滾動目標元素進入視野
             target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1688,33 +1708,34 @@
                 highlight.style.width = `${rect.width + padding * 2}px`;
                 highlight.style.height = `${rect.height + padding * 2}px`;
                 
-                // 計算提示卡片位置
-                const tooltipRect = tooltip.getBoundingClientRect();
+                // 取得提示卡片的預估尺寸
+                const tooltipWidth = tooltip.offsetWidth || 320;
+                const tooltipHeight = tooltip.offsetHeight || 200;
                 const viewportHeight = window.innerHeight;
                 const viewportWidth = window.innerWidth;
                 
                 let tooltipTop, tooltipLeft;
                 
                 // 優先嘗試放在元素下方
-                if (rect.bottom + tooltipRect.height + 20 < viewportHeight) {
+                if (rect.bottom + tooltipHeight + 20 < viewportHeight) {
                     tooltipTop = rect.bottom + 16;
-                } else if (rect.top - tooltipRect.height - 20 > 0) {
+                } else if (rect.top - tooltipHeight - 20 > 0) {
                     // 放在元素上方
-                    tooltipTop = rect.top - tooltipRect.height - 16;
+                    tooltipTop = rect.top - tooltipHeight - 16;
                 } else {
                     // 放在視窗中央
-                    tooltipTop = Math.max(20, (viewportHeight - tooltipRect.height) / 2);
+                    tooltipTop = Math.max(20, (viewportHeight - tooltipHeight) / 2);
                 }
                 
                 // 水平置中對齊目標元素
-                tooltipLeft = rect.left + (rect.width - tooltipRect.width) / 2;
+                tooltipLeft = rect.left + (rect.width - tooltipWidth) / 2;
                 
                 // 確保不超出螢幕邊界
-                tooltipLeft = Math.max(16, Math.min(tooltipLeft, viewportWidth - tooltipRect.width - 16));
+                tooltipLeft = Math.max(16, Math.min(tooltipLeft, viewportWidth - tooltipWidth - 16));
                 
                 tooltip.style.top = `${tooltipTop}px`;
                 tooltip.style.left = `${tooltipLeft}px`;
-            }, 300);
+            }, this.TOUR_SCROLL_DELAY);
         },
         
         restartTour() {
