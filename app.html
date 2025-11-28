@@ -8350,9 +8350,14 @@
             // --- 投影模式 (Projector Mode) ---
             initProjectorChannel() {
                 if ('BroadcastChannel' in window) {
+                    // 如果已經有 channel，先清理
+                    if (this.state.projector.channel) {
+                        this.state.projector.channel.close();
+                    }
+                    
                     this.state.projector.channel = new BroadcastChannel('debate-timer-sync');
                     
-                    // 監聯來自顯示視窗的訊息
+                    // 監聽來自顯示視窗的訊息
                     this.state.projector.channel.onmessage = (event) => {
                         if (event.data.type === 'DISPLAY_CONNECTED') {
                             // 顯示視窗已連接，發送當前狀態
