@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>辯時計 - 投影顯示</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --font-body: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --bg-page: #0f172a;
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+            --color-primary: #818cf8;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-grace: #fb923c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-body);
+            background-color: var(--bg-page);
+            color: var(--text-main);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+        }
+
+        .display-container {
+            text-align: center;
+            padding: 2rem;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        .stage-name {
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .timer-display {
+            font-family: var(--font-mono);
+            font-size: clamp(8rem, 20vw, 25rem);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s ease;
+            text-shadow: 0 0 60px rgba(129, 140, 248, 0.3);
+        }
+
+        .timer-display.state-normal {
+            color: var(--text-main);
+        }
+
+        .timer-display.state-warning {
+            color: var(--color-warning);
+            text-shadow: 0 0 60px rgba(245, 158, 11, 0.4);
+        }
+
+        .timer-display.state-danger {
+            color: var(--color-danger);
+            text-shadow: 0 0 80px rgba(239, 68, 68, 0.5);
+            animation: pulse-danger 0.5s ease-in-out infinite;
+        }
+
+        .timer-display.state-grace {
+            color: var(--color-grace);
+            text-shadow: 0 0 60px rgba(251, 146, 60, 0.4);
+            animation: pulse-grace 1.5s ease-in-out infinite;
+        }
+
+        .timer-display.state-timesup {
+            color: var(--color-danger);
+            font-size: clamp(4rem, 12vw, 15rem);
+            animation: flash-alert 0.3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-danger {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.02); }
+        }
+
+        @keyframes pulse-grace {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes flash-alert {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .progress-bar-container {
+            width: 80%;
+            max-width: 800px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin-top: 3rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), #a855f7);
+            border-radius: 6px;
+            transition: width 1s linear;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .progress-bar.state-warning {
+            background: linear-gradient(90deg, var(--color-warning), #fbbf24);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        }
+
+        .progress-bar.state-danger {
+            background: linear-gradient(90deg, var(--color-danger), #f87171);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .progress-bar.state-grace {
+            background: linear-gradient(90deg, var(--color-grace), #fdba74);
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.5);
+        }
+
+        .status-indicator {
+            margin-top: 2rem;
+            font-size: 1rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--color-primary);
+        }
+
+        .status-dot.running {
+            animation: status-pulse 1s ease-in-out infinite;
+        }
+
+        .status-dot.paused {
+            background: var(--color-warning);
+        }
+
+        .status-dot.disconnected {
+            background: var(--color-danger);
+        }
+
+        @keyframes status-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .waiting-screen {
+            text-align: center;
+        }
+
+        .waiting-screen h1 {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--color-primary) 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .waiting-screen p {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--text-sub);
+        }
+
+        .waiting-screen .loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            margin: 2rem auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Visual alarm overlay for time's up */
+        .alarm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(239, 68, 68, 0.2);
+            pointer-events: none;
+            animation: alarm-flash 0.3s ease-in-out infinite;
+            z-index: 100;
+        }
+
+        @keyframes alarm-flash {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0; }
+        }
+
+        /* Fullscreen hint */
+        .fullscreen-hint {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.75rem 1.5rem;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-sub);
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .fullscreen-hint:hover {
+            opacity: 1;
+        }
+
+        body.is-fullscreen .fullscreen-hint {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Waiting Screen -->
+    <div id="waitingScreen" class="waiting-screen">
+        <h1>辯時計</h1>
+        <p>投影顯示模式</p>
+        <div class="loader"></div>
+        <p style="font-size: 1rem; margin-top: 1rem;">等待連接控制台...</p>
+    </div>
+
+    <!-- Timer Display -->
+    <div id="displayContainer" class="display-container hidden">
+        <div id="stageName" class="stage-name">準備中</div>
+        <div id="timerDisplay" class="timer-display state-normal">00:00</div>
+        <div class="progress-bar-container">
+            <div id="progressBar" class="progress-bar" style="width: 100%;"></div>
+        </div>
+        <div class="status-indicator">
+            <span id="statusDot" class="status-dot"></span>
+            <span id="statusText">已連接</span>
+        </div>
+    </div>
+
+    <!-- Alarm Overlay (hidden by default) -->
+    <div id="alarmOverlay" class="alarm-overlay hidden"></div>
+
+    <!-- Fullscreen Hint -->
+    <div class="fullscreen-hint">按 F11 或雙擊進入全螢幕</div>
+
+    <script>
+        const DisplayApp = {
+            channel: null,
+            lastUpdate: Date.now(),
+            heartbeatInterval: null,
+            isConnected: false,
+
+            init() {
+                // Initialize BroadcastChannel
+                this.channel = new BroadcastChannel('debate-timer-sync');
+                
+                this.channel.onmessage = (event) => {
+                    this.handleMessage(event.data);
+                };
+
+                // Start heartbeat check
+                this.heartbeatInterval = setInterval(() => this.checkConnection(), 3000);
+
+                // Request initial state
+                this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+
+                // Double-click to fullscreen
+                document.body.addEventListener('dblclick', () => this.toggleFullscreen());
+
+                // Track fullscreen state
+                document.addEventListener('fullscreenchange', () => {
+                    document.body.classList.toggle('is-fullscreen', !!document.fullscreenElement);
+                });
+            },
+
+            handleMessage(data) {
+                this.lastUpdate = Date.now();
+                
+                if (!this.isConnected) {
+                    this.isConnected = true;
+                    document.getElementById('waitingScreen').classList.add('hidden');
+                    document.getElementById('displayContainer').classList.remove('hidden');
+                }
+
+                switch (data.type) {
+                    case 'TIMER_UPDATE':
+                        this.updateDisplay(data.payload);
+                        break;
+                    case 'HEARTBEAT':
+                        // Just update lastUpdate timestamp
+                        break;
+                }
+
+                this.updateConnectionStatus(true);
+            },
+
+            updateDisplay(payload) {
+                const {
+                    timeRemaining,
+                    isRunning,
+                    currentStage,
+                    totalTime,
+                    isTimesUp,
+                    isGracePeriod,
+                    gracePeriodRemaining,
+                    isPaused
+                } = payload;
+
+                const timerEl = document.getElementById('timerDisplay');
+                const stageEl = document.getElementById('stageName');
+                const progressEl = document.getElementById('progressBar');
+                const alarmEl = document.getElementById('alarmOverlay');
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+
+                // Update stage name
+                if (stageEl && currentStage) {
+                    stageEl.textContent = currentStage;
+                }
+
+                // Handle time's up state
+                if (isTimesUp) {
+                    timerEl.textContent = '時間到';
+                    timerEl.className = 'timer-display state-timesup';
+                    progressEl.style.width = '0%';
+                    progressEl.className = 'progress-bar state-danger';
+                    alarmEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Hide alarm if not times up
+                alarmEl.classList.add('hidden');
+
+                // Format and display time
+                const displayTime = isGracePeriod ? gracePeriodRemaining : timeRemaining;
+                timerEl.textContent = this.formatTime(displayTime);
+
+                // Determine state class
+                let stateClass = 'state-normal';
+                let progressClass = '';
+
+                if (isGracePeriod) {
+                    stateClass = 'state-grace';
+                    progressClass = 'state-grace';
+                    stageEl.textContent = `${currentStage} (準備中)`;
+                } else if (totalTime > 30 && timeRemaining <= 10) {
+                    stateClass = 'state-danger';
+                    progressClass = 'state-danger';
+                } else if (totalTime > 60 && timeRemaining <= 30) {
+                    stateClass = 'state-warning';
+                    progressClass = 'state-warning';
+                }
+
+                timerEl.className = `timer-display ${stateClass}`;
+                progressEl.className = `progress-bar ${progressClass}`;
+
+                // Update progress bar
+                const progress = totalTime > 0 ? (displayTime / totalTime) * 100 : 100;
+                progressEl.style.width = `${Math.max(0, progress)}%`;
+
+                // Update status indicator
+                if (isPaused) {
+                    statusDot.className = 'status-dot paused';
+                    statusText.textContent = '已暫停';
+                } else if (isRunning) {
+                    statusDot.className = 'status-dot running';
+                    statusText.textContent = '計時中';
+                } else {
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = '已連接';
+                }
+            },
+
+            formatTime(seconds) {
+                if (seconds < 0) seconds = 0;
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            },
+
+            checkConnection() {
+                const timeSinceLastUpdate = Date.now() - this.lastUpdate;
+                
+                // Consider disconnected if no update for 5 seconds
+                if (timeSinceLastUpdate > 5000 && this.isConnected) {
+                    this.updateConnectionStatus(false);
+                }
+            },
+
+            updateConnectionStatus(connected) {
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+
+                if (!connected) {
+                    statusDot.className = 'status-dot disconnected';
+                    statusText.textContent = '連接中斷';
+                }
+            },
+
+            toggleFullscreen() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                } else {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+            }
+        };
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => DisplayApp.init());
+    </script>
+</body>
+
+</html>
