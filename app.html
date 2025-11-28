@@ -942,6 +942,35 @@
         /* 下拉選單 Portal - 強制 z-index 低於 header 和 action bar */
         #formatDropdownListPortal {
             z-index: 45 !important;
+            /* GPU 加速，減少重繪 */
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        /* iOS 虛擬鍵盤適配 - 確保下拉選單不會被鍵盤遮擋或錯位 */
+        @supports (-webkit-touch-callout: none) {
+            /* iOS Safari 專用 */
+            #formatDropdownListPortal {
+                /* 使用 transform 進行位置調整，避免 iOS 鍵盤造成的定位問題 */
+                will-change: transform, opacity;
+            }
+            
+            /* 當鍵盤彈出時，限制下拉選單最大高度 */
+            #formatDropdownListPortal.ios-keyboard-open {
+                max-height: 40vh !important;
+            }
+            
+            /* iOS 滾動時隱藏下拉選單，避免延遲跟隨的視覺問題 */
+            #formatDropdownListPortal.scrolling {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.1s ease-out;
+            }
+            
+            #formatDropdownListPortal:not(.scrolling) {
+                opacity: 1;
+                transition: opacity 0.15s ease-in;
+            }
         }
 
         /* 下拉選單容器 - 確保 relative 定位 */
@@ -3734,6 +3763,193 @@
                 margin: 0 0.25rem;
             }
         }
+
+        /* =========================================
+           🍎 iOS 專用優化 (iOS-Specific Optimizations)
+           ========================================= */
+        
+        /* iOS 設備檢測 - 使用 @supports 檢測 */
+        @supports (-webkit-touch-callout: none) {
+            /* 1. 防止 iOS 橡皮筋過度滾動效果影響體驗 */
+            html, body {
+                overscroll-behavior: none;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* 2. 修復 iOS Safari 100vh 問題 */
+            body {
+                min-height: -webkit-fill-available;
+            }
+            
+            html {
+                height: -webkit-fill-available;
+            }
+            
+            /* 3. 輸入框優化 - 防止 iOS 自動縮放 */
+            input, select, textarea {
+                font-size: 16px !important; /* 防止 iOS 自動縮放 */
+            }
+            
+            /* 4. 修復 iOS 輸入框聚焦時的樣式問題 */
+            input:focus, select:focus, textarea:focus {
+                outline: none;
+                -webkit-appearance: none;
+                appearance: none;
+            }
+            
+            /* 5. 優化 iOS 上的固定定位元素 */
+            .sticky-action-bar,
+            .control-dock-wrapper,
+            header {
+                /* 使用 transform 創建新的層疊上下文，改善 iOS 固定定位 */
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+            }
+            
+            /* 6. 改善 iOS 滾動容器效能 */
+            .searchable-dropdown-list,
+            #paragraphsContainer,
+            #stagesContainer,
+            .debate-flow-tracker {
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+            }
+            
+            /* 7. 按鈕觸控狀態優化 */
+            button:active, 
+            .dock-btn:active,
+            .menu-item:active {
+                opacity: 0.7;
+                transform: scale(0.97);
+            }
+            
+            /* 8. 防止 iOS Safari 雙擊縮放 */
+            button, a, .menu-item, .dock-btn {
+                touch-action: manipulation;
+            }
+            
+            /* 9. 優化 iOS 上的毛玻璃效果 */
+            .glass-panel,
+            .main-dock-bar,
+            .sticky-action-bar {
+                -webkit-backdrop-filter: blur(20px) saturate(180%);
+                backdrop-filter: blur(20px) saturate(180%);
+            }
+            
+            /* 10. 修復 iOS 鍵盤彈出時的佈局問題 */
+            .setup-container {
+                padding-bottom: calc(140px + env(safe-area-inset-bottom));
+            }
+            
+            /* 11. iOS 專用觸控回饋 */
+            .btn-start-match:active {
+                transform: scale(0.95);
+                transition: transform 0.1s ease;
+            }
+            
+            /* 12. 修復 iOS Safari position:fixed 在鍵盤彈出時的問題 */
+            body.ios-keyboard-open .sticky-action-bar {
+                position: absolute;
+            }
+            
+            /* 13. 優化 iOS 上的選單動畫 */
+            #sidebar-panel {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                will-change: transform;
+            }
+            
+            /* 14. 修復 iOS 上的 select 下拉箭頭 */
+            select.modern-input {
+                -webkit-appearance: none;
+                appearance: none;
+            }
+        }
+        
+        /* iOS 行動版特定優化 */
+        @supports (-webkit-touch-callout: none) {
+            @media (max-width: 767px) {
+                /* 加大觸控目標 */
+                .dock-btn {
+                    min-width: 44px;
+                    min-height: 44px;
+                }
+                
+                /* 優化 header 觸控區域 */
+                header button {
+                    min-width: 44px;
+                    min-height: 44px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                /* 側邊欄觸控優化 */
+                .menu-item {
+                    min-height: 48px;
+                }
+                
+                /* 流程編輯器拖曳把手加大 */
+                .card-drag-handle {
+                    width: 3rem;
+                    min-height: 100%;
+                }
+            }
+        }
+        
+        /* iOS 安全區域增強支援 */
+        @supports (padding: max(0px)) {
+            .sticky-action-bar {
+                padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            }
+            
+            .control-dock-wrapper {
+                bottom: max(1rem, calc(0.5rem + env(safe-area-inset-bottom)));
+            }
+            
+            #sidebar-panel {
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* iOS 設備特殊類別樣式 */
+        body.is-ios {
+            /* 使用 CSS 變數處理 100vh 問題 */
+            min-height: calc(var(--vh, 1vh) * 100);
+        }
+        
+        body.is-ios .setup-container {
+            /* 確保 iOS 上有足夠的底部空間 */
+            padding-bottom: calc(160px + env(safe-area-inset-bottom));
+        }
+        
+        /* iOS 鍵盤開啟時的樣式 */
+        body.ios-keyboard-open {
+            /* 防止頁面跳動 */
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+        
+        body.ios-keyboard-open .sticky-action-bar,
+        body.ios-keyboard-open .control-dock-wrapper {
+            /* 鍵盤開啟時隱藏底部控制列，避免遮擋輸入 */
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        
+        /* iOS 觸控反饋增強 */
+        body.is-ios button:active,
+        body.is-ios .dock-btn:active,
+        body.is-ios .menu-item:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease;
+        }
+        
+        body.is-ios .btn-start-match:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 
@@ -4791,6 +5007,10 @@
                 if (this.pipCanvas) { // New
                     this.pipCtx = this.pipCanvas.getContext('2d');
                 }
+                
+                // iOS 專用初始化
+                this.initIOSOptimizations();
+                
                 this.requestWakeLock();
                 // 當使用者切換分頁或最小化後再回來，鎖定會自動失效，需重新請求
                 document.addEventListener('visibilitychange', async () => {
@@ -4811,6 +5031,92 @@
                 this.initAmbientBackground();
                 this.initSpotlightEffect();
                 this.initOnboarding();
+            },
+            
+            /**
+             * iOS 專用優化初始化
+             */
+            initIOSOptimizations() {
+                // 檢測是否為 iOS 設備
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                
+                if (!isIOS) return;
+                
+                document.body.classList.add('is-ios');
+                
+                // 1. 處理 iOS Safari 100vh 問題
+                const setVH = () => {
+                    const vh = window.innerHeight * 0.01;
+                    document.documentElement.style.setProperty('--vh', `${vh}px`);
+                };
+                setVH();
+                window.addEventListener('resize', setVH, { passive: true });
+                
+                // 2. 監聽 iOS 虛擬鍵盤的彈出/收起
+                if (window.visualViewport) {
+                    let initialHeight = window.visualViewport.height;
+                    
+                    window.visualViewport.addEventListener('resize', () => {
+                        const currentHeight = window.visualViewport.height;
+                        const heightDiff = initialHeight - currentHeight;
+                        
+                        // 如果高度差大於 150px，認為是鍵盤彈出
+                        if (heightDiff > 150) {
+                            document.body.classList.add('ios-keyboard-open');
+                            // 調整頁面以避免被鍵盤遮擋
+                            document.body.style.paddingBottom = `${heightDiff}px`;
+                        } else {
+                            document.body.classList.remove('ios-keyboard-open');
+                            document.body.style.paddingBottom = '';
+                        }
+                    }, { passive: true });
+                }
+                
+                // 3. 防止 iOS Safari 雙擊縮放
+                let lastTouchEnd = 0;
+                document.addEventListener('touchend', (e) => {
+                    const now = Date.now();
+                    if (now - lastTouchEnd <= 300) {
+                        e.preventDefault();
+                    }
+                    lastTouchEnd = now;
+                }, { passive: false });
+                
+                // 4. 防止 iOS 橡皮筋效果在不需要的地方
+                document.body.addEventListener('touchmove', (e) => {
+                    // 只有當觸控不在可滾動容器內時才阻止
+                    const target = e.target;
+                    const scrollableParent = target.closest('.searchable-dropdown-list, #paragraphsContainer, #stagesContainer, .debate-flow-tracker, .setup-container');
+                    
+                    if (!scrollableParent && !target.closest('input, textarea, select')) {
+                        // 檢查是否在頂部或底部邊界
+                        if (document.body.scrollTop === 0 || 
+                            document.body.scrollTop + window.innerHeight >= document.body.scrollHeight) {
+                            // 允許正常滾動，但防止過度滾動
+                        }
+                    }
+                }, { passive: true });
+                
+                // 5. 輸入框聚焦時滾動到可見區域
+                document.addEventListener('focusin', (e) => {
+                    if (e.target.matches('input, textarea, select')) {
+                        setTimeout(() => {
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                    }
+                });
+                
+                // 6. 輸入框失焦時恢復頁面
+                document.addEventListener('focusout', (e) => {
+                    if (e.target.matches('input, textarea, select')) {
+                        setTimeout(() => {
+                            window.scrollTo(0, window.scrollY);
+                        }, 100);
+                    }
+                });
+                
+                console.log('iOS optimizations initialized');
             },
 
             loadState() {
@@ -6425,20 +6731,76 @@
                     document.body.appendChild(dropdownList);
                 }
 
-                // 計算位置 - 緊貼搜尋框底部
+                // 計算位置 - 緊貼搜尋框底部，支援 iOS 虛擬鍵盤
                 const updatePosition = () => {
                     const rect = searchInput.getBoundingClientRect();
-                    dropdownList.style.top = rect.bottom + 'px';
-                    dropdownList.style.left = rect.left + 'px';
+                    
+                    // 使用 visualViewport API 處理 iOS 虛擬鍵盤偏移
+                    // iOS Safari 在鍵盤彈出時會改變 visualViewport，但 getBoundingClientRect 不會自動補償
+                    let offsetTop = 0;
+                    let offsetLeft = 0;
+                    
+                    if (window.visualViewport) {
+                        offsetTop = window.visualViewport.offsetTop;
+                        offsetLeft = window.visualViewport.offsetLeft;
+                        
+                        // 檢測 iOS 鍵盤是否開啟（視窗高度顯著縮小）
+                        const isIOSKeyboardOpen = window.visualViewport.height < window.innerHeight * 0.75;
+                        dropdownList.classList.toggle('ios-keyboard-open', isIOSKeyboardOpen);
+                        
+                        // 如果鍵盤開啟且下拉選單會超出可視區域，調整最大高度
+                        if (isIOSKeyboardOpen) {
+                            const availableHeight = window.visualViewport.height - (rect.bottom - offsetTop) - 20;
+                            dropdownList.style.maxHeight = Math.max(150, availableHeight) + 'px';
+                        } else {
+                            dropdownList.style.maxHeight = '';
+                        }
+                    }
+                    
+                    dropdownList.style.top = (rect.bottom + offsetTop) + 'px';
+                    dropdownList.style.left = (rect.left + offsetLeft) + 'px';
                     dropdownList.style.width = rect.width + 'px';
                 };
 
                 updatePosition();
                 dropdownList.style.display = 'block';
 
+                // 檢測是否為 iOS 設備
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                
+                // iOS 滾動處理：滾動時隱藏選單，滾動結束後顯示
+                let scrollTimeout = null;
+                const handleIOSScroll = () => {
+                    if (isIOS) {
+                        dropdownList.classList.add('scrolling');
+                        
+                        // 清除之前的計時器
+                        if (scrollTimeout) {
+                            clearTimeout(scrollTimeout);
+                        }
+                        
+                        // 滾動結束後更新位置並顯示
+                        scrollTimeout = setTimeout(() => {
+                            updatePosition();
+                            dropdownList.classList.remove('scrolling');
+                        }, 100);
+                    } else {
+                        // 非 iOS 設備使用原本的 RAF 更新
+                        if (dropdownList._rafPending) return;
+                        dropdownList._rafPending = true;
+                        requestAnimationFrame(() => {
+                            updatePosition();
+                            dropdownList._rafPending = false;
+                        });
+                    }
+                };
+
                 // [效能優化] 使用事件監聽取代 requestAnimationFrame 持續輪詢
-                // 只在捲動或調整大小時更新位置
-                const throttledUpdate = () => {
+                const throttledUpdate = handleIOSScroll;
+
+                dropdownList._scrollHandler = throttledUpdate;
+                dropdownList._resizeHandler = () => {
                     if (dropdownList._rafPending) return;
                     dropdownList._rafPending = true;
                     requestAnimationFrame(() => {
@@ -6446,11 +6808,26 @@
                         dropdownList._rafPending = false;
                     });
                 };
-
-                dropdownList._scrollHandler = throttledUpdate;
-                dropdownList._resizeHandler = throttledUpdate;
-                window.addEventListener('scroll', throttledUpdate, { passive: true, capture: true });
-                window.addEventListener('resize', throttledUpdate, { passive: true });
+                dropdownList._viewportHandler = dropdownList._resizeHandler;
+                dropdownList._scrollTimeout = null;
+                
+                // 儲存 scrollTimeout 引用以便清理
+                dropdownList._getScrollTimeout = () => scrollTimeout;
+                dropdownList._clearScrollTimeout = () => {
+                    if (scrollTimeout) {
+                        clearTimeout(scrollTimeout);
+                        scrollTimeout = null;
+                    }
+                };
+                
+                window.addEventListener('scroll', dropdownList._scrollHandler, { passive: true, capture: true });
+                window.addEventListener('resize', dropdownList._resizeHandler, { passive: true });
+                
+                // 監聽 visualViewport 變化（iOS 鍵盤彈出/收起）
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', dropdownList._viewportHandler, { passive: true });
+                    window.visualViewport.addEventListener('scroll', dropdownList._viewportHandler, { passive: true });
+                }
 
                 dropdownArrow.classList.add('open');
                 searchInput.value = '';
@@ -6464,12 +6841,30 @@
 
                 if (dropdownList) {
                     dropdownList.style.display = 'none';
+                    dropdownList.style.maxHeight = '';
+                    dropdownList.classList.remove('ios-keyboard-open');
+                    dropdownList.classList.remove('scrolling');
+                    
+                    // 清理 iOS 滾動計時器
+                    if (dropdownList._clearScrollTimeout) {
+                        dropdownList._clearScrollTimeout();
+                    }
+                    
                     // [效能優化] 移除事件監聽器
                     if (dropdownList._scrollHandler) {
                         window.removeEventListener('scroll', dropdownList._scrollHandler, { passive: true, capture: true });
                         window.removeEventListener('resize', dropdownList._resizeHandler, { passive: true });
+                        
+                        // 移除 visualViewport 事件監聯器（iOS 鍵盤適配）
+                        if (window.visualViewport && dropdownList._viewportHandler) {
+                            window.visualViewport.removeEventListener('resize', dropdownList._viewportHandler, { passive: true });
+                            window.visualViewport.removeEventListener('scroll', dropdownList._viewportHandler, { passive: true });
+                        }
+                        
                         dropdownList._scrollHandler = null;
                         dropdownList._resizeHandler = null;
+                        dropdownList._viewportHandler = null;
+                        dropdownList._clearScrollTimeout = null;
                     }
                 }
                 if (dropdownArrow) {
