@@ -3831,9 +3831,10 @@
         </div>
 
         <audio id="ringSound" preload="auto" src="ring.m4a"></audio>
-        <audio id="stageAdvanceSound" preload="auto" src="sounds/stage_advance.mp3"></audio>
-        <audio id="speechDetectedSound" preload="auto" src="sounds/speech_detected.mp3"></audio>
-        <audio id="drawSound" preload="auto" src="sounds/draw.mp3"></audio>
+        <!-- 以下音效為可選，如果檔案不存在會靜默失敗 -->
+        <audio id="stageAdvanceSound" preload="auto"></audio>
+        <audio id="speechDetectedSound" preload="auto"></audio>
+        <audio id="drawSound" preload="auto"></audio>
         <canvas id="pipCanvas" width="640" height="360" class="hidden"></canvas>
     </div>
 
@@ -4595,6 +4596,16 @@
                         ...this.state.sharedDisplay,
                         stream: null,
                         audioTrack: null
+                    };
+
+                    // [修復] 移除投影模式中無法複製的物件 (BroadcastChannel, Window 參照)
+                    stateToSave.projector = {
+                        ...this.state.projector,
+                        channel: null,
+                        displayWindow: null,
+                        presentationConnection: null,
+                        heartbeatInterval: null,
+                        windowCheckInterval: null
                     };
 
                     // 3. 安全地進行深拷貝
@@ -6436,12 +6447,18 @@
                 updatePosition();
                 dropdownList.style.display = 'block';
 
-                // [iOS 修復] 偵測 iOS 裝置
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                // [行動裝置修復] 偵測是否為行動裝置或觸控裝置
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                    (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
 
-                // [效能優化] 使用事件監聽取代 requestAnimationFrame 持續輪詢
-                // iOS 上滾動時直接關閉選單，避免錯位問題
+                // 滾動時關閉選單（但排除選單本身的滾動）
+                const closeOnScroll = (e) => {
+                    // 如果是在選單內部滾動，不關閉
+                    if (dropdownList.contains(e.target)) return;
+                    this.hideFormatDropdown();
+                };
+
+                // 桌面版：滾動時更新位置
                 const throttledUpdate = () => {
                     if (dropdownList._rafPending) return;
                     dropdownList._rafPending = true;
@@ -6451,20 +6468,15 @@
                     });
                 };
 
-                // iOS 專用：滾動時直接關閉選單
-                const closeOnScroll = () => {
-                    this.hideFormatDropdown();
-                };
-
-                if (isIOS) {
-                    // iOS：滾動時關閉選單
+                if (isMobile) {
+                    // 行動裝置：滾動或觸控滑動時關閉選單（排除選單內部）
                     dropdownList._scrollHandler = closeOnScroll;
                     window.addEventListener('scroll', closeOnScroll, { passive: true, capture: true });
-                    // 也監聽 touchmove 事件，因為 iOS 的滾動行為可能不觸發 scroll 事件
+                    // 監聽 touchmove 事件，確保滑動時能正確關閉選單
                     dropdownList._touchMoveHandler = closeOnScroll;
                     document.addEventListener('touchmove', closeOnScroll, { passive: true });
                 } else {
-                    // 非 iOS：滾動時更新位置
+                    // 桌面版：滾動時更新位置
                     dropdownList._scrollHandler = throttledUpdate;
                     window.addEventListener('scroll', throttledUpdate, { passive: true, capture: true });
                 }
@@ -9180,9 +9192,9 @@
                     } catch (e) {
                         console.error("Error while calling VAD destroy:", e);
                     }
-                } else {
-                    // 如果 .destroy 不是函式，則在控制台印出警告，幫助我們了解 vad 物件到底是什麼
-                    console.warn("VAD object did not have a callable .destroy function. VAD object:", audioDetection.vad);
+                } else if (audioDetection.vad !== null) {
+                    // 只有當 vad 物件存在但沒有 destroy 方法時才記錄 (改用 debug 級別避免干擾)
+                    console.debug("VAD object did not have a callable .destroy function. VAD object:", audioDetection.vad);
                 }
 
                 // 這是確保麥克風圖示關閉的關鍵程式碼，無論如何都要執行
@@ -9196,7 +9208,7 @@
                     stream: null,
                     isActive: false,
                 };
-                console.log("VAD (Voice Activity Detection) cleanup process completed.");
+                console.debug("VAD (Voice Activity Detection) cleanup process completed.");
             },
             audioCheckLoop() {
                 const { audioDetection, timer, mainSpeechTimerStartedByGrace } = this.state;
@@ -9239,9 +9251,10 @@
 
             playSound(soundId) {
                 const sound = document.getElementById(soundId);
-                if (sound) {
+                // 檢查音效元素是否存在且有有效的來源
+                if (sound && sound.src && sound.src !== window.location.href) {
                     sound.currentTime = 0;
-                    sound.play().catch(e => console.warn(`Sound play failed for ${soundId}:`, e.message));
+                    sound.play().catch(() => {}); // 靜默失敗
                 }
             },
 
@@ -9258,7 +9271,7 @@
                 const play = () => {
                     if (count < times) {
                         sound.currentTime = 0;
-                        sound.play().catch(e => console.warn(`Ring sound play failed:`, e.message));
+                        sound.play().catch(() => {}); // 靜默失敗
                         count++;
 
                         if (count < times) {
