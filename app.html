@@ -3836,9 +3836,10 @@
 
                 // 投影模式狀態
                 projector: {
-                    channel: null,       // BroadcastChannel 實體
-                    displayWindow: null, // 外部顯示視窗參照
-                    isActive: false,     // 投影模式是否啟用
+                    channel: null,           // BroadcastChannel 實體
+                    displayWindow: null,     // 外部顯示視窗參照
+                    isActive: false,         // 投影模式是否啟用
+                    heartbeatInterval: null, // 心跳計時器
                 },
             },
 
@@ -8351,7 +8352,7 @@
                 if ('BroadcastChannel' in window) {
                     this.state.projector.channel = new BroadcastChannel('debate-timer-sync');
                     
-                    // 監聽來自顯示視窗的訊息
+                    // 監聯來自顯示視窗的訊息
                     this.state.projector.channel.onmessage = (event) => {
                         if (event.data.type === 'DISPLAY_CONNECTED') {
                             // 顯示視窗已連接，發送當前狀態
@@ -8359,12 +8360,18 @@
                         }
                     };
 
-                    // 定期發送心跳
-                    setInterval(() => {
-                        if (this.state.projector.isActive) {
-                            this.state.projector.channel.postMessage({ type: 'HEARTBEAT' });
-                        }
-                    }, 2000);
+                    // 定期發送心跳 (只建立一次，存儲到 state 避免重複建立)
+                    if (!this.state.projector.heartbeatInterval) {
+                        this.state.projector.heartbeatInterval = setInterval(() => {
+                            if (this.state.projector.isActive && this.state.projector.channel) {
+                                try {
+                                    this.state.projector.channel.postMessage({ type: 'HEARTBEAT' });
+                                } catch (e) {
+                                    console.warn('Projector heartbeat failed:', e);
+                                }
+                            }
+                        }, 2000);
+                    }
                 }
             },
 
@@ -8386,19 +8393,23 @@
                 // 判斷是否在寬限時間
                 const isGracePeriod = timer.type === 'grace';
 
-                this.state.projector.channel.postMessage({
-                    type: 'TIMER_UPDATE',
-                    payload: {
-                        timeRemaining: timer.timeLeft,
-                        isRunning: !!(timer.interval || timer.graceInterval),
-                        currentStage: currentStageName,
-                        totalTime: timer.initialDuration,
-                        isTimesUp: isTimesUp,
-                        isGracePeriod: isGracePeriod,
-                        gracePeriodRemaining: isGracePeriod ? timer.timeLeft : 0,
-                        isPaused: timer.isPaused,
-                    }
-                });
+                try {
+                    this.state.projector.channel.postMessage({
+                        type: 'TIMER_UPDATE',
+                        payload: {
+                            timeRemaining: timer.timeLeft,
+                            isRunning: !!(timer.interval || timer.graceInterval),
+                            currentStage: currentStageName,
+                            totalTime: timer.initialDuration,
+                            isTimesUp: isTimesUp,
+                            isGracePeriod: isGracePeriod,
+                            gracePeriodRemaining: isGracePeriod ? timer.timeLeft : 0,
+                            isPaused: timer.isPaused,
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Failed to send projector update:', e);
+                }
             },
 
             async startProjectorMode() {

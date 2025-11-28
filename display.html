@@ -298,18 +298,38 @@
             isConnected: false,
 
             init() {
-                // Initialize BroadcastChannel
-                this.channel = new BroadcastChannel('debate-timer-sync');
-                
-                this.channel.onmessage = (event) => {
-                    this.handleMessage(event.data);
-                };
+                // Check BroadcastChannel support
+                if (!('BroadcastChannel' in window)) {
+                    document.getElementById('waitingScreen').innerHTML = `
+                        <h1>辯時計</h1>
+                        <p>您的瀏覽器不支援 BroadcastChannel API</p>
+                        <p style="font-size: 1rem; margin-top: 1rem; color: var(--text-sub);">
+                            請使用 Chrome、Edge 或 Firefox 瀏覽器
+                        </p>
+                    `;
+                    return;
+                }
 
-                // Start heartbeat check
-                this.heartbeatInterval = setInterval(() => this.checkConnection(), 3000);
+                try {
+                    // Initialize BroadcastChannel
+                    this.channel = new BroadcastChannel('debate-timer-sync');
+                    
+                    this.channel.onmessage = (event) => {
+                        this.handleMessage(event.data);
+                    };
 
-                // Request initial state
-                this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                    // Start heartbeat check
+                    this.heartbeatInterval = setInterval(() => this.checkConnection(), 3000);
+
+                    // Request initial state
+                    this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+
+                    // Cleanup on page unload
+                    window.addEventListener('beforeunload', () => this.cleanup());
+
+                } catch (e) {
+                    console.error('Failed to initialize BroadcastChannel:', e);
+                }
 
                 // Double-click to fullscreen
                 document.body.addEventListener('dblclick', () => this.toggleFullscreen());
@@ -318,6 +338,17 @@
                 document.addEventListener('fullscreenchange', () => {
                     document.body.classList.toggle('is-fullscreen', !!document.fullscreenElement);
                 });
+            },
+
+            cleanup() {
+                if (this.heartbeatInterval) {
+                    clearInterval(this.heartbeatInterval);
+                    this.heartbeatInterval = null;
+                }
+                if (this.channel) {
+                    this.channel.close();
+                    this.channel = null;
+                }
             },
 
             handleMessage(data) {
