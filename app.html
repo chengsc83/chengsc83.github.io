@@ -936,25 +936,34 @@
         .searchable-dropdown-list {
             scrollbar-width: thin;
             scrollbar-color: var(--border-color) transparent;
-            z-index: 35 !important;
-            /* 低於 header (z-40) 但高於一般內容 */
+            box-shadow: 0 8px 30px -5px rgba(0, 0, 0, 0.3), 0 4px 10px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 下拉選單 Portal - 強制 z-index 低於 header 和 action bar */
+        #formatDropdownListPortal {
+            z-index: 45 !important;
+        }
+
+        /* 下拉選單容器 - 確保 relative 定位 */
+        #formatDropdownContainer {
+            position: relative;
         }
 
         .glass-dropdown {
             background: var(--surface-1);
             border: 1px solid var(--border-color);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 30px -5px rgba(0, 0, 0, 0.3), 0 4px 10px -3px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
 
         html.dark .glass-dropdown {
-            background: rgba(30, 27, 75, 0.95);
+            background: rgba(30, 27, 75, 0.98);
             border-color: rgba(99, 102, 241, 0.2);
         }
 
         html:not(.dark) .glass-dropdown {
-            background: rgba(255, 255, 255, 0.98);
+            background: rgba(255, 255, 255, 0.99);
             border-color: rgba(0, 0, 0, 0.1);
         }
 
@@ -1176,6 +1185,56 @@
             background: linear-gradient(90deg, var(--color-primary), #a855f7);
             transition: width 1s linear;
             box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+            will-change: width;
+        }
+
+        /* [效能優化] 計時器卡片 GPU 加速 */
+        #posTimerCard,
+        #negTimerCard {
+            will-change: transform, opacity;
+        }
+
+        /* 自由辯論卡片狀態類別 - 用於效能優化，避免重繪整個卡片 */
+        #posTimerCard.active-team,
+        #negTimerCard.active-team {
+            opacity: 1;
+            transform: scale(1.02);
+            filter: grayscale(0);
+        }
+
+        #posTimerCard.active-team {
+            box-shadow: 0 0 0 4px rgb(34 197 94), 0 10px 15px -3px rgb(34 197 94 / 0.2);
+        }
+
+        #negTimerCard.active-team {
+            box-shadow: 0 0 0 4px rgb(239 68 68), 0 10px 15px -3px rgb(239 68 68 / 0.2);
+        }
+
+        #posTimerCard.inactive-team,
+        #negTimerCard.inactive-team {
+            opacity: 0.6;
+            transform: scale(0.95);
+            filter: grayscale(0.5);
+            box-shadow: none;
+        }
+
+        /* [效能優化] 尊重使用者的動畫偏好設定 */
+        @media (prefers-reduced-motion: reduce) {
+            .state-running .timer-digits,
+            .state-danger .timer-digits,
+            .empty-state-icon,
+            .animate-pulse {
+                animation: none !important;
+            }
+            
+            .progress-fill {
+                transition: none !important;
+            }
+            
+            * {
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+            }
         }
 
         .state-warning .timer-digits {
@@ -1804,6 +1863,43 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
+        /* 退出全螢幕按鈕 */
+        .exit-fullscreen-btn {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease, background 0.2s ease, transform 0.2s ease;
+        }
+
+        .exit-fullscreen-btn:hover {
+            background: rgba(239, 68, 68, 0.8);
+            border-color: rgba(239, 68, 68, 0.5);
+            transform: scale(1.05);
+        }
+
+        body.presentation-mode .exit-fullscreen-btn {
+            display: flex;
+        }
+
+        body.presentation-mode:hover .exit-fullscreen-btn {
+            opacity: 1;
+        }
+
         /* 底部進度指示條 */
         body.presentation-mode::after {
             content: '';
@@ -1922,8 +2018,16 @@
             border-radius: 1rem;
             border: 1px solid var(--border-color);
             overflow-x: auto;
+            overflow-y: hidden;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x;
+            cursor: grab;
+        }
+
+        .debate-flow-tracker:active {
+            cursor: grabbing;
         }
 
         .debate-flow-tracker::-webkit-scrollbar {
@@ -3634,6 +3738,12 @@
 </head>
 
 <body class="transition-colors duration-300">
+    <!-- 退出全螢幕按鈕 -->
+    <button id="exitFullscreenBtn" class="exit-fullscreen-btn" data-action="toggleFullscreen" title="退出全螢幕">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+        </svg>
+    </button>
     <noscript>
         <div
             style="padding: 50px; text-align: center; font-family: sans-serif; color: #333; background-color: #f1f5f9;">
@@ -3771,6 +3881,7 @@
                     paragraphs: [],
                     currentParagraphId: null,
                     interimContent: '',
+                    MAX_PARAGRAPHS: 50, // [記憶體優化] 最多保留 50 段落
                 },
                 pip: { // New state for Picture-in-Picture
                     isActive: false,
@@ -3807,6 +3918,7 @@
                     isRecording: false,
                     isAvailable: false,
                     recordedChunks: [],
+                    intermediateBlobs: [], // [記憶體優化] 定期合併的中間 Blobs
                     audioBlob: null,
                     micAudioTrack: null, // 用來儲存音訊軌道
                     isMicMuted: false,   // 追蹤目前的靜音狀態
@@ -3836,10 +3948,13 @@
 
                 // 投影模式狀態
                 projector: {
-                    channel: null,           // BroadcastChannel 實體
-                    displayWindow: null,     // 外部顯示視窗參照
-                    isActive: false,         // 投影模式是否啟用
-                    heartbeatInterval: null, // 心跳計時器
+                    channel: null,               // BroadcastChannel 實體
+                    displayWindow: null,         // 外部顯示視窗參照 (window.open)
+                    presentationConnection: null, // Presentation API 連接
+                    isActive: false,             // 投影模式是否啟用
+                    heartbeatInterval: null,     // 心跳計時器
+                    windowCheckInterval: null,   // 視窗關閉檢查計時器
+                    mode: null,                  // 'presentation-api' 或 'window'
                 },
             },
 
@@ -4736,6 +4851,10 @@
                 document.body.addEventListener('click', this.handleGlobalClick.bind(this));
                 document.body.addEventListener('change', this.handleGlobalChange.bind(this));
                 window.addEventListener('keydown', this.handleKeyDown.bind(this));
+                
+                // [效能優化] 使用 passive 提升觸控/滾輪效能
+                document.body.addEventListener('touchstart', () => {}, { passive: true });
+                document.body.addEventListener('touchmove', () => {}, { passive: true });
 
                 // [關鍵修正] 監聽全螢幕狀態改變 (包含按 Esc 鍵退出的情況)
                 document.addEventListener('fullscreenchange', () => {
@@ -4745,11 +4864,11 @@
                     if (!isFullscreen) {
                         document.body.classList.remove('presentation-mode');
                         App.state.isPresentationMode = false;
-
-                        // 重新渲染控制列以確保狀態正確
-                        if (App.state.currentView === 'debate') App.renderDebateControls();
-                        if (App.state.currentView === 'free_debate') App.renderFreeDebateControls();
                     }
+
+                    // 重新渲染控制列以確保狀態正確（無論進入或退出全螢幕都需更新）
+                    if (App.state.currentView === 'debate') App.renderDebateControls();
+                    if (App.state.currentView === 'free_debate') App.renderFreeDebateControls();
 
                     this.renderHeader(); // 更新 Header 上的狀態 (如果有必要)
                 });
@@ -5007,6 +5126,8 @@
                     App.render();
                 },
                 backToSetup() {
+                    // [記憶體優化] 清理比賽相關暫存資料
+                    App.clearDebateMemory();
                     App.state.currentView = 'setup';
                     App.render();
                 },
@@ -6049,6 +6170,9 @@
             },
 
             router() {
+                // [記憶體優化] 視圖切換時清理前一視圖的 DOM 快取
+                const previousView = this._lastRouterView;
+                
                 // 建立一個高階函式來處理視圖切換的淡入淡出
                 const switchView = (renderFunction) => {
                     // 如果內容已經是透明的，就不要再加 class，直接渲染
@@ -6067,9 +6191,23 @@
                 };
 
                 const currentStage = this.state.currentFlow[this.state.currentStageIndex];
+                let newView = this.state.currentView;
+                
                 if (currentStage && currentStage.type === 'free_debate') {
+                    newView = 'free_debate';
+                    // [記憶體優化] 離開自由辯論視圖時清理快取
+                    if (previousView !== 'free_debate') {
+                        this._cachedTimerEl = null;
+                        this._cachedProgressEl = null;
+                    }
                     switchView(this.renderFreeDebateView);
+                    this._lastRouterView = newView;
                     return;
+                }
+                
+                // [記憶體優化] 離開自由辯論時清理其專用快取
+                if (previousView === 'free_debate' && newView !== 'free_debate') {
+                    this._clearFreeDebateCache();
                 }
 
                 switch (this.state.currentView) {
@@ -6086,6 +6224,9 @@
                         switchView(this.renderEditorView);
                         break;
                 }
+                
+                this._lastRouterView = newView;
+                
                 if (this.state.pip.isActive) {
                     this.renderPipCanvas();
                 }
@@ -6275,18 +6416,19 @@
                 // 移除舊的下拉選單（如果存在）
                 let dropdownList = document.getElementById('formatDropdownListPortal');
                 if (!dropdownList) {
-                    // 創建新的下拉選單到 body - 套用毛玻璃效果
+                    // 創建下拉選單到 body - 使用 fixed 定位避免被父容器裁切
                     dropdownList = document.createElement('div');
                     dropdownList.id = 'formatDropdownListPortal';
                     dropdownList.className = 'searchable-dropdown-list glass-dropdown py-2 rounded-xl max-h-72 overflow-y-auto';
-                    dropdownList.style.cssText = 'position: fixed; z-index: 40; display: none;';
+                    // z-index 45: 低於 header(60) 和 sticky-action-bar(50)
+                    dropdownList.style.cssText = 'position: fixed; z-index: 45; display: none;';
                     document.body.appendChild(dropdownList);
                 }
 
-                // 計算位置 - 使用 searchInput 而非 container
+                // 計算位置 - 緊貼搜尋框底部
                 const updatePosition = () => {
                     const rect = searchInput.getBoundingClientRect();
-                    dropdownList.style.top = (rect.bottom + 4) + 'px';
+                    dropdownList.style.top = rect.bottom + 'px';
                     dropdownList.style.left = rect.left + 'px';
                     dropdownList.style.width = rect.width + 'px';
                 };
@@ -6294,16 +6436,21 @@
                 updatePosition();
                 dropdownList.style.display = 'block';
 
-                // 監聽捲動和視窗調整大小事件
-                const scrollHandler = () => updatePosition();
-                const resizeHandler = () => updatePosition();
+                // [效能優化] 使用事件監聽取代 requestAnimationFrame 持續輪詢
+                // 只在捲動或調整大小時更新位置
+                const throttledUpdate = () => {
+                    if (dropdownList._rafPending) return;
+                    dropdownList._rafPending = true;
+                    requestAnimationFrame(() => {
+                        updatePosition();
+                        dropdownList._rafPending = false;
+                    });
+                };
 
-                window.addEventListener('scroll', scrollHandler, true);
-                window.addEventListener('resize', resizeHandler);
-
-                // 儲存 handler 以便移除
-                dropdownList._scrollHandler = scrollHandler;
-                dropdownList._resizeHandler = resizeHandler;
+                dropdownList._scrollHandler = throttledUpdate;
+                dropdownList._resizeHandler = throttledUpdate;
+                window.addEventListener('scroll', throttledUpdate, { passive: true, capture: true });
+                window.addEventListener('resize', throttledUpdate, { passive: true });
 
                 dropdownArrow.classList.add('open');
                 searchInput.value = '';
@@ -6317,13 +6464,12 @@
 
                 if (dropdownList) {
                     dropdownList.style.display = 'none';
-
-                    // 移除事件監聽器
+                    // [效能優化] 移除事件監聽器
                     if (dropdownList._scrollHandler) {
-                        window.removeEventListener('scroll', dropdownList._scrollHandler, true);
-                    }
-                    if (dropdownList._resizeHandler) {
-                        window.removeEventListener('resize', dropdownList._resizeHandler);
+                        window.removeEventListener('scroll', dropdownList._scrollHandler, { passive: true, capture: true });
+                        window.removeEventListener('resize', dropdownList._resizeHandler, { passive: true });
+                        dropdownList._scrollHandler = null;
+                        dropdownList._resizeHandler = null;
                     }
                 }
                 if (dropdownArrow) {
@@ -7000,6 +7146,74 @@
                 }
 
                 tracker.innerHTML = html;
+
+                // 加入滑鼠拖曳與觸控滾動功能
+                if (!tracker._dragScrollInitialized) {
+                    tracker._dragScrollInitialized = true;
+                    let isDown = false;
+                    let startX;
+                    let scrollLeft;
+
+                    // 滑鼠拖曳
+                    tracker.addEventListener('mousedown', (e) => {
+                        if (e.target.closest('[data-action]')) return;
+                        isDown = true;
+                        tracker.style.cursor = 'grabbing';
+                        startX = e.pageX - tracker.offsetLeft;
+                        scrollLeft = tracker.scrollLeft;
+                    });
+
+                    tracker.addEventListener('mouseleave', () => {
+                        isDown = false;
+                        tracker.style.cursor = 'grab';
+                    });
+
+                    tracker.addEventListener('mouseup', () => {
+                        isDown = false;
+                        tracker.style.cursor = 'grab';
+                    });
+
+                    tracker.addEventListener('mousemove', (e) => {
+                        if (!isDown) return;
+                        e.preventDefault();
+                        const x = e.pageX - tracker.offsetLeft;
+                        const walk = (x - startX) * 2;
+                        tracker.scrollLeft = scrollLeft - walk;
+                    });
+
+                    // 滑鼠滾輪水平滾動
+                    tracker.addEventListener('wheel', (e) => {
+                        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                            // 已經是水平滾動，不處理
+                            return;
+                        }
+                        e.preventDefault();
+                        tracker.scrollLeft += e.deltaY;
+                    }, { passive: false });
+
+                    // 觸控滑動
+                    let touchStartX = 0;
+                    let touchScrollLeft = 0;
+
+                    tracker.addEventListener('touchstart', (e) => {
+                        touchStartX = e.touches[0].pageX;
+                        touchScrollLeft = tracker.scrollLeft;
+                    }, { passive: true });
+
+                    tracker.addEventListener('touchmove', (e) => {
+                        const touchX = e.touches[0].pageX;
+                        const walk = touchStartX - touchX;
+                        tracker.scrollLeft = touchScrollLeft + walk;
+                    }, { passive: true });
+                }
+
+                // 自動滾動到當前階段
+                setTimeout(() => {
+                    const currentStageEl = tracker.querySelector('.flow-stage.current');
+                    if (currentStageEl) {
+                        currentStageEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }, 100);
             },
 
 
@@ -7075,6 +7289,7 @@
             <div id="promotionWrapper" class="mt-8 opacity-50 hover:opacity-100 transition-opacity">${this.renderPromotionArea()}</div>
         `;
 
+                this._clearFreeDebateCache(); // 清除 DOM 快取
                 this.renderFreeDebateControls();
                 this.renderTranscriptionPanel();
             },
@@ -7124,6 +7339,7 @@
                     close: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`,
                     pip: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>`,
                     fullscreen: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>`,
+                    exitFullscreen: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" /></svg>`,
                     projector: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.875c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125z" /></svg>`,
                     reset: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>`,
                     speech: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`,
@@ -7131,6 +7347,7 @@
                     undo: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>`
                 };
 
+                const isFullscreen = document.fullscreenElement || document.body.classList.contains('presentation-mode');
                 const { projector } = this.state;
 
                 let mainControlsHTML = '';
@@ -7172,7 +7389,7 @@
                     <div class="w-[1px] h-8 bg-white/10 mx-2 my-auto"></div>
                     <div class="menu-item-wrap"><button data-action="togglePip" class="dock-btn ${pip && pip.isActive ? 'is-active' : ''}" aria-label="畫中畫">${icons.pip}</button><span class="menu-label">畫中畫</span></div>
                     <div class="menu-item-wrap"><button data-action="toggleProjectorMode" class="dock-btn ${projector && projector.isActive ? 'is-active' : ''}" aria-label="投影模式">${icons.projector}</button><span class="menu-label">投影</span></div>
-                    <div class="menu-item-wrap"><button data-action="toggleFullscreen" class="dock-btn ${document.fullscreenElement ? 'is-active' : ''}" aria-label="切換全螢幕">${icons.fullscreen}</button><span class="menu-label">全螢幕</span></div>
+                    <div class="menu-item-wrap"><button data-action="toggleFullscreen" class="dock-btn ${isFullscreen ? 'is-active' : ''}" aria-label="${isFullscreen ? '退出全螢幕' : '全螢幕'}">${isFullscreen ? icons.exitFullscreen : icons.fullscreen}</button><span class="menu-label">${isFullscreen ? '退出' : '全螢幕'}</span></div>
                     <div class="w-[1px] h-8 bg-white/10 mx-2 my-auto"></div>
                     <div class="menu-item-wrap"><button data-action="undo" class="dock-btn" aria-label="復原">${icons.undo}</button><span class="menu-label">復原</span></div>
                     <div class="menu-item-wrap"><button data-action="resetDebate" class="dock-btn" style="color: #ef4444;" aria-label="重設比賽">${icons.reset}</button><span class="menu-label text-red-400">重設</span></div>
@@ -7241,10 +7458,18 @@
                 clearInterval(freeDebate.interval);
                 freeDebate.activeTeam = team;
                 freeDebate.isPaused = false;
+                const wasFirstSpeaker = !freeDebate.firstSpeakerSelected;
                 if (!freeDebate.firstSpeakerSelected) freeDebate.firstSpeakerSelected = true;
 
                 freeDebate.interval = setInterval(() => this.runFreeDebateInterval(), 1000);
-                this.renderFreeDebateView();
+                
+                // [效能優化] 首次選擇發言方需要完整重繪（顯示控制列），之後只更新狀態
+                if (wasFirstSpeaker) {
+                    this.renderFreeDebateView();
+                } else {
+                    this.updateFreeDebateDisplay();
+                    this.renderFreeDebateControls();
+                }
             },
 
             runFreeDebateInterval() {
@@ -7280,20 +7505,87 @@
                     this.renderFreeDebateView();
                 }
             },
+            // [效能優化] 自由辯論計時器 DOM 快取
+            _cachedFreeDebateEls: null,
+            _lastRouterView: null, // [記憶體優化] 追蹤上一個視圖用於快取清理
+
+            _getFreeDebateEls() {
+                if (!this._cachedFreeDebateEls) {
+                    this._cachedFreeDebateEls = {
+                        posTimer: document.getElementById('posTimerNum'),
+                        posBar: document.getElementById('posProgressBar'),
+                        posCard: document.getElementById('posTimerCard'),
+                        negTimer: document.getElementById('negTimerNum'),
+                        negBar: document.getElementById('negProgressBar'),
+                        negCard: document.getElementById('negTimerCard')
+                    };
+                }
+                return this._cachedFreeDebateEls;
+            },
+
+            _clearFreeDebateCache() {
+                this._cachedFreeDebateEls = null;
+            },
+
+            // [記憶體優化] 清理比賽相關的記憶體
+            clearDebateMemory() {
+                // 清理 transcription 段落
+                this.state.transcription.paragraphs = [];
+                this.state.transcription.currentParagraphId = null;
+                this.state.transcription.interimContent = '';
+                
+                // 清理錄音資料
+                this.state.recording.recordedChunks = [];
+                this.state.recording.intermediateBlobs = [];
+                this.state.recording.audioBlob = null;
+                
+                // 清理 DOM 快取
+                this._cachedFreeDebateEls = null;
+                this._cachedTimerEl = null;
+                this._cachedProgressEl = null;
+                
+                console.log('[Memory] Cleared debate memory cache');
+            },
+
+            // [記憶體優化] 合併錄音 chunks 到中間 Blob
+            _consolidateRecordingChunks() {
+                const { recordedChunks, intermediateBlobs } = this.state.recording;
+                const chunkCount = recordedChunks.length; // 先記錄長度
+                if (chunkCount > 0) {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    intermediateBlobs.push(blob);
+                    this.state.recording.recordedChunks = [];
+                    console.log(`[Memory] Consolidated ${chunkCount} chunks into blob (total: ${intermediateBlobs.length} blobs)`);
+                }
+            },
+
             updateFreeDebateDisplay() {
-                const { positiveTimeLeft, negativeTimeLeft, initialDuration } = this.state.freeDebate;
+                const { positiveTimeLeft, negativeTimeLeft, initialDuration, activeTeam, isPaused } = this.state.freeDebate;
+                const els = this._getFreeDebateEls();
 
                 // 1. 更新正方
-                const posTimer = document.getElementById('posTimerNum');
-                const posBar = document.getElementById('posProgressBar');
+                const posTimer = els.posTimer;
+                const posBar = els.posBar;
                 if (posTimer) posTimer.textContent = this.formatTime(positiveTimeLeft);
                 if (posBar) posBar.style.width = `${(positiveTimeLeft / initialDuration) * 100}%`;
 
                 // 2. 更新反方
-                const negTimer = document.getElementById('negTimerNum');
-                const negBar = document.getElementById('negProgressBar');
+                const negTimer = els.negTimer;
+                const negBar = els.negBar;
                 if (negTimer) negTimer.textContent = this.formatTime(negativeTimeLeft);
                 if (negBar) negBar.style.width = `${(negativeTimeLeft / initialDuration) * 100}%`;
+
+                // 3. 更新卡片的活動狀態 (使用 CSS 類別切換而非重繪)
+                const posCard = els.posCard;
+                const negCard = els.negCard;
+                if (posCard) {
+                    posCard.classList.toggle('active-team', activeTeam === 'positive' && !isPaused);
+                    posCard.classList.toggle('inactive-team', activeTeam !== 'positive' || isPaused);
+                }
+                if (negCard) {
+                    negCard.classList.toggle('active-team', activeTeam === 'negative' && !isPaused);
+                    negCard.classList.toggle('inactive-team', activeTeam !== 'negative' || isPaused);
+                }
 
                 // 3. 若有開啟畫中畫，同步更新
                 if (this.state.pip.isActive) {
@@ -7317,7 +7609,9 @@
                 } else if (freeDebate.activeTeam) {
                     freeDebate.interval = setInterval(() => this.runFreeDebateInterval(), 1000);
                 }
-                this.renderFreeDebateView();
+                // [效能優化] 只更新需要的部分，不重繪整個視圖
+                this.updateFreeDebateDisplay();
+                this.renderFreeDebateControls();
             },
 
             resetFreeDebate() {
@@ -7572,6 +7866,7 @@
                     close: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`,
                     pip: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>`,
                     fullscreen: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>`,
+                    exitFullscreen: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" /></svg>`,
                     projector: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.875c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125z" /></svg>`,
                     reset: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>`,
                     speech: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`,
@@ -7579,6 +7874,7 @@
                     undo: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>`
                 };
 
+                const isFullscreen = document.fullscreenElement || document.body.classList.contains('presentation-mode');
                 const { projector } = this.state;
 
                 container.innerHTML = `
@@ -7589,7 +7885,7 @@
                     <div class="w-[1px] h-8 bg-white/10 mx-2 my-auto"></div>
                     <div class="menu-item-wrap"><button data-action="togglePip" class="dock-btn ${pip && pip.isActive ? 'is-active' : ''}" aria-label="開啟畫中畫">${icons.pip}</button><span class="menu-label">畫中畫</span></div>
                     <div class="menu-item-wrap"><button data-action="toggleProjectorMode" class="dock-btn ${projector && projector.isActive ? 'is-active' : ''}" aria-label="投影模式">${icons.projector}</button><span class="menu-label">投影</span></div>
-                    <div class="menu-item-wrap"><button data-action="toggleFullscreen" class="dock-btn ${document.fullscreenElement ? 'is-active' : ''}" aria-label="切換全螢幕">${icons.fullscreen}</button><span class="menu-label">全螢幕</span></div>
+                    <div class="menu-item-wrap"><button data-action="toggleFullscreen" class="dock-btn ${isFullscreen ? 'is-active' : ''}" aria-label="${isFullscreen ? '退出全螢幕' : '全螢幕'}">${isFullscreen ? icons.exitFullscreen : icons.fullscreen}</button><span class="menu-label">${isFullscreen ? '退出' : '全螢幕'}</span></div>
                     <div class="w-[1px] h-8 bg-white/10 mx-2 my-auto"></div>
                     <div class="menu-item-wrap"><button data-action="undo" class="dock-btn" aria-label="復原上一步">${icons.undo}</button><span class="menu-label">復原</span></div>
                     <div class="menu-item-wrap"><button data-action="resetDebate" class="dock-btn" style="color: #ef4444;" aria-label="重設所有進度">${icons.reset}</button><span class="menu-label text-red-400">重設</span></div>
@@ -8291,7 +8587,7 @@
                             <div class="menu-toggle-wrapper">
                                 <div class="menu-icon menu-icon--purple group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg></div>
                                 <div class="flex flex-col">
-                                    <span class="font-semibold text-sm">全螢幕 / 投影模式</span>
+                                    <span class="font-semibold text-sm">全螢幕模式</span>
                                     <span class="text-xs text-slate-500">比賽中將自動隱藏介面</span>
                                 </div>
                             </div>
@@ -8384,16 +8680,16 @@
                 if (!this.state.projector.channel) return;
 
                 const { timer, currentFlow, currentStageIndex } = this.state;
-                const stage = currentFlow[currentStageIndex];
+                const stage = currentFlow && currentFlow[currentStageIndex];
                 
                 // 取得當前階段名稱
                 let currentStageName = '準備中';
-                if (stage) {
+                if (stage && (stage.timerLabel || stage.name)) {
                     currentStageName = this.interpolateScript(stage.timerLabel || stage.name || '');
                 }
 
-                // 判斷是否時間到
-                const isTimesUp = timer.timeLeft <= 0 && timer.type !== null && !timer.isPaused;
+                // 判斷是否時間到 (只有在計時器啟動的情況下才判斷)
+                const isTimesUp = timer.type !== null && timer.timeLeft <= 0 && !timer.isPaused;
 
                 // 判斷是否在寬限時間
                 const isGracePeriod = timer.type === 'grace';
@@ -8418,23 +8714,8 @@
             },
 
             async startProjectorMode() {
-                // 1. 優先嘗試 Presentation API (僅 Chrome/Edge 支援)
-                if ('presentation' in navigator && navigator.presentation && navigator.presentation.defaultRequest) {
-                    try {
-                        const request = new PresentationRequest(['display.html']);
-                        navigator.presentation.defaultRequest = request;
-                        const connection = await request.start();
-                        
-                        this.state.projector.isActive = true;
-                        this.showNotification('投影模式已啟動 (Presentation API)', 'success');
-                        this.sendProjectorUpdate();
-                        return;
-                    } catch (e) {
-                        console.log('Presentation API 失敗，嘗試降級方案', e);
-                    }
-                }
-
-                // 2. 降級：使用 window.open 雙視窗法
+                // 使用 window.open 雙視窗法
+                // 注意：Presentation API 在部分瀏覽器上會導致崩潰，故不使用
                 if (window.open) {
                     try {
                         const displayWindow = window.open(
@@ -8446,13 +8727,19 @@
                         if (displayWindow) {
                             this.state.projector.displayWindow = displayWindow;
                             this.state.projector.isActive = true;
+                            this.state.projector.mode = 'window';
                             
-                            // 監聽視窗關閉
-                            const checkWindow = setInterval(() => {
+                            // 監聽視窗關閉 (儲存 interval ID 以便清除)
+                            if (this.state.projector.windowCheckInterval) {
+                                clearInterval(this.state.projector.windowCheckInterval);
+                            }
+                            this.state.projector.windowCheckInterval = setInterval(() => {
                                 if (displayWindow.closed) {
                                     this.state.projector.displayWindow = null;
                                     this.state.projector.isActive = false;
-                                    clearInterval(checkWindow);
+                                    this.state.projector.mode = null;
+                                    clearInterval(this.state.projector.windowCheckInterval);
+                                    this.state.projector.windowCheckInterval = null;
                                 }
                             }, 1000);
 
@@ -8491,11 +8778,41 @@
             },
 
             stopProjectorMode() {
+                // 關閉 Presentation API 連接
+                if (this.state.projector.presentationConnection) {
+                    try {
+                        this.state.projector.presentationConnection.terminate();
+                    } catch (e) {
+                        console.log('Failed to terminate presentation connection:', e);
+                    }
+                    this.state.projector.presentationConnection = null;
+                }
+                // 關閉 window.open 視窗
                 if (this.state.projector.displayWindow && !this.state.projector.displayWindow.closed) {
                     this.state.projector.displayWindow.close();
                 }
                 this.state.projector.displayWindow = null;
+                // [記憶體優化] 關閉 BroadcastChannel 釋放資源
+                if (this.state.projector.channel) {
+                    try {
+                        this.state.projector.channel.close();
+                    } catch (e) {
+                        console.log('Failed to close BroadcastChannel:', e);
+                    }
+                    this.state.projector.channel = null;
+                }
+                // 清除心跳計時器
+                if (this.state.projector.heartbeatInterval) {
+                    clearInterval(this.state.projector.heartbeatInterval);
+                    this.state.projector.heartbeatInterval = null;
+                }
+                // 清除視窗檢查計時器
+                if (this.state.projector.windowCheckInterval) {
+                    clearInterval(this.state.projector.windowCheckInterval);
+                    this.state.projector.windowCheckInterval = null;
+                }
                 this.state.projector.isActive = false;
+                this.state.projector.mode = null;
                 this.showNotification('投影模式已關閉', 'info');
             },
 
@@ -8560,6 +8877,12 @@
                                     currentParagraph = { id: newParagraphId, speaker: speaker, team: team, content: '' };
                                     this.state.transcription.paragraphs.push(currentParagraph);
                                     this.state.transcription.currentParagraphId = newParagraphId;
+                                    
+                                    // [記憶體優化] 限制最大段落數，移除最舊的段落
+                                    const maxParagraphs = this.state.transcription.MAX_PARAGRAPHS || 50;
+                                    while (this.state.transcription.paragraphs.length > maxParagraphs) {
+                                        this.state.transcription.paragraphs.shift();
+                                    }
                                 }
                                 currentParagraph.content += finalTranscript.trim() + '。 ';
                                 this.state.transcription.interimContent = '';
@@ -9423,6 +9746,9 @@
                 const stage = this.state.currentFlow[index];
                 if (!stage) return;
 
+                // 記錄上一個視圖狀態，用於判斷是否需要重新渲染整個視圖
+                const previousView = this.state.currentView;
+
                 // [MODIFIED] 優先處理 free_debate 這種特殊介面的階段類型
                 if (stage.type === 'free_debate') {
                     // 1. 初始化或重設自由辯論的狀態
@@ -9440,6 +9766,9 @@
                     // 清除可能殘留的計時器
                     clearInterval(this.state.freeDebate.interval);
 
+                    // 設置當前視圖為自由辯論
+                    this.state.currentView = 'free_debate';
+
                     // 2. 透過 router 渲染自由辯論的專用介面
                     this.router();
 
@@ -9452,14 +9781,18 @@
 
                 // --- 以下為處理一般辯論階段的既有邏輯 ---
 
-                // 如果前一個階段是自由辯論，確保將視圖切換回標準辯論介面
-                if (this.state.currentView !== 'debate') {
-                    this.state.currentView = 'debate';
-                }
+                // 設置視圖為一般辯論
+                this.state.currentView = 'debate';
 
-                // 渲染標準辯論介面
-                this.renderDebateFlowTracker();
-                this.renderDebateStage();
+                // 如果前一個視圖是自由辯論，需要重新渲染整個視圖
+                if (previousView === 'free_debate') {
+                    this.router();
+                } else {
+                    // 渲染標準辯論介面（只更新部分內容）
+                    this.renderDebateFlowTracker();
+                    this.renderDebateStage();
+                }
+                
                 if (this.state.pip.isActive) {
                     this.renderPipCanvas();
                 }
@@ -9600,6 +9933,7 @@
                         audioTrack.enabled = true; // 確保軌道是啟用的
                     }
                     this.state.recording.recordedChunks = [];
+                    this.state.recording.intermediateBlobs = []; // [記憶體優化] 清空中間 Blobs
 
                     const options = { mimeType: 'audio/webm; codecs=opus' };
                     this.state.recording.mediaRecorder = new MediaRecorder(this.state.recording.mediaStream, options);
@@ -9607,11 +9941,22 @@
                     this.state.recording.mediaRecorder.ondataavailable = (event) => {
                         if (event.data.size > 0) {
                             this.state.recording.recordedChunks.push(event.data);
+                            // [記憶體優化] 每 50 個 chunks 合併一次
+                            if (this.state.recording.recordedChunks.length >= 50) {
+                                this._consolidateRecordingChunks();
+                            }
                         }
                     };
 
                     this.state.recording.mediaRecorder.onstop = () => {
-                        this.state.recording.audioBlob = new Blob(this.state.recording.recordedChunks, { type: 'audio/webm' });
+                        // [記憶體優化] 最終合併：先處理剩餘的 chunks，再合併所有 intermediateBlobs
+                        this._consolidateRecordingChunks();
+                        const { intermediateBlobs } = this.state.recording;
+                        this.state.recording.audioBlob = new Blob(intermediateBlobs, { type: 'audio/webm' });
+                        // 清空中間資料
+                        this.state.recording.intermediateBlobs = [];
+                        this.state.recording.recordedChunks = [];
+                        
                         if (this.state.recording.mediaStream) {
                             this.state.recording.mediaStream.getTracks().forEach(track => track.stop());
                             this.state.recording.mediaStream = null;
