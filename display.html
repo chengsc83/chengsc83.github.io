@@ -119,13 +119,17 @@
         }
 
         .progress-bar-container {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
             width: 80%;
             max-width: 800px;
             height: 12px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 6px;
-            margin-top: 3rem;
             overflow: hidden;
+            z-index: 50;
         }
 
         .progress-bar {
@@ -275,13 +279,15 @@
     <div id="displayContainer" class="display-container hidden">
         <div id="stageName" class="stage-name">準備中</div>
         <div id="timerDisplay" class="timer-display state-normal">00:00</div>
-        <div class="progress-bar-container">
-            <div id="progressBar" class="progress-bar" style="width: 100%;"></div>
-        </div>
         <div class="status-indicator">
             <span id="statusDot" class="status-dot"></span>
             <span id="statusText">已連接</span>
         </div>
+    </div>
+
+    <!-- Progress Bar (Fixed Position) -->
+    <div id="progressBarContainer" class="progress-bar-container hidden">
+        <div id="progressBar" class="progress-bar" style="width: 100%;"></div>
     </div>
 
     <!-- Alarm Overlay (hidden by default) -->
@@ -358,6 +364,7 @@
                     this.isConnected = true;
                     document.getElementById('waitingScreen').classList.add('hidden');
                     document.getElementById('displayContainer').classList.remove('hidden');
+                    document.getElementById('progressBarContainer').classList.remove('hidden');
                 }
 
                 switch (data.type) {
