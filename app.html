@@ -3923,20 +3923,17 @@
             padding-bottom: calc(160px + env(safe-area-inset-bottom));
         }
         
-        /* iOS 鍵盤開啟時的樣式 */
-        body.ios-keyboard-open {
-            /* 防止頁面跳動 */
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-        }
-        
         body.ios-keyboard-open .sticky-action-bar,
         body.ios-keyboard-open .control-dock-wrapper {
             /* 鍵盤開啟時隱藏底部控制列，避免遮擋輸入 */
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease;
+        }
+        
+        /* iOS 鍵盤開啟時調整主要內容區 */
+        body.ios-keyboard-open #main-content {
+            padding-bottom: 50vh; /* 給輸入框足夠的空間滾動到可見區域 */
         }
         
         /* iOS 觸控反饋增強 */
@@ -5056,6 +5053,7 @@
                 // 2. 監聽 iOS 虛擬鍵盤的彈出/收起
                 if (window.visualViewport) {
                     let initialHeight = window.visualViewport.height;
+                    let currentFocusedElement = null;
                     
                     window.visualViewport.addEventListener('resize', () => {
                         const currentHeight = window.visualViewport.height;
@@ -5064,13 +5062,28 @@
                         // 如果高度差大於 150px，認為是鍵盤彈出
                         if (heightDiff > 150) {
                             document.body.classList.add('ios-keyboard-open');
-                            // 調整頁面以避免被鍵盤遮擋
-                            document.body.style.paddingBottom = `${heightDiff}px`;
+                            
+                            // 如果有聚焦的輸入框，確保它可見
+                            if (currentFocusedElement) {
+                                setTimeout(() => {
+                                    this.scrollInputIntoView(currentFocusedElement);
+                                }, 100);
+                            }
                         } else {
                             document.body.classList.remove('ios-keyboard-open');
-                            document.body.style.paddingBottom = '';
                         }
                     }, { passive: true });
+                    
+                    // 追蹤當前聚焦的元素
+                    document.addEventListener('focusin', (e) => {
+                        if (e.target.matches('input, textarea, select')) {
+                            currentFocusedElement = e.target;
+                        }
+                    });
+                    
+                    document.addEventListener('focusout', () => {
+                        currentFocusedElement = null;
+                    });
                 }
                 
                 // 3. 防止 iOS Safari 雙擊縮放
@@ -5101,22 +5114,57 @@
                 // 5. 輸入框聚焦時滾動到可見區域
                 document.addEventListener('focusin', (e) => {
                     if (e.target.matches('input, textarea, select')) {
+                        // 延遲執行，等待鍵盤完全彈出
                         setTimeout(() => {
-                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 300);
+                            this.scrollInputIntoView(e.target);
+                        }, 350);
                     }
                 });
                 
                 // 6. 輸入框失焦時恢復頁面
                 document.addEventListener('focusout', (e) => {
                     if (e.target.matches('input, textarea, select')) {
+                        // 給一個小延遲讓鍵盤收起
                         setTimeout(() => {
-                            window.scrollTo(0, window.scrollY);
+                            // 檢查是否有新的輸入框被聚焦
+                            const newFocused = document.activeElement;
+                            if (!newFocused || !newFocused.matches('input, textarea, select')) {
+                                // 沒有新的輸入框被聚焦，可以安全地重置
+                                document.body.classList.remove('ios-keyboard-open');
+                            }
                         }, 100);
                     }
                 });
                 
                 console.log('iOS optimizations initialized');
+            },
+            
+            /**
+             * 將輸入框滾動到可見區域（iOS 專用）
+             */
+            scrollInputIntoView(element) {
+                if (!element || !window.visualViewport) return;
+                
+                const rect = element.getBoundingClientRect();
+                const viewportHeight = window.visualViewport.height;
+                const viewportTop = window.visualViewport.offsetTop;
+                
+                // 計算輸入框相對於可見區域的位置
+                const elementTop = rect.top - viewportTop;
+                const elementBottom = rect.bottom - viewportTop;
+                
+                // 如果輸入框在可見區域下半部或被遮擋
+                const targetPosition = viewportHeight * 0.3; // 將輸入框放在可見區域的上方 30% 位置
+                
+                if (elementTop > targetPosition || elementBottom > viewportHeight) {
+                    // 需要滾動
+                    const scrollAmount = elementTop - targetPosition;
+                    
+                    window.scrollBy({
+                        top: scrollAmount,
+                        behavior: 'smooth'
+                    });
+                }
             },
 
             loadState() {
@@ -6769,9 +6817,20 @@
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
                 
-                // iOS 滾動處理：滾動時隱藏選單，滾動結束後顯示
+                // 頁面滾動處理（僅處理頁面滾動，忽略選單內部滾動）
                 let scrollTimeout = null;
-                const handleIOSScroll = () => {
+                const handlePageScroll = (e) => {
+                    // 檢查滾動事件是否來自選單內部
+                    // 如果是選單內部滾動，則不處理
+                    if (e && e.target) {
+                        const isDropdownScroll = e.target === dropdownList || 
+                                                 dropdownList.contains(e.target) ||
+                                                 e.target.closest('#formatDropdownListPortal');
+                        if (isDropdownScroll) {
+                            return; // 忽略選單內部滾動
+                        }
+                    }
+                    
                     if (isIOS) {
                         dropdownList.classList.add('scrolling');
                         
@@ -6797,7 +6856,7 @@
                 };
 
                 // [效能優化] 使用事件監聽取代 requestAnimationFrame 持續輪詢
-                const throttledUpdate = handleIOSScroll;
+                const throttledUpdate = handlePageScroll;
 
                 dropdownList._scrollHandler = throttledUpdate;
                 dropdownList._resizeHandler = () => {
