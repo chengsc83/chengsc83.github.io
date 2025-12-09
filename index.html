@@ -160,14 +160,26 @@
                         <p class="mt-2 text-gray-400">內建多種常見辯論賽制範本，並支援高度自訂，滿足各種比賽的彈性需求。</p>
                     </div>
                     <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="300">
+                        <h3 class="text-xl font-semibold text-white">📺 投影與畫中畫</h3>
+                        <p class="mt-2 text-gray-400">支援專業投影視窗與畫中畫模式，無論是雙螢幕配置或多工處理，都能隨時掌握比賽進度。</p>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="400">
+                        <h3 class="text-xl font-semibold text-white">🔗 流程分享與匯入</h3>
+                        <p class="mt-2 text-gray-400">將自訂賽制一鍵生成分享碼，輕鬆與隊友或其他主計人員共用設定，確保比賽流程一致。</p>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="500">
                         <h3 class="text-xl font-semibold text-white">✍️ 語音即時轉錄</h3>
                         <p class="mt-2 text-gray-400">需要賽後逐字稿？辯時計能將比賽發言即時轉錄為文字，方便賽後覆盤、評分與紀錄。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="400">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="600">
+                        <h3 class="text-xl font-semibold text-white">⏪ 復原功能</h3>
+                        <p class="mt-2 text-gray-400">操作失誤？別擔心！復原功能讓您隨時回到上一步，確保比賽流程不受影響。</p>
+                    </div>
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="700">
                         <h3 class="text-xl font-semibold text-white">🛡️ 絕對安全與隱私</h3>
                         <p class="mt-2 text-gray-400">所有操作均在您的瀏覽器本地完成，無任何資料上傳，徹底杜絕資安與隱私風險。</p>
                     </div>
-                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="500">
+                    <div class="card-bg border border-gray-700 rounded-2xl p-8" data-aos="fade-up" data-aos-duration="600" data-aos-delay="800">
                         <h3 class="text-xl font-semibold text-white">💻 現代化的網頁介面</h3>
                         <p class="mt-2 text-gray-400">無需安裝，打開瀏覽器即可使用。介面設計直觀簡潔，讓您能快速上手，專注於比賽。</p>
                     </div>
@@ -312,53 +324,55 @@
             once: true,
             easing: 'ease-out-cubic'
         });
-
-        // FAQ Accordion functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const faqAccordion = document.getElementById('faq-accordion');
-            let currentlyOpen = null;
-            
-            if (faqAccordion) {
-                faqAccordion.addEventListener('click', function(e) {
-                    const toggle = e.target.closest('.faq-toggle');
-                    if (!toggle) return;
-                    
-                    const faqItem = toggle.closest('[data-aos]');
-                    if (!faqItem) return;
-                    
-                    const content = faqItem.querySelector('.faq-content');
-                    const icon = toggle.querySelector('.faq-icon');
-                    if (!content || !icon) return;
-                    
-                    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-                    
-                    // Close currently open item if different from clicked
-                    if (currentlyOpen && currentlyOpen !== faqItem) {
-                        const openToggle = currentlyOpen.querySelector('.faq-toggle');
-                        const openContent = currentlyOpen.querySelector('.faq-content');
-                        const openIcon = currentlyOpen.querySelector('.faq-icon');
-                        if (openToggle && openContent && openIcon) {
-                            openToggle.setAttribute('aria-expanded', 'false');
-                            openContent.classList.add('hidden');
-                            openIcon.style.transform = 'rotate(0deg)';
+    </script>
+    
+    <!-- FAQ Accordion - 獨立腳本確保執行 -->
+    <script>
+        (function() {
+            function initFAQ() {
+                var toggles = document.querySelectorAll('.faq-toggle');
+                
+                for (var i = 0; i < toggles.length; i++) {
+                    toggles[i].onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        var btn = this;
+                        var parent = btn.parentElement;
+                        var content = parent.querySelector('.faq-content');
+                        var icon = btn.querySelector('.faq-icon');
+                        var isOpen = content.classList.contains('hidden') === false;
+                        
+                        // 關閉所有
+                        var allContents = document.querySelectorAll('.faq-content');
+                        var allIcons = document.querySelectorAll('.faq-icon');
+                        var allToggles = document.querySelectorAll('.faq-toggle');
+                        
+                        for (var j = 0; j < allContents.length; j++) {
+                            allContents[j].classList.add('hidden');
+                            allToggles[j].setAttribute('aria-expanded', 'false');
                         }
-                    }
-                    
-                    // Toggle current FAQ item
-                    if (isExpanded) {
-                        toggle.setAttribute('aria-expanded', 'false');
-                        content.classList.add('hidden');
-                        icon.style.transform = 'rotate(0deg)';
-                        currentlyOpen = null;
-                    } else {
-                        toggle.setAttribute('aria-expanded', 'true');
-                        content.classList.remove('hidden');
-                        icon.style.transform = 'rotate(180deg)';
-                        currentlyOpen = faqItem;
-                    }
-                });
+                        for (var k = 0; k < allIcons.length; k++) {
+                            allIcons[k].style.transform = 'rotate(0deg)';
+                        }
+                        
+                        // 如果原本是關的，就打開當前項目
+                        if (!isOpen) {
+                            content.classList.remove('hidden');
+                            icon.style.transform = 'rotate(180deg)';
+                            btn.setAttribute('aria-expanded', 'true');
+                        }
+                    };
+                }
             }
-        });
+            
+            // 確保 DOM 載入完成後執行
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initFAQ);
+            } else {
+                initFAQ();
+            }
+        })();
     </script>
 
 </body>
