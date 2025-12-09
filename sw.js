@@ -1,22 +1,33 @@
-const CACHE_NAME = 'debate-clock-v1';
+const CACHE_NAME = 'debate-clock-v2.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './app.html',
+  './display.html',
+  './formal_timer.html',
   './manifest.json',
   './favicon.svg',
   './ring.m4a',
-  './sounds/stage_advance.mp3',
-  './sounds/speech_detected.mp3',
-  './sounds/draw.mp3'
+  './og-image.png'
 ];
 
 // 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
+  console.log('SW: Installing v2.0...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      // 使用 addAll 但允許個別檔案失敗
+      return Promise.allSettled(
+        ASSETS_TO_CACHE.map(url => 
+          cache.add(url).catch(err => {
+            console.warn(`Failed to cache: ${url}`, err);
+          })
+        )
+      );
     })
   );
+  // 強制新的 Service Worker 立即啟用
+  self.skipWaiting();
 });
 
 // 攔截網路請求 (優先使用快取，若無則請求網路)
