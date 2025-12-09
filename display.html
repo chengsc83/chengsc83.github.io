@@ -22,6 +22,8 @@
             --color-warning: #f59e0b;
             --color-danger: #ef4444;
             --color-grace: #fb923c;
+            --color-positive: #3b82f6;
+            --color-negative: #ef4444;
         }
 
         * {
@@ -46,6 +48,16 @@
             align-items: center;
             min-height: 100vh;
             background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+        }
+
+        /* 自訂背景圖片 */
+        body.has-custom-bg {
+            background: var(--custom-bg-image) center center / cover no-repeat !important;
+            background-color: #000 !important;
+        }
+        
+        body.has-custom-bg .match-display {
+            background: transparent !important;
         }
 
         .display-container {
@@ -263,16 +275,640 @@
         body.is-fullscreen .fullscreen-hint {
             display: none;
         }
+
+        /* ========== 模式切換按鈕 ========== */
+        .mode-toggle-bar {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.35rem;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 0.75rem;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        body:hover .mode-toggle-bar,
+        .mode-toggle-bar:hover {
+            opacity: 1;
+        }
+
+        .mode-btn {
+            padding: 0.45rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: var(--text-sub);
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .mode-btn.active {
+            background: var(--color-primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(129, 140, 248, 0.4);
+        }
+
+        .mode-btn-settings {
+            padding: 0.45rem 0.6rem;
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn-settings:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        /* ========== 正式賽模式樣式 ========== */
+        .match-display {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 2vh 2vw;
+            background: var(--bg-page);
+            color: var(--text-main);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 第一行：正方隊名 | 盃賽名稱 | 反方隊名 */
+        .match-row-1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            height: 18vh;
+            gap: 1.5vw;
+            margin-bottom: 2vh;
+        }
+
+        .team-name-box {
+            flex: 1;
+            padding: 1vh 1vw;
+            background: #fff;
+            border-radius: 1vh;
+            box-shadow: 0 0.5vh 1.5vh rgba(0,0,0,0.15);
+            font-size: 5vh;
+            font-weight: 700;
+            text-align: center;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tournament-box {
+            flex: 1;
+            padding: 1vh 1vw;
+            background: #fff;
+            border-radius: 1vh;
+            box-shadow: 0 0.5vh 1.5vh rgba(0,0,0,0.15);
+            font-size: 4.5vh;
+            font-weight: 700;
+            text-align: center;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 第二行：辯手 | 辯題 | 辯手 */
+        .match-row-2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 1;
+            gap: 1.5vw;
+        }
+
+        /* 辯手區塊 */
+        .debaters-section {
+            display: flex;
+            gap: 1vw;
+            align-items: center;
+            flex: 1;
+        }
+
+        .debater-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1vh;
+            flex: 1;
+            position: relative;
+        }
+
+        .debater-label {
+            padding: 1vh 1.5vw;
+            background: #fff;
+            border-radius: 0.8vh;
+            box-shadow: 0 0.3vh 0.8vh rgba(0,0,0,0.12);
+            font-size: 2.5vh;
+            font-weight: 700;
+            white-space: nowrap;
+            color: #1a1a1a;
+        }
+
+        .debater-name-card {
+            background: #fff;
+            border-radius: 1vh;
+            box-shadow: 0 0.5vh 1.5vh rgba(0,0,0,0.15);
+            padding: 2vh 1vw;
+            height: 32vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .debater-name-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-size: 5vh;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: 0.5vh;
+            line-height: 1;
+        }
+
+        /* 結辯標記 */
+        .debater-closing-badge {
+            width: 5vh;
+            height: 5vh;
+            background: #e53e3e;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5vh;
+            font-weight: 700;
+            box-shadow: 0 0.3vh 0.8vh rgba(229, 62, 62, 0.4);
+            position: absolute;
+            bottom: -6vh;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 辯題區塊 */
+        .topic-box {
+            flex: 1.2;
+            padding: 2vh 1.5vw;
+            background: #fff;
+            border-radius: 1vh;
+            box-shadow: 0 0.5vh 1.5vh rgba(0,0,0,0.15);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            max-height: 50vh;
+            align-self: center;
+        }
+
+        .topic-label {
+            font-size: 3vh;
+            font-weight: 700;
+            margin-bottom: 1.5vh;
+            color: #1a1a1a;
+        }
+
+        .topic-text {
+            font-size: 3.5vh;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1.5;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .definition-section {
+            margin-top: 2vh;
+            padding-top: 2vh;
+            border-top: 0.3vh solid #e5e5e5;
+            text-align: left;
+        }
+
+        .definition-label {
+            font-size: 2vh;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 0.5vh;
+        }
+
+        .definition-text {
+            font-size: 2.2vh;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+
+        /* ========== 行動裝置響應式佈局 ========== */
+        @media (max-width: 768px), (orientation: portrait) {
+            .match-display {
+                padding: 1.5vh 2vw;
+                overflow-y: auto;
+            }
+
+            /* 第一行改為垂直堆疊 */
+            .match-row-1 {
+                flex-direction: column;
+                height: auto;
+                gap: 1.5vh;
+                margin-bottom: 1.5vh;
+            }
+
+            .team-name-box {
+                padding: 1.5vh 2vw;
+                font-size: 4vh;
+                min-height: 6vh;
+            }
+
+            .tournament-box {
+                padding: 1vh 2vw;
+                font-size: 3vh;
+                min-height: 5vh;
+                order: -1; /* 盃賽名稱移到最上方 */
+            }
+
+            /* 第二行改為垂直佈局 */
+            .match-row-2 {
+                flex-direction: column;
+                gap: 2vh;
+                align-items: stretch;
+            }
+
+            /* 辯手區塊改為橫向並排 */
+            .debaters-section {
+                flex-direction: row;
+                justify-content: center;
+                gap: 2vw;
+                order: 2; /* 辯手放在辯題下方 */
+            }
+
+            .debater-column {
+                gap: 0.8vh;
+            }
+
+            .debater-label {
+                padding: 0.6vh 2vw;
+                font-size: 2vh;
+            }
+
+            .debater-name-card {
+                height: auto;
+                min-height: 15vh;
+                max-height: 20vh;
+                padding: 1.5vh 1.5vw;
+            }
+
+            .debater-name-vertical {
+                font-size: 3.5vh;
+                letter-spacing: 0.3vh;
+            }
+
+            .debater-closing-badge {
+                width: 4vh;
+                height: 4vh;
+                font-size: 2vh;
+                bottom: -5vh;
+            }
+
+            /* 辯題區塊 */
+            .topic-box {
+                flex: none;
+                max-height: none;
+                padding: 2vh 3vw;
+                order: 1; /* 辯題放在中間 */
+            }
+
+            .topic-label {
+                font-size: 2.5vh;
+                margin-bottom: 1vh;
+            }
+
+            .topic-text {
+                font-size: 2.8vh;
+            }
+
+            .definition-section {
+                margin-top: 1.5vh;
+                padding-top: 1.5vh;
+            }
+
+            .definition-label {
+                font-size: 1.8vh;
+            }
+
+            .definition-text {
+                font-size: 2vh;
+            }
+        }
+
+        /* 超小螢幕（手機直式） */
+        @media (max-width: 480px) {
+            .match-display {
+                padding: 1vh 1.5vw;
+            }
+
+            .team-name-box {
+                font-size: 3.5vh;
+            }
+
+            .tournament-box {
+                font-size: 2.5vh;
+            }
+
+            .debater-label {
+                font-size: 1.8vh;
+                padding: 0.5vh 1.5vw;
+            }
+
+            .debater-name-card {
+                min-height: 12vh;
+                max-height: 16vh;
+                padding: 1vh 1vw;
+            }
+
+            .debater-name-vertical {
+                font-size: 3vh;
+            }
+
+            .debater-closing-badge {
+                width: 3.5vh;
+                height: 3.5vh;
+                font-size: 1.8vh;
+                bottom: -4.5vh;
+            }
+
+            .topic-label {
+                font-size: 2.2vh;
+            }
+
+            .topic-text {
+                font-size: 2.5vh;
+            }
+        }
+
+        /* ========== 設定面板 ========== */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            z-index: 300;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .settings-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .settings-close {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .settings-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .settings-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .settings-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .settings-input::placeholder {
+            color: var(--text-sub);
+        }
+
+        .settings-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .bg-upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bg-upload-area:hover {
+            border-color: var(--color-primary);
+            background: rgba(129, 140, 248, 0.1);
+        }
+
+        .bg-upload-area svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-sub);
+            margin-bottom: 0.5rem;
+        }
+
+        .bg-preview {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-clear-bg {
+            margin-top: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            border-radius: 0.5rem;
+            color: #fca5a5;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .btn-clear-bg:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 250;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .settings-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
 </head>
 
 <body>
+    <!-- 模式切換按鈕列 -->
+    <div class="mode-toggle-bar" id="modeToggleBar">
+        <button class="mode-btn active" data-mode="timer" id="btnTimerMode">計時器模式</button>
+        <button class="mode-btn" data-mode="match" id="btnMatchMode">正式賽模式</button>
+        <button class="mode-btn-settings" id="btnSettings" title="設定">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- 設定面板遮罩 -->
+    <div class="settings-overlay" id="settingsOverlay"></div>
+
+    <!-- 設定面板 -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <div class="settings-title">顯示設定</div>
+            <button class="settings-close" id="settingsClose">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">賽事名稱</label>
+            <input type="text" class="settings-input" id="settingTournamentName" placeholder="例：第十六屆辯革盃">
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">辯題</label>
+            <textarea class="settings-input settings-textarea" id="settingTopic" placeholder="請輸入本場辯題"></textarea>
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">附加定義</label>
+            <textarea class="settings-input settings-textarea" id="settingDefinition" placeholder="選填：附加定義說明"></textarea>
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">正方隊名</label>
+            <input type="text" class="settings-input" id="settingPositiveTeam" placeholder="正方隊伍名稱">
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">反方隊名</label>
+            <input type="text" class="settings-input" id="settingNegativeTeam" placeholder="反方隊伍名稱">
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">正方結辩</label>
+            <select class="settings-input" id="settingPositiveClosing">
+                <option value="2">正三</option>
+                <option value="1">正二</option>
+                <option value="0">正一</option>
+            </select>
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">反方結辩</label>
+            <select class="settings-input" id="settingNegativeClosing">
+                <option value="2">反三</option>
+                <option value="1">反二</option>
+                <option value="0">反一</option>
+            </select>
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">背景圖片</label>
+            <div class="bg-upload-area" id="bgUploadArea">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <div>點擊或拖曳上傳背景圖片</div>
+            </div>
+            <input type="file" id="bgFileInput" accept="image/*" style="display:none">
+            <img id="bgPreview" class="bg-preview hidden" alt="背景預覽">
+            <button id="btnClearBg" class="btn-clear-bg hidden">清除背景圖片</button>
+        </div>
+    </div>
+
     <!-- Waiting Screen -->
     <div id="waitingScreen" class="waiting-screen">
         <h1>辯時計</h1>
         <p>投影顯示模式</p>
         <div class="loader"></div>
-        <p style="font-size: 1rem; margin-top: 1rem;">等待連接控制台...</p>
+        <p id="waitingStatus" style="font-size: 1rem; margin-top: 1rem;">等待連接控制台...</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.6;">請確認主控頁面已開啟</p>
     </div>
 
     <!-- Timer Display -->
@@ -290,6 +926,39 @@
         <div id="progressBar" class="progress-bar" style="width: 100%;"></div>
     </div>
 
+    <!-- 正式賽模式顯示 -->
+    <div id="matchDisplay" class="match-display hidden">
+        <!-- 第一行：正方隊名 | 盃賽名稱 | 反方隊名 -->
+        <div class="match-row-1">
+            <div class="team-name-box" id="positiveTeamName">正方隊名</div>
+            <div class="tournament-box" id="tournamentName">盃賽名稱</div>
+            <div class="team-name-box" id="negativeTeamName">反方隊名</div>
+        </div>
+        
+        <!-- 第二行：辯手 | 辯題 | 辯手 -->
+        <div class="match-row-2">
+            <!-- 正方辯手：正三、正二、正一 -->
+            <div class="debaters-section" id="positiveDebatersSection">
+                <!-- 由 JS 動態產生 -->
+            </div>
+            
+            <!-- 辯題 -->
+            <div class="topic-box">
+                <div class="topic-label">辯題</div>
+                <div class="topic-text" id="topicText">請設定辯題</div>
+                <div class="definition-section" id="definitionBox" style="display:none;">
+                    <div class="definition-label">附加定義</div>
+                    <div class="definition-text" id="definitionText"></div>
+                </div>
+            </div>
+            
+            <!-- 反方辯手：反一、反二、反三 -->
+            <div class="debaters-section" id="negativeDebatersSection">
+                <!-- 由 JS 動態產生 -->
+            </div>
+        </div>
+    </div>
+
     <!-- Alarm Overlay (hidden by default) -->
     <div id="alarmOverlay" class="alarm-overlay hidden"></div>
 
@@ -297,13 +966,36 @@
     <div class="fullscreen-hint">按 F11 或雙擊進入全螢幕</div>
 
     <script>
-        const DisplayApp = {
+        // 立即執行，確保腳本載入
+        console.log('=== display.html script loaded ===');
+        
+        window.DisplayApp = {
             channel: null,
             lastUpdate: Date.now(),
             heartbeatInterval: null,
+            reconnectInterval: null,
             isConnected: false,
+            reconnectAttempts: 0,
+            
+            // 新增：顯示模式 ('timer' 或 'match')
+            displayMode: 'timer',
+            
+            // 正式賽模式資料
+            matchData: {
+                tournamentName: '',
+                topic: '',
+                definition: '',
+                positiveTeamName: '',
+                negativeTeamName: '',
+                positiveDebaters: [],
+                negativeDebaters: [],
+                positiveClosingIndex: 2,  // 預設正三結辩
+                negativeClosingIndex: 2,  // 預設反三結辩
+                backgroundImage: null
+            },
 
             init() {
+                console.log('DisplayApp.init() called');
                 // Check BroadcastChannel support
                 if (!('BroadcastChannel' in window)) {
                     document.getElementById('waitingScreen').innerHTML = `
@@ -316,40 +1008,372 @@
                     return;
                 }
 
-                try {
-                    // Initialize BroadcastChannel
-                    this.channel = new BroadcastChannel('debate-timer-sync');
-                    
-                    this.channel.onmessage = (event) => {
-                        this.handleMessage(event.data);
-                    };
+                this.setupChannel();
+                this.setupModeToggle();
+                this.setupSettings();
+                this.loadSavedSettings();
 
-                    // Start heartbeat check
-                    this.heartbeatInterval = setInterval(() => this.checkConnection(), 3000);
+                // Start heartbeat check
+                this.heartbeatInterval = setInterval(() => this.checkConnection(), 3000);
 
-                    // Request initial state
-                    this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
-
-                    // Cleanup on page unload
-                    window.addEventListener('beforeunload', () => this.cleanup());
-
-                } catch (e) {
-                    console.error('Failed to initialize BroadcastChannel:', e);
-                }
+                // Cleanup on page unload
+                window.addEventListener('beforeunload', () => this.cleanup());
 
                 // Double-click to fullscreen
-                document.body.addEventListener('dblclick', () => this.toggleFullscreen());
+                document.body.addEventListener('dblclick', (e) => {
+                    // 排除設定面板內的點擊
+                    if (e.target.closest('.settings-panel') || e.target.closest('.mode-toggle-bar')) return;
+                    this.toggleFullscreen();
+                });
 
                 // Track fullscreen state
                 document.addEventListener('fullscreenchange', () => {
                     document.body.classList.toggle('is-fullscreen', !!document.fullscreenElement);
                 });
             },
+            
+            // ========== 模式切換功能 ==========
+            setupModeToggle() {
+                const btnTimerMode = document.getElementById('btnTimerMode');
+                const btnMatchMode = document.getElementById('btnMatchMode');
+                const btnSettings = document.getElementById('btnSettings');
+                
+                btnTimerMode.addEventListener('click', () => this.switchMode('timer'));
+                btnMatchMode.addEventListener('click', () => this.switchMode('match'));
+                btnSettings.addEventListener('click', () => this.openSettings());
+            },
+            
+            switchMode(mode) {
+                this.displayMode = mode;
+                
+                // 更新按鈕狀態
+                document.getElementById('btnTimerMode').classList.toggle('active', mode === 'timer');
+                document.getElementById('btnMatchMode').classList.toggle('active', mode === 'match');
+                
+                // 切換顯示區塊
+                const displayContainer = document.getElementById('displayContainer');
+                const progressBarContainer = document.getElementById('progressBarContainer');
+                const matchDisplay = document.getElementById('matchDisplay');
+                
+                if (mode === 'timer') {
+                    if (this.isConnected) {
+                        displayContainer.classList.remove('hidden');
+                        progressBarContainer.classList.remove('hidden');
+                    }
+                    matchDisplay.classList.add('hidden');
+                } else {
+                    displayContainer.classList.add('hidden');
+                    progressBarContainer.classList.add('hidden');
+                    matchDisplay.classList.remove('hidden');
+                    this.updateMatchDisplay();
+                }
+            },
+            
+            // ========== 設定面板功能 ==========
+            setupSettings() {
+                const settingsPanel = document.getElementById('settingsPanel');
+                const settingsOverlay = document.getElementById('settingsOverlay');
+                const settingsClose = document.getElementById('settingsClose');
+                const bgUploadArea = document.getElementById('bgUploadArea');
+                const bgFileInput = document.getElementById('bgFileInput');
+                const btnClearBg = document.getElementById('btnClearBg');
+                
+                // 關閉設定面板
+                settingsClose.addEventListener('click', () => this.closeSettings());
+                settingsOverlay.addEventListener('click', () => this.closeSettings());
+                
+                // 背景圖片上傳
+                bgUploadArea.addEventListener('click', () => bgFileInput.click());
+                bgUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    bgUploadArea.style.borderColor = 'var(--color-primary)';
+                });
+                bgUploadArea.addEventListener('dragleave', () => {
+                    bgUploadArea.style.borderColor = '';
+                });
+                bgUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    bgUploadArea.style.borderColor = '';
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        this.handleBackgroundUpload(file);
+                    }
+                });
+                bgFileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) this.handleBackgroundUpload(file);
+                });
+                btnClearBg.addEventListener('click', () => this.clearBackground());
+                
+                // 輸入欄位即時更新
+                const inputs = ['settingTournamentName', 'settingTopic', 'settingDefinition', 
+                               'settingPositiveTeam', 'settingNegativeTeam'];
+                inputs.forEach(id => {
+                    document.getElementById(id).addEventListener('input', () => this.updateFromSettings());
+                });
+                
+                // 結辯選擇下拉選單
+                document.getElementById('settingPositiveClosing').addEventListener('change', (e) => {
+                    this.matchData.positiveClosingIndex = parseInt(e.target.value);
+                    if (this.displayMode === 'match') {
+                        this.updateMatchDisplay();
+                    }
+                    this.saveSettings();
+                });
+                document.getElementById('settingNegativeClosing').addEventListener('change', (e) => {
+                    this.matchData.negativeClosingIndex = parseInt(e.target.value);
+                    if (this.displayMode === 'match') {
+                        this.updateMatchDisplay();
+                    }
+                    this.saveSettings();
+                });
+            },
+            
+            openSettings() {
+                document.getElementById('settingsPanel').classList.add('open');
+                document.getElementById('settingsOverlay').classList.add('open');
+            },
+            
+            closeSettings() {
+                document.getElementById('settingsPanel').classList.remove('open');
+                document.getElementById('settingsOverlay').classList.remove('open');
+                this.saveSettings();
+            },
+            
+            updateFromSettings() {
+                this.matchData.tournamentName = document.getElementById('settingTournamentName').value;
+                this.matchData.topic = document.getElementById('settingTopic').value;
+                this.matchData.definition = document.getElementById('settingDefinition').value;
+                this.matchData.positiveTeamName = document.getElementById('settingPositiveTeam').value;
+                this.matchData.negativeTeamName = document.getElementById('settingNegativeTeam').value;
+                
+                if (this.displayMode === 'match') {
+                    this.updateMatchDisplay();
+                }
+            },
+            
+            handleBackgroundUpload(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    this.matchData.backgroundImage = dataUrl;
+                    
+                    // 顯示預覽
+                    const preview = document.getElementById('bgPreview');
+                    preview.src = dataUrl;
+                    preview.classList.remove('hidden');
+                    document.getElementById('btnClearBg').classList.remove('hidden');
+                    
+                    // 應用背景
+                    this.applyBackground();
+                    this.saveSettings();
+                };
+                reader.readAsDataURL(file);
+            },
+            
+            clearBackground() {
+                this.matchData.backgroundImage = null;
+                document.getElementById('bgPreview').classList.add('hidden');
+                document.getElementById('btnClearBg').classList.add('hidden');
+                document.getElementById('bgFileInput').value = '';
+                document.body.classList.remove('has-custom-bg');
+                document.body.style.removeProperty('--custom-bg-image');
+                this.saveSettings();
+            },
+            
+            applyBackground() {
+                if (this.matchData.backgroundImage) {
+                    console.log('[Display] Applying background image');
+                    document.body.style.setProperty('--custom-bg-image', `url(${this.matchData.backgroundImage})`);
+                    document.body.classList.add('has-custom-bg');
+                } else {
+                    console.log('[Display] No background image to apply');
+                    document.body.classList.remove('has-custom-bg');
+                    document.body.style.removeProperty('--custom-bg-image');
+                }
+            },
+            
+            saveSettings() {
+                try {
+                    // 不儲存背景圖片（太大），其他都儲存
+                    const settingsToSave = {
+                        tournamentName: this.matchData.tournamentName,
+                        topic: this.matchData.topic,
+                        definition: this.matchData.definition,
+                        positiveTeamName: this.matchData.positiveTeamName,
+                        negativeTeamName: this.matchData.negativeTeamName,
+                        positiveClosingIndex: this.matchData.positiveClosingIndex,
+                        negativeClosingIndex: this.matchData.negativeClosingIndex
+                    };
+                    localStorage.setItem('display_settings', JSON.stringify(settingsToSave));
+                } catch (e) {
+                    console.warn('無法儲存設定:', e);
+                }
+            },
+            
+            loadSavedSettings() {
+                try {
+                    const saved = localStorage.getItem('display_settings');
+                    if (saved) {
+                        const settings = JSON.parse(saved);
+                        Object.assign(this.matchData, settings);
+                        
+                        // 填入表單
+                        document.getElementById('settingTournamentName').value = settings.tournamentName || '';
+                        document.getElementById('settingTopic').value = settings.topic || '';
+                        document.getElementById('settingDefinition').value = settings.definition || '';
+                        document.getElementById('settingPositiveTeam').value = settings.positiveTeamName || '';
+                        document.getElementById('settingNegativeTeam').value = settings.negativeTeamName || '';
+                        
+                        // 填入結辯選擇
+                        document.getElementById('settingPositiveClosing').value = 
+                            settings.positiveClosingIndex !== undefined ? settings.positiveClosingIndex : 2;
+                        document.getElementById('settingNegativeClosing').value = 
+                            settings.negativeClosingIndex !== undefined ? settings.negativeClosingIndex : 2;
+                    }
+                } catch (e) {
+                    console.warn('無法載入設定:', e);
+                }
+            },
+            
+            // ========== 正式賽模式顯示 ==========
+            updateMatchDisplay() {
+                // 更新賽事名稱
+                document.getElementById('tournamentName').textContent = 
+                    this.matchData.tournamentName || '盃賽名稱';
+                
+                // 更新辯題
+                document.getElementById('topicText').textContent = 
+                    this.matchData.topic || '請設定辯題';
+                
+                // 更新附加定義
+                const defBox = document.getElementById('definitionBox');
+                const defText = document.getElementById('definitionText');
+                if (this.matchData.definition) {
+                    defBox.style.display = 'block';
+                    defText.textContent = this.matchData.definition;
+                } else {
+                    defBox.style.display = 'none';
+                }
+                
+                // 更新隊伍名稱
+                document.getElementById('positiveTeamName').textContent = 
+                    this.matchData.positiveTeamName || '正方隊名';
+                document.getElementById('negativeTeamName').textContent = 
+                    this.matchData.negativeTeamName || '反方隊名';
+                
+                // 更新辯手列表
+                this.renderDebatersSide('positive', this.matchData.positiveDebaters);
+                this.renderDebatersSide('negative', this.matchData.negativeDebaters);
+            },
+            
+            renderDebatersSide(side, debaters) {
+                const container = document.getElementById(side === 'positive' ? 'positiveDebatersSection' : 'negativeDebatersSection');
+                if (!container) return;
+                
+                // 如果沒有辯手資料，顯示預設
+                if (!debaters || debaters.length === 0) {
+                    const positions = side === 'positive' 
+                        ? ['正一', '正二', '正三'] 
+                        : ['反一', '反二', '反三'];
+                    debaters = positions.map((pos, idx) => ({ 
+                        position: pos, 
+                        name: '',
+                        isClosing: idx === 2
+                    }));
+                }
+                
+                // 正方順序：正三、正二、正一（從左到右）
+                // 反方順序：反一、反二、反三（從左到右）
+                const displayOrder = side === 'positive' ? [...debaters].reverse() : debaters;
+                
+                // 取得結辩索引
+                const closingIndex = side === 'positive' 
+                    ? this.matchData.positiveClosingIndex 
+                    : this.matchData.negativeClosingIndex;
+                
+                let html = '';
+                displayOrder.forEach((d, idx) => {
+                    // 取得位置標籤（正一、正二等）
+                    const posLabel = side === 'positive' 
+                        ? `正${['三', '二', '一'][idx] || (3-idx)}`
+                        : `反${['一', '二', '三'][idx] || (idx+1)}`;
+                    
+                    // 計算原始索引（用於判斷結辩）
+                    // 正方：顯示順序 [0,1,2] 對應原始 [2,1,0]，即 idx=0 是正三(index=2)
+                    // 反方：顯示順序 [0,1,2] 對應原始 [0,1,2]，即 idx=0 是反一(index=0)
+                    const originalIndex = side === 'positive' ? (2 - idx) : idx;
+                    const isClosing = originalIndex === closingIndex;
+                    
+                    html += `
+                        <div class="debater-column">
+                            <div class="debater-label">${posLabel}</div>
+                            <div class="debater-name-card">
+                                <span class="debater-name-vertical">${d.name || ''}</span>
+                            </div>
+                            ${isClosing ? '<div class="debater-closing-badge">結</div>' : ''}
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+
+            setupChannel() {
+                try {
+                    // Close existing channel if any
+                    if (this.channel) {
+                        this.channel.close();
+                    }
+
+                    // Initialize BroadcastChannel
+                    this.channel = new BroadcastChannel('debate-timer-sync');
+                    console.log('Display: BroadcastChannel created');
+                    
+                    this.channel.onmessage = (event) => {
+                        console.log('Display: Received message:', event.data.type);
+                        this.handleMessage(event.data);
+                    };
+
+                    // Request initial state - send multiple times to ensure connection
+                    console.log('Display: Sending DISPLAY_CONNECTED');
+                    this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                    
+                    // 延遲再發送幾次，確保主頁面已經初始化
+                    setTimeout(() => {
+                        if (!this.isConnected && this.channel) {
+                            console.log('Display: Retry sending DISPLAY_CONNECTED (500ms)');
+                            this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                        }
+                    }, 500);
+                    
+                    setTimeout(() => {
+                        if (!this.isConnected && this.channel) {
+                            console.log('Display: Retry sending DISPLAY_CONNECTED (1500ms)');
+                            this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                        }
+                    }, 1500);
+                    
+                    setTimeout(() => {
+                        if (!this.isConnected && this.channel) {
+                            console.log('Display: Retry sending DISPLAY_CONNECTED (3000ms)');
+                            this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                        }
+                    }, 3000);
+
+                } catch (e) {
+                    console.error('Failed to initialize BroadcastChannel:', e);
+                }
+            },
 
             cleanup() {
                 if (this.heartbeatInterval) {
                     clearInterval(this.heartbeatInterval);
                     this.heartbeatInterval = null;
+                }
+                if (this.reconnectInterval) {
+                    clearInterval(this.reconnectInterval);
+                    this.reconnectInterval = null;
                 }
                 if (this.channel) {
                     this.channel.close();
@@ -359,17 +1383,73 @@
 
             handleMessage(data) {
                 this.lastUpdate = Date.now();
+                this.reconnectAttempts = 0; // 重置連接嘗試次數
+                
+                console.log('[Display] handleMessage:', data?.type);
+                
+                // 收到 CONTROLLER_READY 時，立即發送 DISPLAY_CONNECTED
+                if (data && data.type === 'CONTROLLER_READY') {
+                    console.log('[Display] Controller is ready, sending DISPLAY_CONNECTED');
+                    try {
+                        this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                    } catch (e) {}
+                    return;
+                }
                 
                 if (!this.isConnected) {
                     this.isConnected = true;
                     document.getElementById('waitingScreen').classList.add('hidden');
-                    document.getElementById('displayContainer').classList.remove('hidden');
-                    document.getElementById('progressBarContainer').classList.remove('hidden');
+                    
+                    // 根據當前模式顯示對應畫面
+                    if (this.displayMode === 'timer') {
+                        document.getElementById('displayContainer').classList.remove('hidden');
+                        document.getElementById('progressBarContainer').classList.remove('hidden');
+                    } else {
+                        document.getElementById('matchDisplay').classList.remove('hidden');
+                    }
+                    console.log('[Display] Connected!');
                 }
 
                 switch (data.type) {
                     case 'TIMER_UPDATE':
                         this.updateDisplay(data.payload);
+                        
+                        // 同時更新辯手資料（如果有）
+                        if (data.payload.positiveDebaters) {
+                            this.matchData.positiveDebaters = data.payload.positiveDebaters;
+                        }
+                        if (data.payload.negativeDebaters) {
+                            this.matchData.negativeDebaters = data.payload.negativeDebaters;
+                        }
+                        if (data.payload.positiveTeamName) {
+                            this.matchData.positiveTeamName = data.payload.positiveTeamName;
+                            document.getElementById('settingPositiveTeam').value = data.payload.positiveTeamName;
+                        }
+                        if (data.payload.negativeTeamName) {
+                            this.matchData.negativeTeamName = data.payload.negativeTeamName;
+                            document.getElementById('settingNegativeTeam').value = data.payload.negativeTeamName;
+                        }
+                        // 同步結辯索引
+                        if (data.payload.positiveClosingIndex !== undefined) {
+                            this.matchData.positiveClosingIndex = data.payload.positiveClosingIndex;
+                            document.getElementById('settingPositiveClosing').value = data.payload.positiveClosingIndex;
+                        }
+                        if (data.payload.negativeClosingIndex !== undefined) {
+                            this.matchData.negativeClosingIndex = data.payload.negativeClosingIndex;
+                            document.getElementById('settingNegativeClosing').value = data.payload.negativeClosingIndex;
+                        }
+                        // 同步賽事名稱和辯題（只要 app.html 有值就更新）
+                        if (data.payload.tournamentName) {
+                            this.matchData.tournamentName = data.payload.tournamentName;
+                            document.getElementById('settingTournamentName').value = data.payload.tournamentName;
+                        }
+                        if (data.payload.debateTopic) {
+                            this.matchData.topic = data.payload.debateTopic;
+                            document.getElementById('settingTopic').value = data.payload.debateTopic;
+                        }
+                        if (this.displayMode === 'match') {
+                            this.updateMatchDisplay();
+                        }
                         break;
                     case 'HEARTBEAT':
                         // Just update lastUpdate timestamp
@@ -467,8 +1547,33 @@
                 const timeSinceLastUpdate = Date.now() - this.lastUpdate;
                 
                 // Consider disconnected if no update for 5 seconds
-                if (timeSinceLastUpdate > 5000 && this.isConnected) {
+                if (timeSinceLastUpdate > 5000) {
+                    this.isConnected = false;
                     this.updateConnectionStatus(false);
+                    // 嘗試重新連接
+                    this.tryReconnect();
+                }
+            },
+
+            tryReconnect() {
+                this.reconnectAttempts++;
+                const waitingStatus = document.getElementById('waitingStatus');
+                if (waitingStatus) {
+                    waitingStatus.textContent = `嘗試連接中... (第 ${this.reconnectAttempts} 次)`;
+                }
+                console.log('Display: 嘗試重新連接... 第', this.reconnectAttempts, '次');
+                // 每次都重新建立 channel 並發送連接請求
+                try {
+                    if (this.channel) {
+                        // 不關閉現有 channel，只是重新發送連接請求
+                        console.log('Display: 重新發送 DISPLAY_CONNECTED');
+                        this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                    } else {
+                        this.setupChannel();
+                    }
+                } catch (e) {
+                    console.warn('Reconnect attempt failed, recreating channel:', e);
+                    this.setupChannel();
                 }
             },
 
@@ -478,7 +1583,10 @@
 
                 if (!connected) {
                     statusDot.className = 'status-dot disconnected';
-                    statusText.textContent = '連接中斷';
+                    statusText.textContent = '重新連接中... (每3秒嘗試)';
+                    // 顯示等待畫面
+                    document.getElementById('waitingScreen').classList.remove('hidden');
+                    document.getElementById('displayContainer').classList.add('hidden');
                 }
             },
 
