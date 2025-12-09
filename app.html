@@ -939,9 +939,35 @@
             box-shadow: 0 8px 30px -5px rgba(0, 0, 0, 0.3), 0 4px 10px -3px rgba(0, 0, 0, 0.2);
         }
 
-        /* 下拉選單 Portal - 強制 z-index 低於 header 和 action bar */
+        /* 下拉選單 Portal - z-index 高於 action bar(50)，低於 header(60) */
         #formatDropdownListPortal {
-            z-index: 45 !important;
+            z-index: 55 !important;
+        }
+
+        /* [行動裝置修復] 賽制選單響應式樣式 */
+        @media (max-width: 767px) {
+            #formatDropdownListPortal {
+                /* 行動裝置使用更大的最大高度 */
+                max-height: 50vh !important;
+                /* 確保不會超出螢幕底部 */
+                max-height: min(50vh, calc(100vh - 200px)) !important;
+            }
+            
+            /* 增加選項的觸控區域 */
+            .searchable-dropdown-item {
+                padding: 0.875rem 1rem !important;
+                min-height: 48px;
+            }
+            
+            /* 增加群組標籤的可讀性 */
+            .searchable-dropdown-group-label {
+                padding: 0.625rem 1rem !important;
+                font-size: 0.75rem !important;
+                position: sticky;
+                top: 0;
+                background: var(--surface-1);
+                z-index: 1;
+            }
         }
 
         /* 下拉選單容器 - 確保 relative 定位 */
@@ -1003,10 +1029,22 @@
             cursor: pointer;
             transition: all 0.15s ease;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.75rem;
             font-size: 0.875rem;
             color: var(--text-main);
+        }
+        
+        .searchable-dropdown-item .dropdown-item-text {
+            /* 文字區域允許換行並保持彈性 */
+            flex: 1 !important;
+            min-width: 0 !important;
+            line-height: 1.4 !important;
+            white-space: normal !important;
+            overflow-wrap: break-word !important;
+            word-wrap: break-word !important;
+            text-overflow: clip !important;
+            overflow: visible !important;
         }
 
         .searchable-dropdown-item:hover {
@@ -3567,6 +3605,9 @@
             background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
             color: white;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
         }
 
         .onboarding-tooltip .btn-next:hover {
@@ -3574,19 +3615,102 @@
             box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
         }
 
-        /* 4. 進度指示器 */
-        .onboarding-tooltip .progress-dots {
+        .onboarding-tooltip .btn-prev {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        /* 4. 章節標題區域 */
+        .onboarding-tooltip .chapter-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .onboarding-tooltip .chapter-icon {
+            font-size: 1.25rem;
+        }
+
+        .onboarding-tooltip .chapter-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* 5. 章節進度指示器 */
+        .onboarding-tooltip .chapter-progress {
             display: flex;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 0.375rem;
             margin-top: 1rem;
-            padding-top: 1rem;
+            padding-top: 0.75rem;
             border-top: 1px solid var(--border-color);
         }
 
+        .onboarding-tooltip .chapter-dot {
+            width: 28px;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--surface-3);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .onboarding-tooltip .chapter-dot:hover {
+            background: var(--surface-2);
+        }
+
+        .onboarding-tooltip .chapter-dot.active {
+            background: var(--color-primary);
+        }
+
+        .onboarding-tooltip .chapter-dot.completed {
+            background: var(--color-success);
+        }
+
+        /* 章節提示 tooltip */
+        .onboarding-tooltip .chapter-dot::after {
+            content: attr(data-title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.25rem 0.5rem;
+            background: var(--surface-1);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.625rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .onboarding-tooltip .chapter-dot:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 6. 步驟進度點 */
+        .onboarding-tooltip .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.375rem;
+            margin-top: 0.5rem;
+        }
+
         .onboarding-tooltip .progress-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: var(--surface-3);
             transition: all 0.3s;
@@ -3594,16 +3718,63 @@
 
         .onboarding-tooltip .progress-dot.active {
             background: var(--color-primary);
-            width: 24px;
-            border-radius: 4px;
+            width: 18px;
+            border-radius: 3px;
         }
 
-        /* 5. 響應式調整 */
+        /* 7. 快捷鍵提示 */
+        .onboarding-tooltip .keyboard-hint {
+            display: none;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 0.7rem;
+            color: var(--text-placeholder);
+        }
+
+        @media (min-width: 768px) {
+            .onboarding-tooltip .keyboard-hint {
+                display: flex;
+            }
+        }
+
+        .onboarding-tooltip .keyboard-hint kbd {
+            display: inline-block;
+            padding: 0.125rem 0.375rem;
+            margin: 0 0.125rem;
+            font-size: 0.65rem;
+            font-family: var(--font-mono);
+            background: var(--surface-2);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            box-shadow: 0 1px 0 var(--border-color);
+        }
+
+        /* 8. 中央定位模式 */
+        .onboarding-tooltip.center-mode {
+            width: 400px;
+            max-width: calc(100vw - 2rem);
+        }
+
+        .onboarding-tooltip.center-mode .chapter-header {
+            text-align: center;
+            justify-content: center;
+        }
+
+        /* 9. 響應式調整 */
         @media (max-width: 640px) {
             .onboarding-tooltip {
                 width: calc(100vw - 2rem);
                 left: 1rem !important;
                 right: 1rem !important;
+            }
+
+            .onboarding-tooltip .chapter-progress {
+                gap: 0.25rem;
+            }
+
+            .onboarding-tooltip .chapter-dot {
+                width: 20px;
+                height: 5px;
             }
         }
 
@@ -3649,16 +3820,14 @@
                 border-top-right-radius: 1.5rem;
             }
 
-            /* 新增拖曳把手 */
-            #sidebar-panel::before {
-                content: '';
-                width: 40px;
-                height: 4px;
-                background: var(--border-color);
-                border-radius: 2px;
-                margin: 0.5rem auto 1rem;
-                display: block;
+            /* 標題區塊調整：移除上方空白，讓標題貼近頂部 */
+            #sidebar-panel > div:first-child {
+                padding-top: 0.75rem !important;
+                padding-bottom: 0.75rem !important;
             }
+
+            /* 移除拖曳把手（白色線條） */
+            /* #sidebar-panel::before 已移除 */
         }
 
         /* 4. 底部控制列優化 */
@@ -3780,6 +3949,14 @@
                             </svg>
                             升級 Premium
                         </button>
+                        <button id="helpBtn" data-action="startTour"
+                            class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors relative group"
+                            aria-label="開啟教學說明" title="教學說明">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                            </svg>
+                            <span class="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-slate-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">教學說明</span>
+                        </button>
                         <button id="themeToggleBtn" data-action="toggleTheme"
                             class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             aria-label="切換主題">
@@ -3811,21 +3988,39 @@
 
         <div id="notification-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
 
-        <!-- 教學引導 (Onboarding Tour) -->
+        <!-- 教學引導 (Onboarding Tour) - 增強版 -->
         <div id="onboarding-overlay" class="onboarding-overlay">
             <div class="backdrop"></div>
             <div id="onboarding-highlight" class="onboarding-highlight"></div>
             <div id="onboarding-tooltip" class="onboarding-tooltip">
-                <span class="step-badge" id="tour-step-badge">步驟 1 / 5</span>
+                <!-- 章節標題 -->
+                <div class="chapter-header" id="tour-chapter-header">
+                    <span class="chapter-icon" id="tour-chapter-icon">👋</span>
+                    <span class="chapter-title" id="tour-chapter-title">歡迎使用辯時計</span>
+                </div>
+                <!-- 步驟徽章 -->
+                <span class="step-badge" id="tour-step-badge">步驟 1 / 10</span>
                 <h4 id="tour-title">歡迎使用辯時計</h4>
                 <p id="tour-description">讓我們快速了解一下主要功能。</p>
+                <!-- 快捷鍵提示 -->
+                <div class="keyboard-hint" id="tour-keyboard-hint">
+                    <span>按 <kbd>←</kbd> <kbd>→</kbd> 或 <kbd>Enter</kbd> 導航</span>
+                </div>
                 <div class="actions">
                     <button class="btn-skip" id="tour-skip">跳過教學</button>
                     <div class="nav-buttons">
-                        <button class="btn-prev" id="tour-prev">上一步</button>
-                        <button class="btn-next" id="tour-next">下一步</button>
+                        <button class="btn-prev" id="tour-prev">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                            上一步
+                        </button>
+                        <button class="btn-next" id="tour-next">
+                            下一步
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
                     </div>
                 </div>
+                <!-- 章節進度指示器 -->
+                <div class="chapter-progress" id="tour-chapter-progress"></div>
                 <div class="progress-dots" id="tour-progress"></div>
             </div>
         </div>
@@ -3849,12 +4044,18 @@
             // --- STATE ---
             state: {
                 currentView: 'setup', // 'setup', 'nineSquare', 'editor', 'debate'
+                setupStep: 1, // 賽前設定步驟：1=辯題與賽制, 2=隊伍資訊, 3=進階設定
+                selectedFormat: '', // 選擇的賽制名稱
+                tournamentName: '', // 盃賽名稱
                 wakeLock: null,
                 positiveTeamName: "正方",
                 negativeTeamName: "反方",
                 debateTopic: "（在此輸入辯題）",
                 positiveTeamPlayers: ["正一", "正二", "正三"],
                 negativeTeamPlayers: ["反一", "反二", "反三"],
+                positiveClosingIndex: 2, // 正方結辯索引（預設正三）
+                negativeClosingIndex: 2, // 反方結辯索引（預設反三）
+                judges: ["裁判一", "裁判二", "裁判三"],
                 positiveNineSquare: {},
                 negativeNineSquare: {},
                 formatFilterTag: '全部', // 賽制標籤篩選
@@ -3900,6 +4101,13 @@
                     stage: null,
                     resolve: null,
                 },
+                currentJudgeChoice: {
+                    stage: null,
+                    resolve: null,
+                    reject: null,
+                },
+                judgeCommentOrder: [], // 裁判講評順序
+                currentJudge: null, // 當前講評的裁判
                 positiveActionCounts: { '申論': 0, '質答': 0 },
                 negativeActionCounts: { '申論': 0, '質答': 0 },
                 customGraceDuration: 60, // 預設準備時間為 60 秒
@@ -3945,6 +4153,8 @@
                 onboarding: {
                     isActive: false,
                     currentStep: 0,
+                    currentChapter: 0,
+                    mode: 'setup', // 'setup' 或 'debate' - 根據當前頁面決定教學內容
                 },
 
                 // 投影模式狀態
@@ -3960,33 +4170,203 @@
             },
 
             // --- 教學引導系統 (Onboarding Tour) ---
-            tourSteps: [
+            // 根據不同模式（賽前設定 / 比賽中）定義不同的教學內容
+            
+            // 賽前設定模式的教學章節
+            setupTourChapters: [
                 {
-                    target: '#debateTopicInput',
-                    title: '設定辯題',
-                    description: '在這裡輸入本場比賽的辯論題目，例如「我國應廢除死刑」。',
+                    id: 'welcome',
+                    title: '歡迎使用辯時計',
+                    icon: '👋',
+                    steps: [
+                        {
+                            target: null,
+                            title: '歡迎使用辯時計！',
+                            description: '這是一套專為臺灣辯論設計的計時系統。讓我們快速了解主要功能，幫助您快速上手。',
+                            position: 'center',
+                        },
+                    ]
                 },
                 {
-                    target: '#positiveTeamNameInput',
-                    title: '正方隊伍設定',
-                    description: '設定正方隊伍的名稱。您也可以選擇音訊來源，讓系統偵測辯士發言。',
+                    id: 'basic-setup',
+                    title: '基本設定',
+                    icon: '⚙️',
+                    steps: [
+                        {
+                            target: '#tournamentNameInput',
+                            title: '盃賽名稱（選填）',
+                            description: '輸入盃賽或比賽名稱，例如「大辯盃辯論比賽」。此資訊會顯示在投影畫面上。',
+                        },
+                        {
+                            target: '#debateTopicInput',
+                            title: '設定辯題',
+                            description: '在這裡輸入本場比賽的辯論題目，例如「我國應廢除死刑」。這是必填欄位。',
+                        },
+                        {
+                            target: '#formatDropdownContainer',
+                            title: '選擇比賽賽制',
+                            description: '點擊選單選擇預設的比賽流程。支援新式奧瑞岡、新加坡制等多種常見賽制，也可以建立自訂流程。',
+                        },
+                    ]
                 },
                 {
-                    target: '#negativeTeamNameInput',
-                    title: '反方隊伍設定',
-                    description: '設定反方隊伍的名稱與音訊來源，讓比賽資訊更清晰完整。',
+                    id: 'features',
+                    title: '功能介紹',
+                    icon: '✨',
+                    steps: [
+                        {
+                            target: '#hamburgerBtn',
+                            title: '控制中心',
+                            description: '點擊右上角選單按鈕可開啟控制中心，調整自動模式、語音朗讀、深淺主題等設定。',
+                        },
+                        {
+                            target: '.sticky-action-bar',
+                            title: '底部操作列',
+                            description: '這裡可以編輯流程、匯入/分享設定。點擊「下一步」進入隊伍資訊設定。',
+                            position: 'top',
+                        },
+                    ]
                 },
                 {
-                    target: '#formatDropdownContainer',
-                    title: '選擇比賽賽制',
-                    description: '點擊選單選擇預設的比賽流程，或建立自訂流程。支援多種常見賽制。',
+                    id: 'more-info',
+                    title: '更多功能',
+                    icon: '📚',
+                    steps: [
+                        {
+                            target: null,
+                            title: '隊伍與辯士設定',
+                            description: '點擊「下一步」後，可以設定正反方隊名、辯士姓名，並勾選結辯辯士。這些資訊會顯示在投影畫面上。',
+                            position: 'center',
+                        },
+                        {
+                            target: null,
+                            title: '投影模式',
+                            description: '開始比賽後，可在底部工具列啟用投影模式，開啟獨立的投影視窗，讓觀眾看到專業的計時畫面。',
+                            position: 'center',
+                        },
+                    ]
                 },
                 {
-                    target: '.btn-start-match',
-                    title: '開始比賽',
-                    description: '一切就緒後，點擊此按鈕即可開始辯論計時！祝您比賽順利！',
+                    id: 'complete',
+                    title: '教學完成',
+                    icon: '🎉',
+                    steps: [
+                        {
+                            target: '.btn-start-match',
+                            title: '準備開始！',
+                            description: '設定好辯題和賽制後，點擊「下一步」繼續設定隊伍，或使用預設值直接開始比賽。隨時可點擊右上角「？」重新查看教學。',
+                        },
+                    ]
                 },
             ],
+
+            // 比賽模式的教學章節
+            debateTourChapters: [
+                {
+                    id: 'debate-welcome',
+                    title: '比賽控制教學',
+                    icon: '🎮',
+                    steps: [
+                        {
+                            target: null,
+                            title: '比賽控制教學',
+                            description: '歡迎進入比賽模式！讓我們了解如何操控計時器和管理比賽流程。',
+                            position: 'center',
+                        },
+                    ]
+                },
+                {
+                    id: 'timer-control',
+                    title: '計時器控制',
+                    icon: '⏱️',
+                    steps: [
+                        {
+                            target: '.timer-display',
+                            title: '計時器顯示',
+                            description: '這裡顯示目前階段的剩餘時間。時間快到時會變色提醒，結束時會響鈴。',
+                        },
+                        {
+                            target: '.main-dock-bar',
+                            title: '主控制列',
+                            description: '中央的播放/暫停按鈕控制計時器。左右箭頭可跳至上一階段或下一階段。',
+                            position: 'top',
+                        },
+                    ]
+                },
+                {
+                    id: 'flow-control',
+                    title: '流程控制',
+                    icon: '📋',
+                    steps: [
+                        {
+                            target: '.flow-tracker-strip',
+                            title: '流程追蹤列',
+                            description: '這裡顯示比賽流程。可左右滑動查看所有階段，點擊任一階段可快速跳轉。',
+                        },
+                        {
+                            target: null,
+                            title: '自動模式',
+                            description: '開啟「自動模式」後，準備時間結束會自動開始計時，適合讓比賽更流暢進行。',
+                            position: 'center',
+                        },
+                    ]
+                },
+                {
+                    id: 'extra-features',
+                    title: '進階功能',
+                    icon: '✨',
+                    steps: [
+                        {
+                            target: '#dockPopupMenu',
+                            title: '更多功能選單',
+                            description: '點擊右側選單按鈕，可使用語音朗讀、畫中畫、投影模式、全螢幕等功能。',
+                            position: 'top',
+                        },
+                        {
+                            target: null,
+                            title: '復原與重設',
+                            description: '「復原」可還原上一步操作。「重設」會重新開始整場比賽。操作前請謹慎確認。',
+                            position: 'center',
+                        },
+                    ]
+                },
+                {
+                    id: 'debate-complete',
+                    title: '教學完成',
+                    icon: '🎉',
+                    steps: [
+                        {
+                            target: null,
+                            title: '準備好了！',
+                            description: '現在您已了解比賽控制的基本操作。祝您比賽順利！如需再次查看教學，請點擊右上角「？」按鈕。',
+                            position: 'center',
+                        },
+                    ]
+                },
+            ],
+
+            // 取得當前模式的教學章節
+            get tourChapters() {
+                return this.state.onboarding.mode === 'debate' 
+                    ? this.debateTourChapters 
+                    : this.setupTourChapters;
+            },
+
+            // 取得所有扁平化的步驟（向後相容）
+            get tourSteps() {
+                const steps = [];
+                this.tourChapters.forEach((chapter, chapterIndex) => {
+                    chapter.steps.forEach((step, stepIndex) => {
+                        steps.push({
+                            ...step,
+                            chapterIndex,
+                            chapterTitle: chapter.title,
+                            chapterIcon: chapter.icon,
+                        });
+                    });
+                });
+                return steps;
+            },
 
             initOnboarding() {
                 // 檢查是否為首次訪問
@@ -4002,17 +4382,42 @@
                     document.getElementById('tour-next').addEventListener('click', () => this.nextTourStep());
                     document.getElementById('tour-prev').addEventListener('click', () => this.prevTourStep());
                     document.getElementById('tour-skip').addEventListener('click', () => this.endTour());
+                    
+                    // 鍵盤導航支援
+                    this._tourKeyboardHandler = (e) => {
+                        if (!this.state.onboarding.isActive) return;
+                        if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                            e.preventDefault();
+                            this.nextTourStep();
+                        } else if (e.key === 'ArrowLeft') {
+                            e.preventDefault();
+                            this.prevTourStep();
+                        } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            this.endTour();
+                        }
+                    };
+                    document.addEventListener('keydown', this._tourKeyboardHandler);
                 }
             },
 
-            startTour() {
-                if (this.state.currentView !== 'setup') {
-                    this.showNotification('請先回到賽前設定頁面再開始教學', 'info');
-                    return;
+            startTour(forceMode = null) {
+                // 判斷教學模式
+                const currentView = this.state.currentView;
+                let mode = forceMode;
+                
+                if (!mode) {
+                    if (currentView === 'debate' || currentView === 'free_debate') {
+                        mode = 'debate';
+                    } else {
+                        mode = 'setup';
+                    }
                 }
 
+                this.state.onboarding.mode = mode;
                 this.state.onboarding.isActive = true;
                 this.state.onboarding.currentStep = 0;
+                this.state.onboarding.currentChapter = 0;
 
                 const overlay = document.getElementById('onboarding-overlay');
                 if (overlay) {
@@ -4040,8 +4445,13 @@
                     this._tourResizeHandler = null;
                 }
 
-                // 儲存已完成狀態
-                localStorage.setItem('debateTourCompleted', 'true');
+                // 根據模式儲存已完成狀態
+                const mode = this.state.onboarding.mode;
+                if (mode === 'setup') {
+                    localStorage.setItem('debateTourCompleted', 'true');
+                } else if (mode === 'debate') {
+                    localStorage.setItem('debateControlTourCompleted', 'true');
+                }
             },
 
             nextTourStep() {
@@ -4050,7 +4460,10 @@
                     this.updateTourStep();
                 } else {
                     this.endTour();
-                    this.showNotification('教學完成！開始您的第一場辯論吧！', 'success');
+                    const msg = this.state.onboarding.mode === 'debate' 
+                        ? '🎉 教學完成！祝您比賽順利！'
+                        : '🎉 教學完成！開始您的第一場辯論吧！';
+                    this.showNotification(msg, 'success');
                 }
             },
 
@@ -4059,6 +4472,18 @@
                     this.state.onboarding.currentStep--;
                     this.updateTourStep();
                 }
+            },
+
+            // 跳轉到指定章節
+            goToChapter(chapterIndex) {
+                // 找到該章節的第一個步驟
+                let stepIndex = 0;
+                for (let i = 0; i < chapterIndex; i++) {
+                    stepIndex += this.tourChapters[i].steps.length;
+                }
+                this.state.onboarding.currentStep = stepIndex;
+                this.state.onboarding.currentChapter = chapterIndex;
+                this.updateTourStep();
             },
 
             updateTourStep() {
@@ -4073,12 +4498,20 @@
                 const prevBtn = document.getElementById('tour-prev');
                 const nextBtn = document.getElementById('tour-next');
                 const progressContainer = document.getElementById('tour-progress');
+                const chapterProgress = document.getElementById('tour-chapter-progress');
+                const chapterIcon = document.getElementById('tour-chapter-icon');
+                const chapterTitle = document.getElementById('tour-chapter-title');
+                const tooltip = document.getElementById('onboarding-tooltip');
 
                 // 確保所有必要元素都存在
                 if (!stepBadge || !titleEl || !descEl || !prevBtn || !nextBtn || !progressContainer) {
                     console.error('Onboarding tour: Missing DOM elements');
                     return;
                 }
+
+                // 更新章節資訊
+                if (chapterIcon) chapterIcon.textContent = step.chapterIcon || '📚';
+                if (chapterTitle) chapterTitle.textContent = step.chapterTitle || '';
 
                 // 更新內容
                 stepBadge.textContent = `步驟 ${currentIdx + 1} / ${totalSteps}`;
@@ -4087,32 +4520,99 @@
 
                 // 更新按鈕狀態
                 prevBtn.disabled = currentIdx === 0;
-                nextBtn.textContent = currentIdx === totalSteps - 1 ? '完成' : '下一步';
+                prevBtn.style.display = currentIdx === 0 ? 'none' : 'flex';
+                
+                const isLastStep = currentIdx === totalSteps - 1;
+                nextBtn.innerHTML = isLastStep 
+                    ? '完成教學 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
+                    : '下一步 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>';
 
-                // 更新進度指示器 (使用 DOM 方法而非 innerHTML)
+                // 更新章節進度指示器
+                if (chapterProgress) {
+                    chapterProgress.innerHTML = '';
+                    this.tourChapters.forEach((chapter, i) => {
+                        const dot = document.createElement('span');
+                        const isActive = i === step.chapterIndex;
+                        const isCompleted = i < step.chapterIndex;
+                        dot.className = `chapter-dot${isActive ? ' active' : ''}${isCompleted ? ' completed' : ''}`;
+                        dot.setAttribute('data-title', chapter.title);
+                        dot.addEventListener('click', () => this.goToChapter(i));
+                        chapterProgress.appendChild(dot);
+                    });
+                }
+
+                // 更新步驟進度指示器（只顯示當前章節的步驟）
                 progressContainer.innerHTML = '';
-                this.tourSteps.forEach((_, i) => {
+                const chapterSteps = this.tourChapters[step.chapterIndex]?.steps || [];
+                const stepInChapter = this.getStepIndexInChapter(currentIdx, step.chapterIndex);
+                chapterSteps.forEach((_, i) => {
                     const dot = document.createElement('span');
-                    dot.className = `progress-dot${i === currentIdx ? ' active' : ''}`;
+                    dot.className = `progress-dot${i === stepInChapter ? ' active' : ''}`;
                     progressContainer.appendChild(dot);
                 });
 
-                // 定位高亮框和提示卡片
-                this.positionTourElements(step.target);
+                // 處理中央定位或目標元素定位
+                if (tooltip) {
+                    if (step.position === 'center' || !step.target) {
+                        tooltip.classList.add('center-mode');
+                        this.positionTourElementsCenter();
+                    } else {
+                        tooltip.classList.remove('center-mode');
+                        this.positionTourElements(step.target, step.position);
+                    }
+                }
+            },
+
+            // 取得步驟在章節內的索引
+            getStepIndexInChapter(globalStepIndex, chapterIndex) {
+                let stepsBefore = 0;
+                for (let i = 0; i < chapterIndex; i++) {
+                    stepsBefore += this.tourChapters[i].steps.length;
+                }
+                return globalStepIndex - stepsBefore;
             },
 
             // 滾動動畫延遲常數 (毫秒)
             TOUR_SCROLL_DELAY: 300,
 
-            positionTourElements(targetSelector) {
+            // 中央定位模式
+            positionTourElementsCenter() {
+                const highlight = document.getElementById('onboarding-highlight');
+                const tooltip = document.getElementById('onboarding-tooltip');
+
+                if (!tooltip) return;
+
+                // 隱藏高亮框
+                if (highlight) {
+                    highlight.style.width = '0';
+                    highlight.style.height = '0';
+                    highlight.style.boxShadow = 'none';
+                }
+
+                // 將提示卡片置中
+                const viewportHeight = window.innerHeight;
+                const viewportWidth = window.innerWidth;
+                const tooltipWidth = tooltip.offsetWidth || 400;
+                const tooltipHeight = tooltip.offsetHeight || 250;
+
+                tooltip.style.top = `${(viewportHeight - tooltipHeight) / 2}px`;
+                tooltip.style.left = `${(viewportWidth - tooltipWidth) / 2}px`;
+            },
+
+            positionTourElements(targetSelector, preferredPosition) {
                 const target = document.querySelector(targetSelector);
                 const highlight = document.getElementById('onboarding-highlight');
                 const tooltip = document.getElementById('onboarding-tooltip');
 
                 if (!target || !highlight || !tooltip) {
                     console.warn('Onboarding tour: Target element or tour elements not found', targetSelector);
+                    // 如果找不到目標，使用中央定位
+                    this.positionTourElementsCenter();
                     return;
                 }
+
+                // 恢復高亮框樣式
+                highlight.style.boxShadow = '0 0 0 4000px rgba(0, 0, 0, 0.6)';
 
                 // 滾動目標元素進入視野
                 target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4136,15 +4636,24 @@
 
                     let tooltipTop, tooltipLeft;
 
-                    // 優先嘗試放在元素下方
-                    if (rect.bottom + tooltipHeight + 20 < viewportHeight) {
-                        tooltipTop = rect.bottom + 16;
-                    } else if (rect.top - tooltipHeight - 20 > 0) {
-                        // 放在元素上方
+                    // 根據偏好位置決定放置位置
+                    if (preferredPosition === 'top') {
+                        // 強制放在元素上方
                         tooltipTop = rect.top - tooltipHeight - 16;
+                        if (tooltipTop < 20) {
+                            tooltipTop = rect.bottom + 16;
+                        }
                     } else {
-                        // 放在視窗中央
-                        tooltipTop = Math.max(20, (viewportHeight - tooltipHeight) / 2);
+                        // 優先嘗試放在元素下方
+                        if (rect.bottom + tooltipHeight + 20 < viewportHeight) {
+                            tooltipTop = rect.bottom + 16;
+                        } else if (rect.top - tooltipHeight - 20 > 0) {
+                            // 放在元素上方
+                            tooltipTop = rect.top - tooltipHeight - 16;
+                        } else {
+                            // 放在視窗中央
+                            tooltipTop = Math.max(20, (viewportHeight - tooltipHeight) / 2);
+                        }
                     }
 
                     // 水平置中對齊目標元素
@@ -4561,66 +5070,92 @@
             },
             saveState(actionName = 'unknown') {
                 try {
-                    // [關鍵優化 1] 解構出 history，絕對不要把「歷史紀錄」存進「歷史紀錄」裡！
-                    // 這避免了指數級的記憶體增長
-                    const { history, ...currentState } = this.state;
-
-                    // 2. 建立一個乾淨的副本
-                    const stateToSave = { ...currentState };
-
-                    // [關鍵優化 2] 移除所有大型物件與硬體參照 (Runtime Objects)
-                    stateToSave.wakeLock = null;
-                    stateToSave.pip = { isActive: this.state.pip.isActive, videoElement: null }; // 只存開關狀態
-                    stateToSave.sortableInstance = null;
-
-                    // 移除 VAD 實體
-                    stateToSave.audioDetection = {
-                        ...this.state.audioDetection,
-                        vad: null,
-                        stream: null,
-                        analyser: null
+                    // [關鍵修復] 完全手動建立可序列化的狀態物件
+                    // 不使用展開運算符來避免複製無法序列化的物件
+                    const stateToSave = {
+                        // 基本狀態值
+                        currentView: this.state.currentView,
+                        currentStageIndex: this.state.currentStageIndex,
+                        timeRemaining: this.state.timeRemaining,
+                        isRunning: this.state.isRunning,
+                        isPaused: this.state.isPaused,
+                        totalElapsed: this.state.totalElapsed,
+                        debateTopic: this.state.debateTopic,
+                        positiveTeamName: this.state.positiveTeamName,
+                        negativeTeamName: this.state.negativeTeamName,
+                        selectedFormat: this.state.selectedFormat,
+                        stages: JSON.parse(JSON.stringify(this.state.stages || [])),
+                        formatFilterTag: this.state.formatFilterTag,
+                        
+                        // 設定值
+                        settings: this.state.settings ? { ...this.state.settings } : {},
+                        audioSourceModes: this.state.audioSourceModes ? { ...this.state.audioSourceModes } : {},
+                        
+                        // 自由辯論狀態
+                        freeDebate: this.state.freeDebate ? {
+                            isActive: this.state.freeDebate.isActive,
+                            currentTeam: this.state.freeDebate.currentTeam,
+                            posTime: this.state.freeDebate.posTime,
+                            negTime: this.state.freeDebate.negTime,
+                            totalTime: this.state.freeDebate.totalTime
+                        } : null,
+                        
+                        // UI 狀態
+                        theme: this.state.theme,
+                        showTranscription: this.state.showTranscription,
+                        
+                        // 不可序列化的物件設為 null
+                        wakeLock: null,
+                        sortableInstance: null,
+                        pip: { isActive: this.state.pip?.isActive || false, videoElement: null },
+                        audioDetection: {
+                            isEnabled: this.state.audioDetection?.isEnabled || false,
+                            isListening: this.state.audioDetection?.isListening || false,
+                            vad: null,
+                            stream: null,
+                            analyser: null
+                        },
+                        recording: {
+                            isRecording: this.state.recording?.isRecording || false,
+                            isPaused: this.state.recording?.isPaused || false,
+                            mediaRecorder: null,
+                            mediaStream: null,
+                            micAudioTrack: null,
+                            recordedChunks: [],
+                            audioBlob: null
+                        },
+                        sharedDisplay: {
+                            isSharing: this.state.sharedDisplay?.isSharing || false,
+                            stream: null,
+                            audioTrack: null
+                        },
+                        projector: {
+                            isActive: this.state.projector?.isActive || false,
+                            mode: this.state.projector?.mode || null,
+                            channel: null,
+                            displayWindow: null,
+                            presentationConnection: null,
+                            heartbeatInterval: null,
+                            windowCheckInterval: null
+                        },
+                        
+                        // 教學狀態
+                        tour: this.state.tour ? {
+                            isActive: this.state.tour.isActive,
+                            currentStep: this.state.tour.currentStep
+                        } : { isActive: false, currentStep: 0 }
                     };
 
-                    // [關鍵優化 3] 絕對不存錄音資料，防止記憶體暴增
-                    stateToSave.recording = {
-                        ...this.state.recording,
-                        mediaRecorder: null,
-                        mediaStream: null,
-                        micAudioTrack: null,
-                        recordedChunks: [], // 清空：復原時不需要還原錄音數據
-                        audioBlob: null     // 清空：復原時不需要還原錄音檔
-                    };
-
-                    // 移除螢幕分享實體
-                    stateToSave.sharedDisplay = {
-                        ...this.state.sharedDisplay,
-                        stream: null,
-                        audioTrack: null
-                    };
-
-                    // [修復] 移除投影模式中無法複製的物件 (BroadcastChannel, Window 參照)
-                    stateToSave.projector = {
-                        ...this.state.projector,
-                        channel: null,
-                        displayWindow: null,
-                        presentationConnection: null,
-                        heartbeatInterval: null,
-                        windowCheckInterval: null
-                    };
-
-                    // 3. 安全地進行深拷貝
+                    // 安全地進行深拷貝
                     const stateSnapshot = structuredClone(stateToSave);
 
-                    // 4. 存入歷史紀錄
+                    // 存入歷史紀錄
                     this.state.history.push(stateSnapshot);
 
-                    // [關鍵優化 4] 限制歷史紀錄長度 (降為 10 步)
-                    // 對於辯論流程控制來說，10 步復原已經非常足夠
+                    // [關鍵優化] 限制歷史紀錄長度 (降為 10 步)
                     if (this.state.history.length > 10) {
                         this.state.history.shift();
                     }
-
-                    // 強制觸發垃圾回收 (雖然 JS 無法手動 GC，但設為 null 有助於標記)
                 } catch (e) {
                     console.error("Failed to save state:", e);
                 }
@@ -4863,6 +5398,12 @@
                 document.body.addEventListener('change', this.handleGlobalChange.bind(this));
                 window.addEventListener('keydown', this.handleKeyDown.bind(this));
                 
+                // 監聯辯士名稱輸入變更
+                document.body.addEventListener('input', this.handleDebaterNameInput.bind(this));
+                
+                // 監聽裁判名稱輸入變更
+                document.body.addEventListener('input', this.handleJudgeNameInput.bind(this));
+                
                 // [效能優化] 使用 passive 提升觸控/滾輪效能
                 document.body.addEventListener('touchstart', () => {}, { passive: true });
                 document.body.addEventListener('touchmove', () => {}, { passive: true });
@@ -4922,6 +5463,35 @@
                     if (this.changeActions[action]) {
                         this.changeActions[action](e);
                     }
+                }
+            },
+
+            // 處理辯士名稱輸入變更
+            handleDebaterNameInput(e) {
+                const input = e.target;
+                if (!input.classList.contains('debater-name-input')) return;
+                
+                const team = input.dataset.team;
+                const index = parseInt(input.dataset.index, 10);
+                const value = input.value.trim();
+                
+                if (team === 'positive' && index >= 0 && index < this.state.positiveTeamPlayers.length) {
+                    this.state.positiveTeamPlayers[index] = value || `正${['一', '二', '三', '四', '五'][index] || (index + 1)}`;
+                } else if (team === 'negative' && index >= 0 && index < this.state.negativeTeamPlayers.length) {
+                    this.state.negativeTeamPlayers[index] = value || `反${['一', '二', '三', '四', '五'][index] || (index + 1)}`;
+                }
+            },
+
+            // 處理裁判名稱輸入變更
+            handleJudgeNameInput(e) {
+                const input = e.target;
+                if (!input.classList.contains('judge-name-input')) return;
+                
+                const index = parseInt(input.dataset.index, 10);
+                const value = input.value.trim();
+                
+                if (index >= 0 && index < this.state.judges.length) {
+                    this.state.judges[index] = value || `裁判${['一', '二', '三', '四', '五'][index] || (index + 1)}`;
                 }
             },
 
@@ -5040,6 +5610,52 @@
 
             // --- ACTIONS ---
             actions: {
+                // 賽前設定步驟切換
+                goToSetupStep(e) {
+                    const stepEl = e.target.closest('[data-step]');
+                    if (!stepEl) return;
+                    const step = parseInt(stepEl.dataset.step, 10);
+                    if (step >= 1 && step <= 3) {
+                        App.state.setupStep = step;
+                        App.renderSetupView();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+                nextSetupStep() {
+                    // Step 1 驗證：必須選擇賽制
+                    if (App.state.setupStep === 1) {
+                        const formatSelect = document.getElementById('formatSelect');
+                        const selectedFormat = formatSelect ? formatSelect.value : '';
+                        if (!selectedFormat || selectedFormat === 'CUSTOM_EMPTY') {
+                            App.showNotification('請先選擇比賽賽制', 'warning');
+                            return;
+                        }
+                        // 保存 Step 1 的值
+                        const debateTopicInput = document.getElementById('debateTopicInput');
+                        if (debateTopicInput) {
+                            App.state.debateTopic = debateTopicInput.value.trim() || App.state.debateTopic;
+                        }
+                    }
+                    // 保存 Step 2 的值
+                    if (App.state.setupStep === 2) {
+                        App.saveSetupFormValues();
+                    }
+                    if (App.state.setupStep < 3) {
+                        App.state.setupStep++;
+                        App.renderSetupView();
+                        // 滾動到頂部
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+                prevSetupStep() {
+                    // 保存當前步驟的值
+                    App.saveSetupFormValues();
+                    if (App.state.setupStep > 1) {
+                        App.state.setupStep--;
+                        App.renderSetupView();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
                 toggleMicMute() { App.toggleMicMute(); },
                 toggleProjectorMode() { App.toggleProjectorMode(); },
                 startFreeDebate(e) {
@@ -5063,7 +5679,8 @@
                 async startDebate(e) {
                     App.state.history = [];
                     App.saveState('startDebate');
-                    const selectedFormatName = document.getElementById('formatSelect').value;
+                    // 優先使用已儲存的賽制名稱，若無則從 DOM 讀取
+                    const selectedFormatName = App.state.selectedFormat || document.getElementById('formatSelect')?.value;
 
                     if (!selectedFormatName) {
                         App.showNotification("請選擇一個比賽格式", "error");
@@ -5102,22 +5719,34 @@
                         }
                     }
 
-                    App.state.positiveTeamName = document.getElementById('positiveTeamNameInput').value.trim() || "正方";
-                    App.state.negativeTeamName = document.getElementById('negativeTeamNameInput').value.trim() || "反方";
-                    App.state.debateTopic = document.getElementById('debateTopicInput').value.trim() || "（未設定辯題）";
+                    App.state.positiveTeamName = document.getElementById('positiveTeamNameInput')?.value.trim() || App.state.positiveTeamName || "正方";
+                    App.state.negativeTeamName = document.getElementById('negativeTeamNameInput')?.value.trim() || App.state.negativeTeamName || "反方";
+                    App.state.debateTopic = document.getElementById('debateTopicInput')?.value.trim() || App.state.debateTopic || "（未設定辯題）";
+
+                    // 從辯士名稱設定區塊讀取所有賽制的辯士名稱
+                    const posDebaterInputs = Array.from(document.querySelectorAll('#positiveDebaterInputs .debater-name-input'));
+                    const negDebaterInputs = Array.from(document.querySelectorAll('#negativeDebaterInputs .debater-name-input'));
+                    
+                    if (posDebaterInputs.length > 0) {
+                        App.state.positiveTeamPlayers = posDebaterInputs.map((input, i) => 
+                            input.value.trim() || `正${['一', '二', '三', '四', '五'][i] || (i + 1)}`
+                        );
+                    }
+                    if (negDebaterInputs.length > 0) {
+                        App.state.negativeTeamPlayers = negDebaterInputs.map((input, i) => 
+                            input.value.trim() || `反${['一', '二', '三', '四', '五'][i] || (i + 1)}`
+                        );
+                    }
+                    
+                    // 從裁判名稱設定區塊讀取裁判名稱（Step 3 進階設定中）
+                    const judgeInputs = Array.from(document.querySelectorAll('#judgeInputs .judge-name-input'));
+                    if (judgeInputs.length > 0) {
+                        App.state.judges = judgeInputs.map((input, i) => 
+                            input.value.trim() || `裁判${['一', '二', '三', '四', '五'][i] || (i + 1)}`
+                        );
+                    }
 
                     if (selectedFormatName === "辯革盃 (九辯位自由排序制)") {
-                        // 修正：只從 .player-input-group 容器中選取，避免選到隱藏區塊中的重複元素
-                        const posInputs = Array.from(document.querySelectorAll('.player-input-group[data-team="positive"] .player-input'));
-                        const negInputs = Array.from(document.querySelectorAll('.player-input-group[data-team="negative"] .player-input'));
-
-                        // 如果找到輸入框，使用輸入值；否則使用預設值
-                        App.state.positiveTeamPlayers = posInputs.length > 0
-                            ? posInputs.map(i => i.value.trim() || i.placeholder)
-                            : ["正方辯士 A", "正方辯士 B", "正方辯士 C"];
-                        App.state.negativeTeamPlayers = negInputs.length > 0
-                            ? negInputs.map(i => i.value.trim() || i.placeholder)
-                            : ["反方辯士 A", "反方辯士 B", "反方辯士 C"];
                         // Reset counts for Bian-Ge-Bei
                         App.state.positiveActionCounts = { '申論': 0, '質詢': 0, '答辯': 0 };
                         App.state.negativeActionCounts = { '申論': 0, '質詢': 0, '答辯': 0 };
@@ -5132,6 +5761,9 @@
                         }
                         App.state.currentFlow = JSON.parse(JSON.stringify(format));
                         App.state.currentView = 'debate';
+                        // 重置裁判講評順序
+                        App.state.judgeCommentOrder = [];
+                        App.state.currentJudge = null;
                         App.actions.nextStage(); // Start the first stage
                     }
                     App.render();
@@ -5141,6 +5773,50 @@
                     App.clearDebateMemory();
                     App.state.currentView = 'setup';
                     App.render();
+                },
+                addDebater() {
+                    const count = App.state.positiveTeamPlayers.length;
+                    if (count >= 4) {
+                        App.showNotification('最多支援 4 位辯士', 'warning');
+                        return;
+                    }
+                    const num = count + 1;
+                    const numNames = ['一', '二', '三', '四'];
+                    App.state.positiveTeamPlayers.push(`正${numNames[count] || num}`);
+                    App.state.negativeTeamPlayers.push(`反${numNames[count] || num}`);
+                    App.render();
+                    App.showNotification(`已新增第 ${num} 位辯士`, 'success');
+                },
+                removeDebater() {
+                    if (App.state.positiveTeamPlayers.length <= 3) {
+                        App.showNotification('至少需要 3 位辯士', 'warning');
+                        return;
+                    }
+                    App.state.positiveTeamPlayers.pop();
+                    App.state.negativeTeamPlayers.pop();
+                    App.render();
+                    App.showNotification(`已移除辯士，目前 ${App.state.positiveTeamPlayers.length} 位`, 'info');
+                },
+                addJudge() {
+                    const count = App.state.judges.length;
+                    if (count >= 5) {
+                        App.showNotification('最多支援 5 位裁判', 'warning');
+                        return;
+                    }
+                    const num = count + 1;
+                    const numNames = ['一', '二', '三', '四', '五'];
+                    App.state.judges.push(`裁判${numNames[count] || num}`);
+                    App.render();
+                    App.showNotification(`已新增第 ${num} 位裁判`, 'success');
+                },
+                removeJudge() {
+                    if (App.state.judges.length <= 1) {
+                        App.showNotification('至少需要 1 位裁判', 'warning');
+                        return;
+                    }
+                    App.state.judges.pop();
+                    App.render();
+                    App.showNotification(`已移除裁判，目前 ${App.state.judges.length} 位`, 'info');
                 },
                 toggleFormatDropdown(e) {
                     e.preventDefault();
@@ -5218,6 +5894,11 @@
                     App.actions.nextStage();
                 },
                 shareFlow() {
+                    // 先保存設定頁面的表單值
+                    if (App.state.currentView === 'setup') {
+                        App.saveSetupFormValues();
+                    }
+                    
                     let flowToShare = null;
                     let flowName = "自訂流程";
 
@@ -5226,16 +5907,11 @@
                         flowToShare = App.state.currentFlow;
                         flowName = document.getElementById('editor-flow-name')?.value || '編輯中的流程';
                     } else if (App.state.currentView === 'setup') {
-                        // 情況二：如果在設定頁面，分享下拉選單中選定的流程
-                        const flowSelect = document.getElementById('formatSelect');
-                        if (!flowSelect) {
-                            App.showNotification("找不到流程選單", "error");
-                            return;
-                        }
-                        flowName = flowSelect.value;
+                        // 情況二：如果在設定頁面，優先使用已儲存的賽制名稱
+                        flowName = App.state.selectedFormat || document.getElementById('formatSelect')?.value;
 
-                        if (flowName === "CUSTOM_EMPTY") {
-                            App.showNotification("無法分享一個空白流程", "info");
+                        if (!flowName || flowName === "CUSTOM_EMPTY") {
+                            App.showNotification("請先選擇要分享的流程", "info");
                             return;
                         }
 
@@ -5476,8 +6152,13 @@
                     window.location.reload();
                 },
                 openEditor() {
-                    const selectedFormatName = document.getElementById('formatSelect').value;
-                    if (selectedFormatName === "CUSTOM_EMPTY") {
+                    // 先保存設定頁面的表單值
+                    App.saveSetupFormValues();
+                    
+                    // 優先使用已保存在 state 中的賽制，再從 DOM 取得
+                    const selectedFormatName = App.state.selectedFormat || document.getElementById('formatSelect')?.value;
+                    
+                    if (selectedFormatName === "CUSTOM_EMPTY" || !selectedFormatName) {
                         App.state.currentFlow = [];
                     } else {
                         const format = App.getDebateFormat(selectedFormatName);
@@ -5519,12 +6200,20 @@
                     }
                     // --- [結束] ---
 
+                    // 更新選擇的賽制為新儲存的流程
+                    App.state.selectedFormat = newFlowName;
+                    
                     App.state.currentView = 'setup';
                     App.render();
                     // After render, set the new value
                     setTimeout(() => {
                         const formatSelect = document.getElementById('formatSelect');
-                        if (formatSelect) formatSelect.value = newFlowName;
+                        if (formatSelect) {
+                            formatSelect.value = newFlowName;
+                            // 觸發 formatChanged 以更新 UI
+                            const event = new Event('change', { bubbles: true });
+                            formatSelect.dispatchEvent(event);
+                        }
                         App.showNotification(`流程 "${newFlowName}" 已儲存`, "success");
                     }, 0);
                 },
@@ -5710,6 +6399,120 @@
                         resolve({ selected_player: selectedPlayer, selected_action_type: selectedAction });
                     }
                     App.state.currentChoice = { stage: null, resolve: null };
+                },
+                confirmJudgeChoice(e) {
+                    const judgeIndex = parseInt(e.target.closest('[data-judge-index]').dataset.judgeIndex, 10);
+                    const { stage, resolve } = App.state.currentJudgeChoice;
+
+                    if (stage && resolve) {
+                        const judges = App.state.judges || ['裁判一', '裁判二', '裁判三'];
+                        const selectedJudge = judges[judgeIndex] || `裁判${judgeIndex + 1}`;
+                        const totalJudges = judges.length;
+                        const isFirstJudge = App.state.judgeCommentOrder.length === 0;
+                        
+                        // 記錄講評順序
+                        if (!App.state.judgeCommentOrder) {
+                            App.state.judgeCommentOrder = [];
+                        }
+                        App.state.judgeCommentOrder.push(judgeIndex);
+                        
+                        const commentedCount = App.state.judgeCommentOrder.length;
+                        const isLastJudge = commentedCount === totalJudges;
+                        
+                        // 記錄當前選擇的裁判，供後續使用
+                        App.state.currentJudge = {
+                            index: judgeIndex,
+                            name: selectedJudge
+                        };
+                        
+                        // 生成講稿
+                        let scriptToSpeak = '';
+                        let displayScript = '';
+                        
+                        if (isFirstJudge) {
+                            // 第一位裁判：包含開場白
+                            scriptToSpeak = `感謝雙方隊伍帶來一場精彩的比賽，接下來讓我們欣賞更精彩的裁判講評。首先，歡迎 ${selectedJudge} 前輩為我們講評。`;
+                            displayScript = `首先，歡迎 ${selectedJudge} 前輩為我們講評。`;
+                        } else if (isLastJudge) {
+                            // 最後一位裁判
+                            scriptToSpeak = `最後，歡迎 ${selectedJudge} 前輩為我們講評。`;
+                            displayScript = scriptToSpeak;
+                        } else {
+                            // 中間的裁判
+                            scriptToSpeak = `接著，歡迎 ${selectedJudge} 前輩為我們講評。`;
+                            displayScript = scriptToSpeak;
+                        }
+
+                        // 更新階段顯示 - 讓 renderDebateStage 處理
+                        // stageContainer 會在 speakCallback 中的 renderDebateControls 之後由 state 更新
+                        
+                        const timerStatus = document.getElementById('timerStatus');
+                        if (timerStatus) {
+                            timerStatus.textContent = `${selectedJudge} 講評中`;
+                        }
+
+                        App.actions.closeModal(e);
+
+                        // Resolve the promise to continue the process
+                        // 講稿會在 loadStage 中統一朗讀
+                        resolve({ selected_judge: selectedJudge, judge_index: judgeIndex, script: scriptToSpeak, displayScript: displayScript });
+                    }
+                    App.state.currentJudgeChoice = { stage: null, resolve: null };
+                },
+                resetJudgeCommentOrder(e) {
+                    App.state.judgeCommentOrder = [];
+                    App.state.currentJudge = null;
+                    App.showNotification('已重置裁判講評順序', 'info');
+                    
+                    // 重新顯示選擇對話框
+                    if (App.state.currentJudgeChoice && App.state.currentJudgeChoice.stage) {
+                        App.actions.closeModal(e);
+                        setTimeout(() => {
+                            App.getJudgeChoice(App.state.currentJudgeChoice.stage)
+                                .then(App.state.currentJudgeChoice.resolve)
+                                .catch(App.state.currentJudgeChoice.reject);
+                        }, 100);
+                    }
+                },
+                finishJudgeComment() {
+                    // 結束當前裁判講評，選擇下一位裁判或完成
+                    const judges = App.state.judges || ['裁判一', '裁判二', '裁判三'];
+                    const commentedCount = (App.state.judgeCommentOrder || []).length;
+                    
+                    // 清除當前裁判
+                    App.state.currentJudge = null;
+                    
+                    if (commentedCount >= judges.length) {
+                        // 所有裁判已講評完畢
+                        App.showNotification('所有裁判講評完畢！', 'success');
+                        
+                        // 如果是自動模式，延遲後自動跳到下一階段
+                        if (App.state.isAutoMode) {
+                            App.state.autoAdvanceTimeout = setTimeout(() => {
+                                App.actions.nextStage();
+                            }, 2000);
+                        } else {
+                            App.renderDebateStage();
+                        }
+                    } else {
+                        // 還有裁判未講評，顯示選擇對話框
+                        const stage = App.state.currentFlow[App.state.currentStageIndex];
+                        if (stage && stage.type === 'judge_comment') {
+                            App.getJudgeChoice(stage).then((choiceResult) => {
+                                // 朗讀講稿並重新渲染
+                                if (choiceResult && choiceResult.script) {
+                                    App.speak(choiceResult.script, () => {
+                                        App.renderDebateStage();
+                                    });
+                                } else {
+                                    App.renderDebateStage();
+                                }
+                            }).catch((e) => {
+                                console.error("Judge choice cancelled", e);
+                                App.renderDebateStage();
+                            });
+                        }
+                    }
                 },
                 startTranscription() {
                     if (App.state.speechRecognitionStatus !== 'ready' && App.state.speechRecognitionStatus !== 'active') {
@@ -5938,6 +6741,9 @@
                 restartTour() {
                     App.restartTour();
                 },
+                startTour() {
+                    App.startTour();
+                },
                 showPremiumModal() {
                     App.showNotification("開發中，敬請期待。 歡迎洽談開發團隊", "info", 5000);
                 },
@@ -6000,6 +6806,9 @@
                     }
                 },
                 showImportModal() {
+                    // 先保存設定頁面的表單值
+                    App.saveSetupFormValues();
+                    
                     App.renderModal({
                         title: '匯入流程',
                         body: `
@@ -6026,6 +6835,8 @@
                     const flowName = App.decodeFlow(encodedData);
 
                     if (flowName) {
+                        // 更新 state 中的選擇
+                        App.state.selectedFormat = flowName;
                         App.showNotification(`已成功匯入 "${flowName}"`, "success");
                         App.actions.closeModal(e); // 關閉匯入彈窗
                         App.render(); // 重新渲染設定頁面
@@ -6097,6 +6908,10 @@
                 },
                 formatChanged(e) {
                     const selectedValue = e.target.value;
+                    // 儲存選擇的賽制名稱到 state（排除空白流程選項）
+                    if (selectedValue && selectedValue !== 'CUSTOM_EMPTY') {
+                        App.state.selectedFormat = selectedValue;
+                    }
                     const isBianGeBei = selectedValue === '辯革盃 (九辯位自由排序制)';
 
                     // 更新：分別選取兩個隊伍卡片中的選手輸入區塊
@@ -6430,35 +7245,54 @@
                     // 創建下拉選單到 body - 使用 fixed 定位避免被父容器裁切
                     dropdownList = document.createElement('div');
                     dropdownList.id = 'formatDropdownListPortal';
-                    dropdownList.className = 'searchable-dropdown-list glass-dropdown py-2 rounded-xl max-h-72 overflow-y-auto';
-                    // z-index 45: 低於 header(60) 和 sticky-action-bar(50)
-                    dropdownList.style.cssText = 'position: fixed; z-index: 45; display: none;';
+                    // [行動裝置修復] 不在 class 中設定固定 max-h，改由 CSS 響應式控制
+                    dropdownList.className = 'searchable-dropdown-list glass-dropdown py-2 rounded-xl overflow-y-auto';
+                    // z-index 55: 高於 sticky-action-bar(50)，低於 header(60)
+                    // [行動裝置修復] 動態計算最大高度
+                    const isMobileDevice = window.innerWidth < 768;
+                    const maxHeight = isMobileDevice ? 'min(50vh, calc(100vh - 200px))' : '18rem';
+                    dropdownList.style.cssText = `position: fixed; z-index: 55; display: none; max-height: ${maxHeight};`;
                     document.body.appendChild(dropdownList);
                 }
 
                 // 計算位置 - 緊貼搜尋框底部
                 const updatePosition = () => {
                     const rect = searchInput.getBoundingClientRect();
+                    const isMobileDevice = window.innerWidth < 768;
+                    
+                    // [行動裝置修復] 確保選單不會超出螢幕底部
+                    const viewportHeight = window.innerHeight;
+                    const spaceBelow = viewportHeight - rect.bottom;
+                    const minBottomPadding = isMobileDevice ? 120 : 80; // 為底部按鈕列留空間
+                    
+                    // 計算可用高度
+                    const availableHeight = spaceBelow - minBottomPadding;
+                    const maxAllowedHeight = isMobileDevice ? Math.min(availableHeight, viewportHeight * 0.5) : Math.min(availableHeight, 288);
+                    
                     dropdownList.style.top = rect.bottom + 'px';
                     dropdownList.style.left = rect.left + 'px';
                     dropdownList.style.width = rect.width + 'px';
+                    dropdownList.style.maxHeight = Math.max(maxAllowedHeight, 150) + 'px'; // 最小高度 150px
                 };
 
                 updatePosition();
                 dropdownList.style.display = 'block';
 
-                // [行動裝置修復] 偵測是否為行動裝置或觸控裝置
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-                    (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
-
-                // 滾動時關閉選單（但排除選單本身的滾動）
+                // 滾動時關閉選單（但排除選單本身的滾動）- 所有裝置統一行為
                 const closeOnScroll = (e) => {
                     // 如果是在選單內部滾動，不關閉
                     if (dropdownList.contains(e.target)) return;
                     this.hideFormatDropdown();
                 };
 
-                // 桌面版：滾動時更新位置
+                // 所有裝置：滾動時關閉選單
+                dropdownList._scrollHandler = closeOnScroll;
+                window.addEventListener('scroll', closeOnScroll, { passive: true, capture: true });
+                // 監聽 touchmove 事件，確保觸控滑動時能正確關閉選單
+                dropdownList._touchMoveHandler = closeOnScroll;
+                document.addEventListener('touchmove', closeOnScroll, { passive: true });
+                
+                // 視窗大小變化時更新位置
                 const throttledUpdate = () => {
                     if (dropdownList._rafPending) return;
                     dropdownList._rafPending = true;
@@ -6467,20 +7301,6 @@
                         dropdownList._rafPending = false;
                     });
                 };
-
-                if (isMobile) {
-                    // 行動裝置：滾動或觸控滑動時關閉選單（排除選單內部）
-                    dropdownList._scrollHandler = closeOnScroll;
-                    window.addEventListener('scroll', closeOnScroll, { passive: true, capture: true });
-                    // 監聽 touchmove 事件，確保滑動時能正確關閉選單
-                    dropdownList._touchMoveHandler = closeOnScroll;
-                    document.addEventListener('touchmove', closeOnScroll, { passive: true });
-                } else {
-                    // 桌面版：滾動時更新位置
-                    dropdownList._scrollHandler = throttledUpdate;
-                    window.addEventListener('scroll', throttledUpdate, { passive: true, capture: true });
-                }
-                
                 dropdownList._resizeHandler = throttledUpdate;
                 window.addEventListener('resize', throttledUpdate, { passive: true });
 
@@ -6609,7 +7429,7 @@
                             html += `
                             <div class="searchable-dropdown-item ${isSelected}" data-value="${item.value}">
                                 <span class="searchable-dropdown-item-icon ${item.iconClass}">${item.icon}</span>
-                                <span class="truncate">${item.text}</span>
+                                <span class="dropdown-item-text">${item.text}</span>
                             </div>
                         `;
                         });
@@ -6672,6 +7492,52 @@
                 return groupName === tag;
             },
 
+            // 保存設定頁面表單值到 state
+            saveSetupFormValues() {
+                // 盃賽名稱 (Step 1)
+                const tournamentNameInput = document.getElementById('tournamentNameInput');
+                if (tournamentNameInput) {
+                    App.state.tournamentName = tournamentNameInput.value.trim();
+                }
+                // 辯題 (Step 1)
+                const debateTopicInput = document.getElementById('debateTopicInput');
+                if (debateTopicInput) {
+                    App.state.debateTopic = debateTopicInput.value.trim() || App.state.debateTopic;
+                }
+                // 隊伍名稱 (Step 2)
+                const positiveTeamNameInput = document.getElementById('positiveTeamNameInput');
+                const negativeTeamNameInput = document.getElementById('negativeTeamNameInput');
+                if (positiveTeamNameInput) {
+                    App.state.positiveTeamName = positiveTeamNameInput.value.trim() || App.state.positiveTeamName;
+                }
+                if (negativeTeamNameInput) {
+                    App.state.negativeTeamName = negativeTeamNameInput.value.trim() || App.state.negativeTeamName;
+                }
+                // 辯士名稱 (Step 2) - 只從 debaterNamesSection 區塊中讀取，避免重複
+                const debaterSection = document.getElementById('debaterNamesSection');
+                if (debaterSection) {
+                    const posDebaterInputs = Array.from(debaterSection.querySelectorAll('#positiveDebaterInputs .debater-name-input'));
+                    const negDebaterInputs = Array.from(debaterSection.querySelectorAll('#negativeDebaterInputs .debater-name-input'));
+                    if (posDebaterInputs.length > 0) {
+                        App.state.positiveTeamPlayers = posDebaterInputs.map((input, i) => 
+                            input.value.trim() || `正${['一', '二', '三', '四'][i] || (i + 1)}`
+                        );
+                    }
+                    if (negDebaterInputs.length > 0) {
+                        App.state.negativeTeamPlayers = negDebaterInputs.map((input, i) => 
+                            input.value.trim() || `反${['一', '二', '三', '四'][i] || (i + 1)}`
+                        );
+                    }
+                }
+                // 裁判名稱 (Step 3)
+                const judgeInputs = Array.from(document.querySelectorAll('#judgeInputs .judge-name-input'));
+                if (judgeInputs.length > 0) {
+                    App.state.judges = judgeInputs.map((input, i) => 
+                        input.value.trim() || App.state.judges[i] || `裁判${['一', '二', '三', '四', '五'][i] || (i + 1)}`
+                    );
+                }
+            },
+
             renderSetupView() {
                 try {
                     const savedCustomFlows = localStorage.getItem('customDebateFlows');
@@ -6703,38 +7569,54 @@
                 }
 
                 const speechDetectionChecked = this.state.enableSpeechDetection ? 'checked' : '';
+                const currentStep = this.state.setupStep || 1;
+                
+                // 進度指示器的樣式函數
+                const getStepClass = (step) => {
+                    if (step < currentStep) return 'bg-green-500 text-white cursor-pointer hover:bg-green-600'; // 已完成
+                    if (step === currentStep) return 'bg-indigo-500 text-white'; // 當前
+                    return 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-400'; // 未完成
+                };
+                const getStepTextClass = (step) => {
+                    if (step === currentStep) return 'text-indigo-600 dark:text-indigo-400 font-medium';
+                    return 'text-slate-500';
+                };
+                const getLineClass = (beforeStep) => {
+                    return beforeStep < currentStep ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600';
+                };
 
                 this.mainContent.innerHTML = `
                 <div class="setup-container w-full max-w-4xl mx-auto animate-fade-in-up px-4 md:px-0 pb-32">
                     <!-- 頁面標題 -->
-                    <div class="setup-header mb-8 text-center">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white mb-4 shadow-lg shadow-indigo-500/30">
-                            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                        </div>
-                        <h2 class="text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">賽前設定</h2>
-                        <p class="text-slate-500 mt-2">完成以下設定，準備開始一場精彩的思辨對決</p>
+                    <div class="setup-header mb-6 text-center">
+                        <h2 class="text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">賽前設定</h2>
                     </div>
 
-                    <!-- 進度指示器 -->
+                    <!-- 進度指示器 (可點擊) -->
                     <div class="flex items-center justify-center gap-2 mb-8">
-                        <div class="flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm font-bold">1</span>
-                            <span class="text-sm font-medium text-indigo-600">辯題與賽制</span>
-                        </div>
-                        <div class="w-8 h-0.5 bg-slate-300 dark:bg-slate-600"></div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300 flex items-center justify-center text-sm font-bold">2</span>
-                            <span class="text-sm text-slate-500">隊伍資訊</span>
-                        </div>
-                        <div class="w-8 h-0.5 bg-slate-300 dark:bg-slate-600"></div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300 flex items-center justify-center text-sm font-bold">3</span>
-                            <span class="text-sm text-slate-500">進階設定</span>
-                        </div>
+                        <button data-action="goToSetupStep" data-step="1" class="flex items-center gap-2 transition-all ${currentStep === 1 ? '' : 'opacity-80 hover:opacity-100'}">
+                            <span class="w-8 h-8 rounded-full ${getStepClass(1)} flex items-center justify-center text-sm font-bold transition-colors">
+                                ${1 < currentStep ? '✓' : '1'}
+                            </span>
+                            <span class="text-sm ${getStepTextClass(1)} hidden sm:inline">辯題與賽制</span>
+                        </button>
+                        <div class="w-6 sm:w-10 h-0.5 ${getLineClass(1)} transition-colors"></div>
+                        <button data-action="goToSetupStep" data-step="2" class="flex items-center gap-2 transition-all ${currentStep === 2 ? '' : 'opacity-80 hover:opacity-100'}">
+                            <span class="w-8 h-8 rounded-full ${getStepClass(2)} flex items-center justify-center text-sm font-bold transition-colors">
+                                ${2 < currentStep ? '✓' : '2'}
+                            </span>
+                            <span class="text-sm ${getStepTextClass(2)} hidden sm:inline">隊伍資訊</span>
+                        </button>
+                        <div class="w-6 sm:w-10 h-0.5 ${getLineClass(2)} transition-colors"></div>
+                        <button data-action="goToSetupStep" data-step="3" class="flex items-center gap-2 transition-all ${currentStep === 3 ? '' : 'opacity-80 hover:opacity-100'}">
+                            <span class="w-8 h-8 rounded-full ${getStepClass(3)} flex items-center justify-center text-sm font-bold transition-colors">3</span>
+                            <span class="text-sm ${getStepTextClass(3)} hidden sm:inline">確認開始</span>
+                        </button>
                     </div>
 
                     <div class="space-y-6">
-                        <!-- 第一區塊：辯題與賽制 -->
+                        <!-- Step 1：辯題與賽制 -->
+                        ${currentStep === 1 ? `
                         <div class="glass-panel p-6 md:p-8 relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                             <div class="flex items-center gap-3 mb-6">
@@ -6742,12 +7624,26 @@
                                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
                                 </span>
                                 <div>
-                                    <h3 class="text-lg font-bold text-[var(--text-main)]">辯題與賽制</h3>
+                                    <h3 class="text-lg font-bold text-[var(--text-main)]">Step 1：辯題與賽制</h3>
                                     <p class="text-xs text-slate-500">設定本場比賽的核心議題與進行方式</p>
                                 </div>
                             </div>
                             
                             <div class="space-y-6">
+                                <!-- 盃賽名稱輸入 -->
+                                <div>
+                                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                        <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                                        盃賽名稱 <span class="text-xs text-slate-400 font-normal">(選填)</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" id="tournamentNameInput" class="modern-input text-base pr-10" placeholder="例如：大辯盃辯論比賽" value="${this.state.tournamentName || ''}">
+                                        <button type="button" id="clearTournamentBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" title="清除">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                
                                 <!-- 辯題輸入 -->
                                 <div>
                                     <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
@@ -6814,149 +7710,238 @@
                                 </div>
                             </div>
                         </div>
+                        ` : ''}
 
-                        <!-- 第二區塊：隊伍設定 -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- 正方 -->
-                            <div class="glass-panel p-5 relative overflow-hidden group hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300">
-                                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
-                                <div class="absolute -right-8 -top-8 w-24 h-24 bg-green-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                                
-                                <div class="flex items-center gap-3 mb-4">
-                                    <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30">
-                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                                    </span>
-                                    <div>
-                                        <h3 class="text-base font-bold text-green-600">正方隊伍</h3>
-                                        <p class="text-xs text-slate-500">支持命題方</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-3">
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">隊伍名稱</label>
-                                        <input type="text" id="positiveTeamNameInput" class="modern-input font-semibold text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 focus:border-green-500 focus:ring-green-500/20" value="${this.state.positiveTeamName}" placeholder="輸入正方隊名">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">音訊來源</label>
-                                        <select id="positiveAudioSource" data-change-action="setTeamAudioSource" data-team="positive" class="modern-input text-sm w-full">
-                                            <option value="microphone" ${this.state.audioSourceModes.positive === 'microphone' ? 'selected' : ''}>🎤 實體麥克風</option>
-                                            <option value="display" ${this.state.audioSourceModes.positive === 'display' ? 'selected' : ''}>🖥️ 線上音訊</option>
-                                        </select>
-                                    </div>
-                                    <div class="player-input-group space-y-2" data-team="positive" style="display:none"></div>
+                        <!-- Step 2：隊伍資訊 -->
+                        ${currentStep === 2 ? `
+                        <div class="glass-panel p-6 md:p-8 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-red-500"></div>
+                            <div class="flex items-center gap-3 mb-6">
+                                <span class="p-2.5 rounded-xl bg-gradient-to-br from-green-500/20 to-red-500/20 text-emerald-500">
+                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                </span>
+                                <div>
+                                    <h3 class="text-lg font-bold text-[var(--text-main)]">Step 2：隊伍資訊</h3>
+                                    <p class="text-xs text-slate-500">設定正反方隊伍名稱與辯士</p>
                                 </div>
                             </div>
                             
+                        <!-- 隊伍名稱 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <!-- 正方 -->
+                            <div class="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-8 h-8 rounded-lg bg-green-500 text-white flex items-center justify-center text-sm font-bold">正</span>
+                                    <span class="font-bold text-green-700 dark:text-green-400">正方隊伍</span>
+                                </div>
+                                <input type="text" id="positiveTeamNameInput" class="modern-input font-semibold text-green-700 dark:text-green-400 border-green-300 dark:border-green-700" value="${this.state.positiveTeamName}" placeholder="輸入正方隊名">
+                            </div>
                             <!-- 反方 -->
-                            <div class="glass-panel p-5 relative overflow-hidden group hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300">
-                                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 to-rose-500"></div>
-                                <div class="absolute -right-8 -top-8 w-24 h-24 bg-red-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                                
-                                <div class="flex items-center gap-3 mb-4">
-                                    <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-400 to-rose-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
-                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" /></svg>
-                                    </span>
-                                    <div>
-                                        <h3 class="text-base font-bold text-red-500">反方隊伍</h3>
-                                        <p class="text-xs text-slate-500">反對命題方</p>
-                                    </div>
+                            <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-8 h-8 rounded-lg bg-red-500 text-white flex items-center justify-center text-sm font-bold">反</span>
+                                    <span class="font-bold text-red-700 dark:text-red-400">反方隊伍</span>
                                 </div>
-                                
-                                <div class="space-y-3">
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">隊伍名稱</label>
-                                        <input type="text" id="negativeTeamNameInput" class="modern-input font-semibold text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 focus:border-red-500 focus:ring-red-500/20" value="${this.state.negativeTeamName}" placeholder="輸入反方隊名">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">音訊來源</label>
-                                        <select id="negativeAudioSource" data-change-action="setTeamAudioSource" data-team="negative" class="modern-input text-sm w-full">
-                                            <option value="microphone" ${this.state.audioSourceModes.negative === 'microphone' ? 'selected' : ''}>🎤 實體麥克風</option>
-                                            <option value="display" ${this.state.audioSourceModes.negative === 'display' ? 'selected' : ''}>🖥️ 線上音訊</option>
-                                        </select>
-                                    </div>
-                                    <div class="player-input-group space-y-2" data-team="negative" style="display:none"></div>
-                                </div>
+                                <input type="text" id="negativeTeamNameInput" class="modern-input font-semibold text-red-700 dark:text-red-400 border-red-300 dark:border-red-700" value="${this.state.negativeTeamName}" placeholder="輸入反方隊名">
                             </div>
                         </div>
+                        
+                        <!-- 辯士名稱 -->
+                        <div class="border-t border-[var(--border-color)] pt-6">
+                            <h4 class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                辯士名稱設定
+                                <span class="text-xs text-slate-400 font-normal ml-2">（勾選結辯者）</span>
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- 正方辯士 -->
+                                <div>
+                                    <div class="text-xs font-medium text-green-600 dark:text-green-400 mb-2">正方辯士</div>
+                                    <div id="positiveDebaterInputs" class="space-y-2">
+                                        ${this.state.positiveTeamPlayers.map((p, i) => `
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" 
+                                                    class="debater-name-input modern-input text-sm flex-1 border-green-200 dark:border-green-800" 
+                                                    data-team="positive" 
+                                                    data-index="${i}"
+                                                    placeholder="正方辯士 ${i + 1}" 
+                                                    value="${p}">
+                                                <label class="flex items-center gap-1 cursor-pointer select-none" title="設為結辯">
+                                                    <input type="radio" 
+                                                        name="positiveClosing" 
+                                                        class="closing-radio w-4 h-4 text-green-600 accent-green-600" 
+                                                        data-team="positive" 
+                                                        data-index="${i}"
+                                                        ${this.state.positiveClosingIndex === i ? 'checked' : ''}>
+                                                    <span class="text-xs text-green-600 dark:text-green-400 font-medium">結</span>
+                                                </label>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <!-- 反方辯士 -->
+                                <div>
+                                    <div class="text-xs font-medium text-red-600 dark:text-red-400 mb-2">反方辯士</div>
+                                    <div id="negativeDebaterInputs" class="space-y-2">
+                                        ${this.state.negativeTeamPlayers.map((p, i) => `
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" 
+                                                    class="debater-name-input modern-input text-sm flex-1 border-red-200 dark:border-red-800" 
+                                                    data-team="negative" 
+                                                    data-index="${i}"
+                                                    placeholder="反方辯士 ${i + 1}" 
+                                                    value="${p}">
+                                                <label class="flex items-center gap-1 cursor-pointer select-none" title="設為結辯">
+                                                    <input type="radio" 
+                                                        name="negativeClosing" 
+                                                        class="closing-radio w-4 h-4 text-red-600 accent-red-600" 
+                                                        data-team="negative" 
+                                                        data-index="${i}"
+                                                        ${this.state.negativeClosingIndex === i ? 'checked' : ''}>
+                                                    <span class="text-xs text-red-600 dark:text-red-400 font-medium">結</span>
+                                                </label>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 新增/移除辯士按鈕 -->
+                            <div class="flex items-center justify-center gap-3 mt-4 pt-4 border-t border-[var(--border-color)]">
+                                <button type="button" data-action="addDebater" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg transition-colors ${this.state.positiveTeamPlayers.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                    新增辯士
+                                </button>
+                                <button type="button" data-action="removeDebater" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 rounded-lg transition-colors ${this.state.positiveTeamPlayers.length <= 3 ? 'opacity-50 cursor-not-allowed' : ''}">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+                                    移除辯士
+                                </button>
+                                <span class="text-xs text-slate-400">目前：${this.state.positiveTeamPlayers.length} 位</span>
+                            </div>
+                        </div>
+                        </div>
+                        ` : ''}
 
-                        <!-- 第三區塊：進階設定 (可收合) -->
+                        <!-- Step 3：確認與進階設定 -->
+                        ${currentStep === 3 ? `
+                        <!-- 設定摘要 -->
+                        <div class="glass-panel p-6 md:p-8 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+                            <div class="flex items-center gap-3 mb-6">
+                                <span class="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-500">
+                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                                <div>
+                                    <h3 class="text-lg font-bold text-[var(--text-main)]">Step 3：確認設定</h3>
+                                    <p class="text-xs text-slate-500">檢查設定並開始比賽</p>
+                                </div>
+                            </div>
+                            
+                            <!-- 摘要卡片 -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                ${this.state.tournamentName ? `
+                                <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 md:col-span-2">
+                                    <div class="text-xs text-amber-600 dark:text-amber-400 mb-1">盃賽名稱</div>
+                                    <div class="font-bold text-amber-700 dark:text-amber-300">${this.state.tournamentName}</div>
+                                </div>
+                                ` : ''}
+                                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                                    <div class="text-xs text-slate-500 mb-1">辯題</div>
+                                    <div class="font-bold text-[var(--text-main)] line-clamp-2">${this.state.debateTopic || '（未設定）'}</div>
+                                </div>
+                                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                                    <div class="text-xs text-slate-500 mb-1">賽制</div>
+                                    <div class="font-bold text-[var(--text-main)]">${this.state.selectedFormat && this.state.selectedFormat !== 'CUSTOM_EMPTY' ? this.state.selectedFormat : '（未選擇）'}</div>
+                                </div>
+                                <div class="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                                    <div class="text-xs text-green-600 dark:text-green-400 mb-1">正方</div>
+                                    <div class="font-bold text-green-700 dark:text-green-300">${this.state.positiveTeamName}</div>
+                                    <div class="text-xs text-slate-500 mt-1">${this.state.positiveTeamPlayers.join('、')}</div>
+                                </div>
+                                <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                                    <div class="text-xs text-red-600 dark:text-red-400 mb-1">反方</div>
+                                    <div class="font-bold text-red-700 dark:text-red-300">${this.state.negativeTeamName}</div>
+                                    <div class="text-xs text-slate-500 mt-1">${this.state.negativeTeamPlayers.join('、')}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 隱藏的 select 用於保持賽制選擇 -->
+                            <select id="formatSelect" data-change-action="formatChanged" class="hidden">
+                                ${formatOptions}
+                            </select>
+                        </div>
+
+                        <!-- 進階設定 (可收合) -->
                         <details class="glass-panel overflow-hidden group" open>
                             <summary class="p-5 cursor-pointer select-none flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                 <div class="flex items-center gap-3">
-                                    <span class="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-500">
+                                    <span class="p-2.5 rounded-xl bg-gradient-to-br from-slate-500/20 to-gray-500/20 text-slate-500">
                                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                                     </span>
                                     <div>
-                                        <h3 class="text-base font-bold text-[var(--text-main)]">進階設定</h3>
-                                        <p class="text-xs text-slate-500">自動計時、緩衝時間等</p>
+                                        <h3 class="text-sm font-bold text-[var(--text-main)]">進階設定（選填）</h3>
+                                        <p class="text-xs text-slate-500">裁判、緩衝時間等</p>
                                     </div>
                                 </div>
                                 <svg class="w-5 h-5 text-slate-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </summary>
-                            
-                            <div class="px-5 pb-5 pt-2 border-t border-[var(--border-color)]">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <!-- 準備時間偵測 -->
-                                    <div class="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                                        <div class="flex items-center gap-3">
-                                            <span class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-500 flex items-center justify-center">
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                            </span>
-                                            <div>
-                                                <span class="font-semibold text-sm block">準備時間偵測</span>
-                                                <span class="text-xs text-slate-500">自動偵測開始發言</span>
-                                            </div>
+                            <div class="px-5 pb-5 pt-2 border-t border-[var(--border-color)] space-y-4">
+                                <!-- 裁判名稱 -->
+                                <div>
+                                    <div class="text-xs font-medium text-violet-600 dark:text-violet-400 mb-2 flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
+                                        裁判名稱
+                                    </div>
+                                    <div id="judgeInputs" class="grid grid-cols-3 gap-2">
+                                        ${this.state.judges.map((j, i) => `
+                                            <input type="text" class="judge-name-input modern-input text-sm border-violet-200 dark:border-violet-800" data-index="${i}" placeholder="裁判 ${i + 1}" value="${j}">
+                                        `).join('')}
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <button type="button" data-action="addJudge" class="text-xs text-emerald-600 hover:underline ${this.state.judges.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}">+ 新增</button>
+                                        <button type="button" data-action="removeJudge" class="text-xs text-rose-600 hover:underline ${this.state.judges.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">- 移除</button>
+                                    </div>
+                                </div>
+                                <!-- 其他設定 -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-[var(--border-color)]">
+                                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-medium">準備時間偵測</span>
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" ${speechDetectionChecked} data-change-action="toggleSpeechDetection" class="sr-only peer">
-                                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                                            <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
                                         </label>
                                     </div>
-
-                                    <!-- 發言緩衝秒數 -->
-                                    <div class="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                                        <div class="flex items-center gap-3">
-                                            <span class="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-500 flex items-center justify-center">
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            </span>
-                                            <div>
-                                                <span class="font-semibold text-sm block">緩衝秒數</span>
-                                                <span class="text-xs text-slate-500">上台準備時間</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-1.5 bg-white dark:bg-slate-700 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-600">
-                                            <input type="number" data-change-action="setGraceDuration" class="bg-transparent w-12 text-center font-mono font-bold text-lg focus:outline-none" value="${this.state.customGraceDuration}" min="0" max="300">
-                                            <span class="text-xs text-slate-500 font-medium">秒</span>
+                                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                                        <span class="text-sm font-medium">緩衝秒數</span>
+                                        <div class="flex items-center gap-1 bg-white dark:bg-slate-700 rounded px-2 py-1 border">
+                                            <input type="number" data-change-action="setGraceDuration" class="bg-transparent w-10 text-center font-mono font-bold focus:outline-none" value="${this.state.customGraceDuration}" min="0" max="300">
+                                            <span class="text-xs text-slate-500">秒</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </details>
+                        ` : ''}
                         
-                        <!-- 快速提示卡片 -->
-                        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-800/30">
-                            <div class="flex items-start gap-3">
-                                <span class="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                </span>
-                                <div>
-                                    <h4 class="font-semibold text-sm text-indigo-700 dark:text-indigo-300">快速開始小提示</h4>
-                                    <p class="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-1">設定完成後，點擊右下角「開始比賽」按鈕即可開始計時。比賽過程中可隨時暫停或調整。</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="playersSectionHidden" style="display:none">
-                        ${this.state.positiveTeamPlayers.map((p, i) => `<input type="text" class="player-input modern-input text-sm" data-team="positive" placeholder="正方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
-                        |
-                        ${this.state.negativeTeamPlayers.map((p, i) => `<input type="text" class="player-input modern-input text-sm" data-team="negative" placeholder="反方辯士 ${String.fromCharCode(65 + i)}" value="${p}">`).join('')}
+                        <!-- 隱藏的 select 用於 Step 1 和 2 保持賽制選擇 -->
+                        ${currentStep !== 3 ? `
+                        <select id="formatSelect" data-change-action="formatChanged" class="hidden">
+                            ${formatOptions}
+                        </select>
+                        ` : ''}
                     </div>
                 </div>
 
                 <div class="sticky-action-bar animate-fade-in-up">
+                    <!-- 左側按鈕組 -->
                     <div class="flex gap-1">
+                        ${currentStep > 1 ? `
+                        <button data-action="prevSetupStep" class="flex items-center gap-1.5 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                            <span class="text-sm font-medium">上一步</span>
+                        </button>
+                        ` : ''}
                         <button data-action="openEditor" class="btn-icon-label hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-xl px-3 py-2 transition-all">
                             <svg class="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             <span class="text-xs">編輯流程</span>
@@ -6970,21 +7955,20 @@
                             <span class="text-xs">分享</span>
                         </button>
                     </div>
+                    <!-- 右側主按鈕 -->
+                    ${currentStep < 3 ? `
+                    <button data-action="nextSetupStep" class="btn-start-match flex items-center gap-2 group">
+                        <span>下一步</span>
+                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    ` : `
                     <button data-action="startDebate" class="btn-start-match flex items-center gap-2 group">
                         <span>開始比賽</span>
                         <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                     </button>
+                    `}
                 </div>
             `;
-
-                const hiddenSection = document.getElementById('playersSectionHidden');
-                if (hiddenSection) {
-                    const inputs = hiddenSection.innerHTML.split('|');
-                    const posContainer = document.querySelector('.player-input-group[data-team="positive"]');
-                    const negContainer = document.querySelector('.player-input-group[data-team="negative"]');
-                    if (posContainer && inputs[0]) posContainer.innerHTML = inputs[0];
-                    if (negContainer && inputs[1]) negContainer.innerHTML = inputs[1];
-                }
 
                 if (this.state.pendingSharedFlow) {
                     setTimeout(() => {
@@ -7007,6 +7991,21 @@
                 // 初始化搜尋功能
                 this.initFormatSearch();
 
+                // 清除盃賽名稱按鈕
+                const clearTournamentBtn = document.getElementById('clearTournamentBtn');
+                const tournamentNameInput = document.getElementById('tournamentNameInput');
+                if (clearTournamentBtn && tournamentNameInput) {
+                    clearTournamentBtn.addEventListener('click', () => {
+                        tournamentNameInput.value = '';
+                        tournamentNameInput.focus();
+                    });
+                    // 即時同步到 state 並發送到投影模式
+                    tournamentNameInput.addEventListener('input', () => {
+                        App.state.tournamentName = tournamentNameInput.value.trim();
+                        App.sendProjectorUpdate();
+                    });
+                }
+
                 // 清除辯題按鈕
                 const clearTopicBtn = document.getElementById('clearTopicBtn');
                 const debateTopicInput = document.getElementById('debateTopicInput');
@@ -7015,7 +8014,61 @@
                         debateTopicInput.value = '';
                         debateTopicInput.focus();
                     });
+                    // 即時同步到 state 並發送到投影模式
+                    debateTopicInput.addEventListener('input', () => {
+                        App.state.debateTopic = debateTopicInput.value.trim();
+                        App.sendProjectorUpdate();
+                    });
                 }
+                
+                // 隊名輸入即時同步到投影模式
+                const positiveTeamNameInput = document.getElementById('positiveTeamNameInput');
+                if (positiveTeamNameInput) {
+                    positiveTeamNameInput.addEventListener('input', () => {
+                        App.state.positiveTeamName = positiveTeamNameInput.value.trim() || App.state.positiveTeamName;
+                        App.sendProjectorUpdate();
+                    });
+                }
+                const negativeTeamNameInput = document.getElementById('negativeTeamNameInput');
+                if (negativeTeamNameInput) {
+                    negativeTeamNameInput.addEventListener('input', () => {
+                        App.state.negativeTeamName = negativeTeamNameInput.value.trim() || App.state.negativeTeamName;
+                        App.sendProjectorUpdate();
+                    });
+                }
+                
+                // 辯手名稱輸入即時同步到投影模式
+                const debaterInputs = document.querySelectorAll('.debater-name-input');
+                debaterInputs.forEach(input => {
+                    input.addEventListener('input', () => {
+                        const team = input.dataset.team;
+                        const index = parseInt(input.dataset.index);
+                        const value = input.value.trim();
+                        
+                        if (team === 'positive' && App.state.positiveTeamPlayers[index] !== undefined) {
+                            App.state.positiveTeamPlayers[index] = value || `正${['一', '二', '三', '四'][index] || (index + 1)}`;
+                        } else if (team === 'negative' && App.state.negativeTeamPlayers[index] !== undefined) {
+                            App.state.negativeTeamPlayers[index] = value || `反${['一', '二', '三', '四'][index] || (index + 1)}`;
+                        }
+                        App.sendProjectorUpdate();
+                    });
+                });
+                
+                // 結辯勾選即時同步到投影模式
+                const closingRadios = document.querySelectorAll('.closing-radio');
+                closingRadios.forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        const team = radio.dataset.team;
+                        const index = parseInt(radio.dataset.index);
+                        
+                        if (team === 'positive') {
+                            App.state.positiveClosingIndex = index;
+                        } else if (team === 'negative') {
+                            App.state.negativeClosingIndex = index;
+                        }
+                        App.sendProjectorUpdate();
+                    });
+                });
             },
 
             renderNineSquareGridView() {
@@ -7741,7 +8794,67 @@
                 if (timerState === 'warning') timerStateClass += ' state-warning';
                 if (timerState === 'danger') timerStateClass += ' state-danger';
 
-                if (stage.type === 'draw_rebuttal_order') {
+                if (stage.type === 'judge_comment') {
+                    // 裁判講評：無計時器顯示
+                    const judges = this.state.judges || ['裁判一', '裁判二', '裁判三'];
+                    const commentedCount = (this.state.judgeCommentOrder || []).length;
+                    const currentJudge = this.state.currentJudge;
+                    const allDone = commentedCount >= judges.length;
+                    
+                    let judgeDisplay = '';
+                    let actionButtons = '';
+                    
+                    if (allDone) {
+                        judgeDisplay = `
+                            <div class="text-lg text-slate-500 mb-2">講評完畢</div>
+                            <div class="text-4xl font-black bg-gradient-to-r from-violet-500 to-purple-500 bg-clip-text text-transparent">✅</div>
+                            <div class="text-xl font-bold text-[var(--text-main)] mt-2">所有裁判已講評</div>
+                        `;
+                        actionButtons = `
+                            <div class="mt-6">
+                                <button data-action="nextStage" class="px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-xl shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-105 transition-all font-bold text-lg">
+                                    繼續下一階段 →
+                                </button>
+                            </div>
+                        `;
+                    } else if (currentJudge) {
+                        judgeDisplay = `
+                            <div class="text-lg text-slate-500 mb-2">正在講評</div>
+                            <div class="text-4xl font-black bg-gradient-to-r from-violet-500 to-purple-500 bg-clip-text text-transparent">${currentJudge.name}</div>
+                            <div class="text-xl font-bold text-[var(--text-main)] mt-2">第 ${commentedCount} / ${judges.length} 位</div>
+                        `;
+                        // 顯示結束講評按鈕
+                        const nextJudgeText = commentedCount < judges.length ? '選擇下一位裁判' : '完成所有講評';
+                        actionButtons = `
+                            <div class="mt-6">
+                                <button data-action="finishJudgeComment" class="px-10 py-5 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-xl shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-105 transition-all font-bold text-xl flex items-center gap-3 mx-auto">
+                                    <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    結束講評
+                                </button>
+                                <p class="text-sm text-slate-400 mt-3">${nextJudgeText}</p>
+                            </div>
+                        `;
+                    } else {
+                        judgeDisplay = `
+                            <div class="text-lg text-slate-500 mb-2">等待選擇</div>
+                            <div class="text-6xl font-black text-violet-400">🎓</div>
+                            <div class="text-xl font-bold text-[var(--text-main)] mt-2">請選擇裁判</div>
+                        `;
+                    }
+                    
+                    timerContent = `
+                <div class="glass-panel hero-timer-card text-center flex-grow rounded-3xl">
+                    <div class="flex items-center justify-center gap-3 mb-6">
+                        <span class="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-violet-500/30">🎓</span>
+                        <h3 class="text-2xl font-black text-[var(--text-main)]">裁判講評</h3>
+                    </div>
+                    <div class="py-4">${judgeDisplay}</div>
+                    ${actionButtons}
+                    <div class="mt-4 text-sm text-slate-500">
+                        ${commentedCount > 0 ? `已講評：${this.state.judgeCommentOrder.map(i => judges[i]).join(' → ')}` : '尚未開始講評'}
+                    </div>
+                </div>`;
+                } else if (stage.type === 'draw_rebuttal_order') {
                     timerContent = `
                 <div class="glass-panel hero-timer-card text-center flex-grow rounded-3xl">
                     <div class="flex items-center justify-center gap-3 mb-6">
@@ -7827,21 +8940,72 @@
                     'announcement': '主席宣告',
                     'choice_speech': '選擇階段',
                     'free_debate': '自由辯論',
-                    'draw_rebuttal_order': '抽籤'
+                    'draw_rebuttal_order': '抽籤',
+                    'judge_comment': '裁判講評'
                 };
 
-                stageContainer.innerHTML = `
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
-                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent opacity-50"></div>
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-wider">${stageTypeLabel[stage.type] || '階段'}</span>
-                    </div>
-                    <h3 class="font-bold text-lg text-[var(--text-main)] mb-2">${this.interpolateScript(stage.name)}</h3>
-                    <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">${this.interpolateScript(stage.script || stage.baseScript || '無講稿')}</p>
-                </div>
-            </div>
-        `;
+                // 裁判講評階段：顯示特殊提示
+                if (stage.type === 'judge_comment') {
+                    const judges = this.state.judges || ['裁判一', '裁判二', '裁判三'];
+                    const commentedCount = (this.state.judgeCommentOrder || []).length;
+                    const allDone = commentedCount >= judges.length;
+                    
+                    if (allDone) {
+                        // 所有裁判都講評完畢
+                        const orderedNames = this.state.judgeCommentOrder.map(i => judges[i]).join(' → ');
+                        stageContainer.innerHTML = `
+                            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
+                                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50"></div>
+                                <div class="flex flex-col gap-2 text-center">
+                                    <div class="text-4xl mb-2">✅</div>
+                                    <h3 class="font-bold text-lg text-[var(--text-main)] mb-2">裁判講評完畢</h3>
+                                    <p class="text-slate-600 dark:text-slate-300 text-sm">講評順序：${orderedNames}</p>
+                                </div>
+                            </div>
+                        `;
+                    } else if (this.state.currentJudge) {
+                        // 已選擇裁判，正在講評中
+                        const judge = this.state.currentJudge;
+                        const orderText = commentedCount === 1 ? '第一位' : (commentedCount === judges.length ? '最後一位' : `第 ${commentedCount} 位`);
+                        stageContainer.innerHTML = `
+                            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
+                                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50"></div>
+                                <div class="flex flex-col gap-2 text-center">
+                                    <div class="text-4xl mb-2">🎓</div>
+                                    <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wider">裁判講評</span>
+                                    <h3 class="font-bold text-xl text-violet-600 dark:text-violet-400 mb-2">${judge.name} 講評中</h3>
+                                    <p class="text-slate-500 text-sm">講評順序：${orderText}（共 ${judges.length} 位裁判）</p>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 尚未選擇裁判
+                        stageContainer.innerHTML = `
+                            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
+                                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50"></div>
+                                <div class="flex flex-col gap-2 text-center">
+                                    <div class="text-4xl mb-2">🎓</div>
+                                    <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wider">裁判講評</span>
+                                    <h3 class="font-bold text-lg text-[var(--text-main)] mb-2">請選擇裁判講評順序</h3>
+                                    <p class="text-slate-600 dark:text-slate-300 text-sm">共 ${judges.length} 位裁判等待講評</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    stageContainer.innerHTML = `
+                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
+                            <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent opacity-50"></div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-wider">${stageTypeLabel[stage.type] || '階段'}</span>
+                                </div>
+                                <h3 class="font-bold text-lg text-[var(--text-main)] mb-2">${this.interpolateScript(stage.name)}</h3>
+                                <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">${this.interpolateScript(stage.script || stage.baseScript || '無講稿')}</p>
+                            </div>
+                        </div>
+                    `;
+                }
 
                 this.renderDebateControls();
             },
@@ -7863,6 +9027,7 @@
                 // 判斷是否為「無計時器」的環節
                 let isNoTimerStage = !stage.duration && stage.type !== 'manual_prep';
                 if (stage.type === 'draw_rebuttal_order') isNoTimerStage = true;
+                if (stage.type === 'judge_comment') isNoTimerStage = true;
 
                 // --- [新增] 判斷抽籤是否尚未完成 ---
                 const isDrawNotCompleted = (stage && stage.type === 'draw_rebuttal_order' && !this.state.rebuttalOrder);
@@ -8162,7 +9327,8 @@
                 });
             },
             renderEditorView() {
-                const originalFormatName = this.findFormatNameByFlow(this.state.originalFlowBeforeEdit) || '自訂流程';
+                // 優先使用已保存的賽制名稱，否則透過流程內容反查
+                const originalFormatName = this.state.selectedFormat || this.findFormatNameByFlow(this.state.originalFlowBeforeEdit) || '自訂流程';
 
                 // 計算流程統計資訊
                 const totalDuration = this.state.currentFlow.reduce((sum, s) => sum + (s.duration || 0), 0);
@@ -8397,6 +9563,27 @@
                 this.updateEditorUnsavedIndicator();
             },
 
+            // 插入變數到指定的 textarea
+            insertVariable(button) {
+                const variable = button.dataset.variable;
+                const targetId = button.dataset.target;
+                const textarea = document.getElementById(targetId);
+                
+                if (!textarea) return;
+                
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const text = textarea.value;
+                
+                // 在游標位置插入變數
+                textarea.value = text.substring(0, start) + variable + text.substring(end);
+                
+                // 將游標移到插入的變數之後
+                const newCursorPos = start + variable.length;
+                textarea.setSelectionRange(newCursorPos, newCursorPos);
+                textarea.focus();
+            },
+
             renderStageEditorModal(stage = {}, index = NaN) {
                 const isNew = isNaN(index);
                 const title = isNew ? '新增階段' : `編輯階段: ${stage.name}`;
@@ -8409,6 +9596,7 @@
                     { value: 'speech_auto', text: '🎤 自動發言計時' },
                     { value: 'choice_speech', text: '🗣️ 選擇性發言' },
                     { value: 'free_debate', text: '⚖️ 自由辯論' },
+                    { value: 'judge_comment', text: '🎓 裁判講評' },
                 ];
 
                 const formFields = `
@@ -8429,7 +9617,7 @@
 
                 this.renderModal({
                     title,
-                    body: `<form id="stage-editor-form" class="max-h-[60vh] overflow-y-auto p-1 pr-4">${formFields}</form>`,
+                    body: `<form id="stage-editor-form" class="p-1 pr-2">${formFields}</form>`,
                     footer: `
                     <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>
                     <button data-action="saveStage" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">儲存</button>
@@ -8443,6 +9631,59 @@
                     const container = document.getElementById('dynamic-fields-container');
                     let html = '';
                     const inputClasses = "form-element w-full p-2 border rounded-md";
+
+                    // 變數標籤 HTML 生成函式
+                    const renderVariableTags = (textareaId) => {
+                        const numNames = ['一', '二', '三', '四', '五', '六'];
+                        const playerCount = App.state.positiveTeamPlayers.length;
+                        
+                        // 基本變數
+                        const variables = [
+                            { key: '{{debate_topic}}', label: '辯題', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+                            { key: '{{positive_team_name}}', label: '正方隊名', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+                            { key: '{{negative_team_name}}', label: '反方隊名', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+                        ];
+                        
+                        // 動態新增正方選手變數
+                        for (let i = 0; i < playerCount; i++) {
+                            variables.push({ 
+                                key: `{{positive_player_${i + 1}}}`, 
+                                label: `正${numNames[i] || (i + 1)}`, 
+                                color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' 
+                            });
+                        }
+                        
+                        // 動態新增反方選手變數
+                        for (let i = 0; i < playerCount; i++) {
+                            variables.push({ 
+                                key: `{{negative_player_${i + 1}}}`, 
+                                label: `反${numNames[i] || (i + 1)}`, 
+                                color: 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' 
+                            });
+                        }
+                        
+                        // 結辯順序和辯革盃變數
+                        variables.push(
+                            { key: '{{first_rebuttal_team_name}}', label: '先結辯方', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
+                            { key: '{{second_rebuttal_team_name}}', label: '後結辯方', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
+                            { key: '{{selected_action_type}}', label: '環節選擇(辯革盃)', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' }
+                        );
+                        
+                        return `
+                            <div class="flex flex-wrap gap-1.5 mb-2">
+                                <span class="text-xs text-slate-500 mr-1 self-center">點擊插入：</span>
+                                ${variables.map(v => `
+                                    <button type="button" 
+                                        class="variable-tag px-2 py-0.5 rounded text-xs font-medium ${v.color} hover:opacity-80 transition-opacity cursor-pointer"
+                                        data-variable="${v.key}"
+                                        data-target="${textareaId}"
+                                        onclick="App.insertVariable(this)">
+                                        ${v.label}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        `;
+                    };
 
                     // 建立一個區塊的函式，方便重複使用
                     const createSection = (title, content) => {
@@ -8465,8 +9706,24 @@
                     if (['manual_prep', 'speech_auto'].includes(type)) {
                         mainSettings += `<div><label class="block text-sm font-medium mb-1">計時器標籤</label><input name="timerLabel" type="text" class="${inputClasses}" value="${current.timerLabel || ''}"></div>`;
                     }
-                    if (!['choice_speech'].includes(type)) {
-                        mainSettings += `<div><label class="block text-sm font-medium mb-1">主持人講稿</label><textarea name="script" rows="3" class="${inputClasses}">${current.script || ''}</textarea></div>`;
+                    if (!['choice_speech', 'judge_comment'].includes(type)) {
+                        mainSettings += `
+                            <div>
+                                <label class="block text-sm font-medium mb-1">主持人講稿</label>
+                                ${renderVariableTags('script-textarea')}
+                                <textarea name="script" id="script-textarea" rows="4" class="${inputClasses}" placeholder="輸入講稿，可點擊上方標籤插入變數...">${current.script || ''}</textarea>
+                            </div>`;
+                    }
+                    
+                    // 裁判講評特別說明
+                    if (type === 'judge_comment') {
+                        mainSettings += `
+                            <div class="bg-violet-50 dark:bg-violet-900/20 p-3 rounded-lg text-sm text-violet-700 dark:text-violet-300">
+                                <p class="flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    裁判講評不設計時器。進入此階段時，系統會彈出選擇視窗讓您選擇講評裁判的順序。
+                                </p>
+                            </div>`;
                     }
 
                     // 2. 收集緩衝期設定
@@ -8479,7 +9736,12 @@
                     if (type === 'choice_speech') {
                         choiceSettings += `<div><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div>`;
                         choiceSettings += `<div><label class="block text-sm font-medium mb-1">可選動作 (以逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
-                        choiceSettings += `<div><label class="block text-sm font-medium mb-1">基礎講稿樣板</label><textarea name="baseScript" rows="3" class="${inputClasses}" placeholder="例：請 {{choosingTeam}} 辯士上台進行 {{selected_action_type}}">${current.baseScript || ''}</textarea></div>`;
+                        choiceSettings += `
+                            <div>
+                                <label class="block text-sm font-medium mb-1">基礎講稿樣板</label>
+                                ${renderVariableTags('baseScript-textarea')}
+                                <textarea name="baseScript" id="baseScript-textarea" rows="3" class="${inputClasses}" placeholder="例：請 {{choosingTeam}} 辯士上台進行 {{selected_action_type}}">${current.baseScript || ''}</textarea>
+                            </div>`;
                         choiceSettings += `<div><label class="block text-sm font-medium mb-1">基礎計時器標籤樣板</label><input name="baseTimerLabel" type="text" class="${inputClasses}" placeholder="例：{{choosingTeam}} {{selected_action_type}}" value="${current.baseTimerLabel || ''}"></div>`;
                     }
 
@@ -8493,6 +9755,18 @@
 
                 typeSelector.addEventListener('change', (e) => renderDynamicFields(e.target.value));
                 renderDynamicFields(current.type); // Initial render
+                
+                // Enter 鍵儲存功能（排除 textarea）
+                const form = document.getElementById('stage-editor-form');
+                if (form) {
+                    form.addEventListener('keydown', (e) => {
+                        // 如果按下 Enter 且不是在 textarea 中
+                        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                            e.preventDefault();
+                            App.actions.saveStage();
+                        }
+                    });
+                }
             },
 
             renderHeader() {
@@ -8687,38 +9961,81 @@
                 if ('BroadcastChannel' in window) {
                     // 如果已經有 channel，先清理
                     if (this.state.projector.channel) {
-                        this.state.projector.channel.close();
+                        try { this.state.projector.channel.close(); } catch (e) {}
                     }
                     
-                    this.state.projector.channel = new BroadcastChannel('debate-timer-sync');
-                    
-                    // 監聽來自顯示視窗的訊息
-                    this.state.projector.channel.onmessage = (event) => {
-                        if (event.data.type === 'DISPLAY_CONNECTED') {
-                            // 顯示視窗已連接，發送當前狀態
-                            this.sendProjectorUpdate();
-                        }
-                    };
+                    try {
+                        this.state.projector.channel = new BroadcastChannel('debate-timer-sync');
+                        console.log('[Projector] BroadcastChannel initialized');
+                        
+                        // 監聽來自顯示視窗的訊息
+                        this.state.projector.channel.onmessage = (event) => {
+                            console.log('[Projector] Received:', event.data?.type);
+                            if (event.data && event.data.type === 'DISPLAY_CONNECTED') {
+                                // 頁面重載後，若投影視窗仍在運行，自動重新啟用投影模式
+                                if (!this.state.projector.isActive) {
+                                    this.state.projector.isActive = true;
+                                    this.state.projector.mode = 'window';
+                                    console.log('[Projector] Display reconnected!');
+                                    this.showNotification('投影視窗已重新連接', 'success', 2000);
+                                }
+                                // 發送當前狀態
+                                this.sendProjectorUpdate();
+                            }
+                        };
 
-                    // 定期發送心跳 (只建立一次，存儲到 state 避免重複建立)
-                    if (!this.state.projector.heartbeatInterval) {
+                        // 清除舊的心跳
+                        if (this.state.projector.heartbeatInterval) {
+                            clearInterval(this.state.projector.heartbeatInterval);
+                        }
+                        
+                        // 定期發送心跳
                         this.state.projector.heartbeatInterval = setInterval(() => {
                             if (this.state.projector.isActive && this.state.projector.channel) {
                                 try {
                                     this.state.projector.channel.postMessage({ type: 'HEARTBEAT' });
                                 } catch (e) {
-                                    console.warn('Projector heartbeat failed:', e);
+                                    console.warn('[Projector] Heartbeat failed:', e);
                                 }
                             }
                         }, 2000);
+                        
+                        // 主動廣播 CONTROLLER_READY，讓已開啟的 display 知道我們已準備好
+                        setTimeout(() => {
+                            if (this.state.projector.channel) {
+                                try {
+                                    this.state.projector.channel.postMessage({ type: 'CONTROLLER_READY' });
+                                    console.log('[Projector] Sent CONTROLLER_READY');
+                                } catch (e) {}
+                            }
+                        }, 300);
+                        
+                    } catch (e) {
+                        console.error('[Projector] Failed to create BroadcastChannel:', e);
                     }
+                } else {
+                    console.warn('[Projector] BroadcastChannel not supported');
                 }
             },
 
             sendProjectorUpdate() {
-                if (!this.state.projector.channel) return;
+                // 如果投影模式未啟用，不發送更新
+                if (!this.state.projector.isActive) {
+                    return;
+                }
+                
+                // 如果 channel 不存在，嘗試重新初始化
+                if (!this.state.projector.channel) {
+                    this.initProjectorChannel();
+                    // 如果仍然無法初始化，靜默返回
+                    if (!this.state.projector.channel) {
+                        return;
+                    }
+                }
 
-                const { timer, currentFlow, currentStageIndex } = this.state;
+                const timer = this.state.timer || { timeLeft: 0, initialDuration: 0, isPaused: false, type: null, interval: null, graceInterval: null };
+                const currentFlow = this.state.currentFlow;
+                const currentStageIndex = this.state.currentStageIndex || 0;
                 const stage = currentFlow && currentFlow[currentStageIndex];
                 
                 // 取得當前階段名稱
@@ -8734,25 +10051,55 @@
                 const isGracePeriod = timer.type === 'grace';
 
                 try {
+                    // 準備辯手資料
+                    const positiveDebaters = (this.state.positiveTeamPlayers || []).map((name, idx) => ({
+                        position: ['一辯', '二辯', '三辯', '四辯'][idx] || `${idx+1}辯`,
+                        name: name || '',
+                        isClosing: idx === this.state.positiveClosingIndex
+                    }));
+                    
+                    const negativeDebaters = (this.state.negativeTeamPlayers || []).map((name, idx) => ({
+                        position: ['一辯', '二辯', '三辯', '四辯'][idx] || `${idx+1}辯`,
+                        name: name || '',
+                        isClosing: idx === this.state.negativeClosingIndex
+                    }));
+
                     this.state.projector.channel.postMessage({
                         type: 'TIMER_UPDATE',
                         payload: {
-                            timeRemaining: timer.timeLeft,
+                            timeRemaining: timer.timeLeft || 0,
                             isRunning: !!(timer.interval || timer.graceInterval),
                             currentStage: currentStageName,
-                            totalTime: timer.initialDuration,
+                            totalTime: timer.initialDuration || 0,
                             isTimesUp: isTimesUp,
                             isGracePeriod: isGracePeriod,
                             gracePeriodRemaining: isGracePeriod ? timer.timeLeft : 0,
-                            isPaused: timer.isPaused,
+                            isPaused: timer.isPaused || false,
+                            // 辯手資料
+                            positiveTeamName: this.state.positiveTeamName || '',
+                            negativeTeamName: this.state.negativeTeamName || '',
+                            positiveDebaters: positiveDebaters,
+                            negativeDebaters: negativeDebaters,
+                            // 結辯索引
+                            positiveClosingIndex: this.state.positiveClosingIndex,
+                            negativeClosingIndex: this.state.negativeClosingIndex,
+                            // 正式賽模式資料
+                            tournamentName: this.state.tournamentName || '',
+                            debateTopic: this.state.debateTopic || '',
                         }
                     });
+                    console.log('Projector update sent:', currentStageName);
                 } catch (e) {
                     console.warn('Failed to send projector update:', e);
                 }
             },
 
             async startProjectorMode() {
+                // 先確保 BroadcastChannel 已初始化
+                if (!this.state.projector.channel) {
+                    this.initProjectorChannel();
+                }
+                
                 // 使用 window.open 雙視窗法
                 // 注意：Presentation API 在部分瀏覽器上會導致崩潰，故不使用
                 if (window.open) {
@@ -9471,6 +10818,19 @@
                     selected_player: options.selected_player || '',
                     selected_action_type: options.selected_action_type || '',
                 };
+                
+                // 動態新增正反方選手變數 (支援 1-6 位辯士)
+                const numNames = ['一', '二', '三', '四', '五', '六'];
+                for (let i = 0; i < 6; i++) {
+                    replacements[`positive_player_${i + 1}`] = this.state.positiveTeamPlayers[i] || `正${numNames[i] || (i + 1)}`;
+                    replacements[`negative_player_${i + 1}`] = this.state.negativeTeamPlayers[i] || `反${numNames[i] || (i + 1)}`;
+                }
+                
+                // 動態新增裁判變數 (支援 1-5 位裁判)
+                for (let i = 0; i < 5; i++) {
+                    replacements[`judge_${i + 1}`] = this.state.judges[i] || `裁判${numNames[i] || (i + 1)}`;
+                }
+                
                 return script.replace(/\{\{(\w+)\}\}/g, (match, key) => replacements[key] || match);
             },
 
@@ -9850,6 +11210,17 @@
                             return; // 中斷執行
                         }
                     }
+                    
+                    // 裁判講評：先讓用戶選擇裁判
+                    if (stage.type === 'judge_comment') {
+                        try {
+                            choiceResult = await this.getJudgeChoice(stage);
+                        } catch (e) {
+                            console.error("Judge choice was cancelled or failed", e);
+                            if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
+                            return; // 中斷執行
+                        }
+                    }
 
                     const speakCallback = () => {
                         const timerLabel = this.interpolateScript(stage.timerLabel || stage.baseTimerLabel, choiceResult);
@@ -9867,6 +11238,10 @@
                             case 'choice_speech':
                                 this.startGracePeriodTimer(stage, timerLabel);
                                 break;
+                            case 'judge_comment':
+                                // 裁判講評不計時，重新渲染階段顯示和控制列
+                                this.renderDebateStage();
+                                break;
                             case 'announcement':
                                 if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
                                 break;
@@ -9876,8 +11251,13 @@
                         }
                     };
 
-                    const scriptToSpeak = this.interpolateScript(stage.script || stage.baseScript, choiceResult);
-                    this.speak(scriptToSpeak, speakCallback);
+                    // 裁判講評：使用 choiceResult 中的講稿
+                    if (stage.type === 'judge_comment' && choiceResult && choiceResult.script) {
+                        this.speak(choiceResult.script, speakCallback);
+                    } else {
+                        const scriptToSpeak = this.interpolateScript(stage.script || stage.baseScript, choiceResult);
+                        this.speak(scriptToSpeak, speakCallback);
+                    }
                 };
 
                 executeStage();
@@ -9935,6 +11315,107 @@
                         footer: ''
                     });
                 });
+            },
+
+            // 裁判講評選擇對話框
+            getJudgeChoice(stage) {
+                return new Promise((resolve, reject) => {
+                    this.state.currentJudgeChoice = { stage, resolve, reject };
+
+                    const judges = this.state.judges || ['裁判一', '裁判二', '裁判三'];
+                    const totalJudges = judges.length;
+                    
+                    // 追蹤已講評的裁判
+                    if (!this.state.judgeCommentOrder) {
+                        this.state.judgeCommentOrder = [];
+                    }
+                    
+                    const commentedCount = this.state.judgeCommentOrder.length;
+                    const isFirstJudge = commentedCount === 0;
+                    const isLastJudge = commentedCount === totalJudges - 1;
+                    
+                    // 生成開場白（只在第一位裁判前顯示）
+                    let introText = '';
+                    if (isFirstJudge) {
+                        introText = `
+                            <div class="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 p-4 rounded-xl mb-4 text-center">
+                                <p class="text-slate-700 dark:text-slate-300 text-lg">
+                                    感謝雙方隊伍帶來一場精彩的比賽，<br>
+                                    接下來讓我們欣賞更精彩的裁判講評。
+                                </p>
+                            </div>
+                        `;
+                    }
+                    
+                    const optionsHTML = judges.map((judge, index) => {
+                        const hasCommented = this.state.judgeCommentOrder.includes(index);
+                        const orderNum = this.state.judgeCommentOrder.indexOf(index) + 1;
+                        
+                        if (hasCommented) {
+                            return `<button disabled class="px-6 py-4 rounded-xl text-white font-bold text-lg bg-gray-400 cursor-not-allowed opacity-50 min-w-[120px]">
+                                <div class="text-sm opacity-75">第${orderNum}位</div>
+                                ${judge}
+                                <div class="text-xs mt-1">✓ 已講評</div>
+                            </button>`;
+                        }
+                        return `<button data-action="confirmJudgeChoice" data-judge-index="${index}" class="px-6 py-4 rounded-xl text-white font-bold text-lg bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 transition-all hover:scale-105 shadow-lg min-w-[120px]">
+                            <div class="text-2xl mb-1">🎓</div>
+                            ${judge}
+                        </button>`;
+                    }).join('');
+                    
+                    // 顯示講評順序
+                    let orderInfo = '';
+                    if (this.state.judgeCommentOrder.length > 0) {
+                        const orderedNames = this.state.judgeCommentOrder.map(i => judges[i]).join(' → ');
+                        orderInfo = `<div class="text-sm text-slate-500 mb-4">已講評：${orderedNames}</div>`;
+                    }
+                    
+                    // 提示文字
+                    let hintText = '';
+                    if (isFirstJudge) {
+                        hintText = '請選擇第一位講評的裁判';
+                    } else if (isLastJudge) {
+                        hintText = '請選擇最後一位講評的裁判';
+                    } else {
+                        hintText = `請選擇第 ${commentedCount + 1} 位講評的裁判`;
+                    }
+                    
+                    // 重置按鈕
+                    const resetBtn = this.state.judgeCommentOrder.length > 0 
+                        ? `<button data-action="resetJudgeCommentOrder" class="text-sm text-slate-500 hover:text-slate-700 underline">重置講評順序</button>`
+                        : '';
+
+                    this.renderModal({
+                        title: `🎓 ${hintText}`,
+                        body: `
+                            ${introText}
+                            ${orderInfo}
+                            <div class="flex justify-center flex-wrap gap-4 py-4">${optionsHTML}</div>
+                            <div class="text-center mt-4">${resetBtn}</div>
+                        `,
+                        footer: `<button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>`
+                    });
+                });
+            },
+            
+            // 生成裁判講評的講稿
+            getJudgeCommentScript(judgeIndex, judgeName) {
+                const judges = this.state.judges || ['裁判一', '裁判二', '裁判三'];
+                const totalJudges = judges.length;
+                const commentedCount = this.state.judgeCommentOrder.length;
+                
+                // 根據順序生成不同的講稿
+                if (commentedCount === 1) {
+                    // 第一位裁判
+                    return `首先，歡迎 ${judgeName} 前輩為我們講評。`;
+                } else if (commentedCount === totalJudges) {
+                    // 最後一位裁判
+                    return `最後，歡迎 ${judgeName} 前輩為我們講評。`;
+                } else {
+                    // 中間的裁判
+                    return `接著，歡迎 ${judgeName} 前輩為我們講評。`;
+                }
             },
 
             // --- AUDIO RECORDING & DOWNLOAD ---
