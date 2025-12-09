@@ -10871,6 +10871,10 @@
                 if (this._timeCache.has(seconds)) {
                     return this._timeCache.get(seconds);
                 }
+
+                // 處理負數情況：確保顯示為 00:00 而不是負數時間
+                if (seconds < 0) seconds = 0;
+
                 const m = Math.floor(seconds / 60);
                 const s = seconds % 60;
                 const result = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
