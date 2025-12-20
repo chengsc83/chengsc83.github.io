@@ -9633,7 +9633,7 @@
                     { value: 'draw_rebuttal_order', text: '🎲 結辯順序抽籤' },
                     { value: 'manual_prep', text: '⏱️ 手動準備計時' },
                     { value: 'speech_auto', text: '🎤 自動發言計時' },
-                    { value: 'choice_speech', text: '🗣️ 選擇性發言' },
+                    { value: 'choice_speech', text: '🗣️ 辯革盃發言' },
                     { value: 'free_debate', text: '⚖️ 自由辯論' },
                     { value: 'judge_comment', text: '🎓 裁判講評' },
                 ];
@@ -9771,7 +9771,7 @@
                         graceSettings += `<div><label class="block text-sm font-medium mb-1">緩衝期結束動作</label><select name="graceEndAction" class="${inputClasses}"><option value="auto_start" ${current.graceEndAction === 'auto_start' ? 'selected' : ''}>自動開始</option><option value="manual_start" ${current.graceEndAction === 'manual_start' ? 'selected' : ''}>手動開始</option><option value="auto_skip" ${current.graceEndAction === 'auto_skip' ? 'selected' : ''}>自動跳過</option></select></div>`;
                     }
 
-                    // 3. 收集選擇性發言設定
+                    // 3. 收集辯革盃發言設定
                     if (type === 'choice_speech') {
                         choiceSettings += `<div><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div>`;
                         choiceSettings += `<div><label class="block text-sm font-medium mb-1">可選動作 (以逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
@@ -9787,7 +9787,7 @@
                     // 4. 組合區塊
                     if (mainSettings) html += createSection('主要設定', mainSettings);
                     if (graceSettings) html += createSection('緩衝期設定', graceSettings);
-                    if (choiceSettings) html += createSection('選擇性發言設定', choiceSettings);
+                    if (choiceSettings) html += createSection('辯革盃發言設定', choiceSettings);
 
                     container.innerHTML = html;
                 };
@@ -9976,7 +9976,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">Debate Clock Pro v2.0 <br> Designed for Debaters.</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 v2.1 <br> 技術，為了更好的思辯</div>
             `;
             },
 
@@ -11898,3 +11898,4 @@
 </body>
 
 </html>
+
