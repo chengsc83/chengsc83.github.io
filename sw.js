@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debate-clock-v2.2';
+const CACHE_NAME = 'debate-clock-v2.3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -13,7 +13,7 @@ const ASSETS_TO_CACHE = [
 
 // 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing v2.2...');
+  console.log('SW: Installing v2.3...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       // 使用 addAll 但允許個別檔案失敗
