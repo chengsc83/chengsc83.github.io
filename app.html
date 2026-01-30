@@ -313,6 +313,31 @@
             color: #94a3b8 !important;
         }
 
+        /* Format tag 分類標籤樣式 */
+        .format-tag {
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: var(--surface-2);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .format-tag:hover {
+            background-color: var(--surface-1);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .format-tag.active {
+            background-color: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
         select.modern-input {
             appearance: none;
             cursor: pointer;
@@ -2484,7 +2509,7 @@
             /* 水平置中 */
 
             /* 尺寸與形狀 */
-            width: calc(100% - 2rem);
+            width: calc(100% -2rem);
             max-width: 56rem;
             /* 約 900px，與上方卡片等寬 */
             height: auto;
@@ -3966,6 +3991,18 @@
                         <button id="themeToggleBtn" data-action="toggleTheme"
                             class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             aria-label="切換主題">
+                            <!-- 太陽圖示 (淺色模式時顯示) -->
+                            <svg class="h-5 w-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                            </svg>
+                            <!-- 月亮圖示 (深色模式時顯示) -->
+                            <svg class="h-5 w-5 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                            </svg>
                         </button>
                         <button id="hamburgerBtn" data-action="toggleSidebar"
                             class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -4130,12 +4167,21 @@
                     mediaRecorder: null,
                     mediaStream: null,
                     isRecording: false,
+                    isPaused: false,          // 錄音是否暫停
+                    pausedDuration: 0,        // 暫停期間累計的時間（毫秒）
+                    pauseStartTime: null,     // 暫停開始時間
                     isAvailable: false,
                     recordedChunks: [],
                     intermediateBlobs: [], // [記憶體優化] 定期合併的中間 Blobs
                     audioBlob: null,
                     micAudioTrack: null, // 用來儲存音訊軌道
                     isMicMuted: false,   // 追蹤目前的靜音狀態
+                    // 時間戳功能
+                    timestamps: [],           // 當前錄音時間戳陣列
+                    recordingStartTime: null, // 錄音開始的時間戳 (Date.now())
+                    isPlayerOpen: false,      // 播放器是否開啟
+                    // 多段錄音支援
+                    recordings: [],           // 所有錄音段落: [{audioBlob, timestamps, startTime}]
                 },
 
                 freeDebate: {
@@ -5642,8 +5688,7 @@
                 nextSetupStep() {
                     // Step 1 驗證：必須選擇賽制
                     if (App.state.setupStep === 1) {
-                        const formatSelect = document.getElementById('formatSelect');
-                        const selectedFormat = formatSelect ? formatSelect.value : '';
+                        const selectedFormat = App.state.selectedFormat;
                         if (!selectedFormat || selectedFormat === 'CUSTOM_EMPTY') {
                             App.showNotification('請先選擇比賽賽制', 'warning');
                             return;
@@ -6068,6 +6113,22 @@
                         App.state.rebuttalOrder = null;
                     }
 
+                    // [BUG FIX] 當跳轉到較早的階段時，回退跳過的 choice_speech 階段的計數
+                    if (targetIndex < App.state.currentStageIndex) {
+                        for (let i = App.state.currentStageIndex; i > targetIndex; i--) {
+                            const stageToUndo = App.state.currentFlow[i];
+                            if (stageToUndo && stageToUndo.type === 'choice_speech' && stageToUndo.executedAction) {
+                                const team = stageToUndo.choosingTeam;
+                                const actionToUndo = stageToUndo.executedAction;
+                                const counts = (team === 'positive') ? App.state.positiveActionCounts : App.state.negativeActionCounts;
+                                if (counts[actionToUndo] > 0) {
+                                    counts[actionToUndo]--;
+                                }
+                                delete stageToUndo.executedAction;
+                            }
+                        }
+                    }
+
                     App.state.currentStageIndex = targetIndex;
                     App.playSound('stageAdvanceSound');
                     App.loadStage(targetIndex);
@@ -6352,11 +6413,12 @@
                     if (stage && resolve) {
                         const team = stage.choosingTeam;
                         // Increment the count for the selected action
-                        if (team === 'positive') {
-                            App.state.positiveActionCounts[selectedAction]++;
-                        } else {
-                            App.state.negativeActionCounts[selectedAction]++;
+                        // [FIX] 確保 key 存在於 actionCounts 中，避免 Unicode 編碼差異問題
+                        const actionCounts = (team === 'positive') ? App.state.positiveActionCounts : App.state.negativeActionCounts;
+                        if (typeof actionCounts[selectedAction] !== 'number') {
+                            actionCounts[selectedAction] = 0;
                         }
+                        actionCounts[selectedAction]++;
 
                         // [FIXED] Store the executed choice for potential reversal.
                         const currentStageInFlow = App.state.currentFlow[App.state.currentStageIndex];
@@ -6367,7 +6429,7 @@
                         // 根據九宮格決定上場辯士
                         let selectedPlayer = "辯士";
                         const nineSquare = (team === 'positive') ? App.state.positiveNineSquare : App.state.negativeNineSquare;
-                        const actionCounts = (team === 'positive') ? App.state.positiveActionCounts : App.state.negativeActionCounts;
+                        // actionCounts 已在上方宣告，不需重複宣告
                         const players = (team === 'positive') ? App.state.positiveTeamPlayers : App.state.negativeTeamPlayers;
 
                         // 如果有九宮格資料，則根據九宮格決定辯士
@@ -6564,6 +6626,61 @@
                         App.stopRecognition();
                         App.renderTranscriptionPanel();
                     }
+                },
+                pauseRecording() {
+                    App.pauseRecording();
+                },
+                resumeRecording() {
+                    App.resumeRecording();
+                },
+                // 錄音播放器 actions
+                openRecordingPlayer() {
+                    if (!App.state.recording.audioBlob) {
+                        App.showNotification("沒有可播放的錄音", "info");
+                        return;
+                    }
+                    App.state.recording.isPlayerOpen = true;
+                    App.renderRecordingPlayer();
+                },
+                closeRecordingPlayer() {
+                    App.state.recording.isPlayerOpen = false;
+                    const playerPanel = document.getElementById('recordingPlayerPanel');
+                    if (playerPanel) playerPanel.remove();
+                },
+                seekToTimestamp(e) {
+                    const index = parseInt(e.target.closest('[data-timestamp-index]')?.dataset.timestampIndex, 10);
+                    if (isNaN(index)) return;
+                    App.seekToRecordingTimestamp(index);
+                },
+                seekToEndScreenTimestamp(e) {
+                    const index = parseInt(e.target.closest('[data-timestamp-index]')?.dataset.timestampIndex, 10);
+                    if (isNaN(index)) return;
+                    App.seekToEndScreenTimestamp(index);
+                },
+                seekToMultiRecording(e) {
+                    const btn = e.target.closest('[data-rec-index]');
+                    const recIndex = parseInt(btn?.dataset.recIndex, 10);
+                    const tsIndex = parseInt(btn?.dataset.timestampIndex, 10);
+                    if (isNaN(recIndex) || isNaN(tsIndex)) return;
+                    App.seekToMultiRecording(recIndex, tsIndex);
+                },
+                downloadSingleRecording(e) {
+                    const recIndex = parseInt(e.target.closest('[data-rec-index]')?.dataset.recIndex, 10);
+                    if (isNaN(recIndex)) return;
+                    App.downloadSingleRecording(recIndex);
+                },
+                downloadAllRecordings() {
+                    App.downloadAllRecordings();
+                },
+                shareSingleRecording(e) {
+                    const recIndex = parseInt(e.target.closest('[data-rec-index]')?.dataset.recIndex, 10);
+                    if (isNaN(recIndex)) return;
+                    App.shareSingleRecording(recIndex);
+                },
+                copyTimestamps(e) {
+                    const recIndex = parseInt(e.target.closest('[data-rec-index]')?.dataset.recIndex, 10);
+                    if (isNaN(recIndex)) return;
+                    App.copyTimestamps(recIndex);
                 },
                 toggleTheme() {
                     const html = document.documentElement;
@@ -6772,9 +6889,11 @@
 
 
                 deleteCustomFlow(e) {
-                    const flowSelect = document.getElementById('formatSelect');
-                    if (!flowSelect) return;
-                    const flowName = flowSelect.value;
+                    const flowName = App.state.selectedFormat;
+                    if (!flowName) {
+                        App.showNotification("請先選擇一個賽制", "warning");
+                        return;
+                    }
 
                     // 檢查這是否為一個可刪除的「自訂流程」
                     if (!App.debateFormatGroups['自訂流程'] || !App.debateFormatGroups['自訂流程'][flowName]) {
@@ -6794,12 +6913,11 @@
                 },
 
                 confirmDeleteCustomFlow(e) {
-                    const flowSelect = document.getElementById('formatSelect');
-                    if (!flowSelect) {
+                    const flowName = App.state.selectedFormat;
+                    if (!flowName) {
                         App.actions.closeModal(e);
                         return;
                     }
-                    const flowName = flowSelect.value;
 
                     if (App.debateFormatGroups['自訂流程'] && App.debateFormatGroups['自訂流程'][flowName]) {
                         // 1. 從物件中刪除
@@ -6814,7 +6932,9 @@
                             App.showNotification("刪除時發生錯誤", "error");
                         }
 
-                        // 3. 關閉彈窗並重新渲染設定頁面
+                        // 3. 清空選擇狀態並重新渲染
+                        App.state.selectedFormat = null;
+                        App.state.currentFlow = [];
                         App.actions.closeModal(e);
                         App.render(); // 這將會呼叫 renderSetupView 並更新下拉選單
 
@@ -6823,6 +6943,140 @@
                         App.actions.closeModal(e);
                     }
                 },
+                showFormatSelectorModal() {
+                    // 保存設定頁面的表單值
+                    App.saveSetupFormValues();
+
+                    // 建立分類標籤
+                    const groupNames = Object.keys(App.debateFormatGroups);
+                    const tagsHtml = `
+                        <button data-action="filterFormatGroup" data-group="全部" class="format-tag active">全部</button>
+                        ${groupNames.map(group => `
+                            <button data-action="filterFormatGroup" data-group="${group}" class="format-tag">${group}</button>
+                        `).join('')}
+                    `;
+
+                    // 建立分組賽制列表
+                    let formatsHtml = '';
+                    const groupIcons = {
+                        '特殊賽制': '🟠',
+                        '新式奧瑞岡（臺灣）': '🔵',
+                        '新式奧瑞岡（國際）': '🟣',
+                        '新加坡制': '🟢',
+                        '自訂流程': '⭐'
+                    };
+
+                    for (const [groupName, formats] of Object.entries(App.debateFormatGroups)) {
+                        const formatKeys = Object.keys(formats);
+                        if (formatKeys.length === 0) continue;
+
+                        const icon = groupIcons[groupName] || '📋';
+                        formatsHtml += `
+                            <div class="format-group" data-group="${groupName}">
+                                <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 sticky top-0">${icon} ${groupName}</div>
+                                ${formatKeys.map(formatName => `
+                                    <button data-action="selectFormatFromModal" data-format="${formatName}" class="format-option w-full text-left px-4 py-3 hover:bg-[var(--color-primary)]/10 transition-colors flex items-center gap-3 border-b border-[var(--border-color)]/50">
+                                        <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-accent)]/20 flex items-center justify-center text-sm">${icon}</span>
+                                        <span class="font-medium text-[var(--text-main)]">${formatName}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
+                    const modalBody = `
+                        <div class="space-y-4">
+                            <!-- 分類標籤 -->
+                            <div id="modalFormatTags" class="flex flex-wrap gap-2">
+                                ${tagsHtml}
+                            </div>
+                            
+                            <!-- 搜尋框 -->
+                            <div class="relative">
+                                <input type="text" id="modalFormatSearch" 
+                                    class="modern-input pl-10 pr-4 w-full text-sm" 
+                                    placeholder="搜尋賽制..."
+                                    autocomplete="off">
+                                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                </div>
+                            </div>
+                            
+                            <!-- 賽制列表 -->
+                            <div id="modalFormatList" class="rounded-xl border border-[var(--border-color)]">
+                                ${formatsHtml}
+                            </div>
+                        </div>
+                    `;
+
+                    App.renderModal({
+                        title: '🏆 選擇比賽賽制',
+                        body: modalBody,
+                        footer: ''
+                    });
+
+                    // 綁定搜尋和篩選事件
+                    setTimeout(() => {
+                        const searchInput = document.getElementById('modalFormatSearch');
+                        if (searchInput) {
+                            searchInput.addEventListener('input', (e) => {
+                                App.filterModalFormats(e.target.value.toLowerCase());
+                            });
+                            searchInput.focus();
+                        }
+                    }, 100);
+                },
+
+                filterFormatGroup(e) {
+                    const group = e.target.dataset.group;
+
+                    // 更新標籤狀態
+                    document.querySelectorAll('#modalFormatTags .format-tag').forEach(tag => {
+                        tag.classList.toggle('active', tag.dataset.group === group);
+                    });
+
+                    // 篩選列表
+                    document.querySelectorAll('#modalFormatList .format-group').forEach(groupEl => {
+                        if (group === '全部') {
+                            groupEl.style.display = 'block';
+                        } else {
+                            groupEl.style.display = groupEl.dataset.group === group ? 'block' : 'none';
+                        }
+                    });
+                },
+
+                selectFormatFromModal(e) {
+                    const formatName = e.target.closest('[data-format]')?.dataset.format;
+                    if (!formatName) return;
+
+                    // 更新選擇的賽制
+                    App.state.selectedFormat = formatName;
+
+                    // 找到對應的流程並設定
+                    for (const [groupName, formats] of Object.entries(App.debateFormatGroups)) {
+                        if (formats[formatName]) {
+                            App.state.currentFlow = JSON.parse(JSON.stringify(formats[formatName]));
+                            break;
+                        }
+                    }
+
+                    // 更新隱藏的 select 值
+                    const formatSelect = document.getElementById('formatSelect');
+                    if (formatSelect) {
+                        formatSelect.value = formatName;
+                        const event = new Event('change', { bubbles: true });
+                        formatSelect.dispatchEvent(event);
+                    }
+
+                    // 關閉 Modal
+                    App.actions.closeModal(e);
+
+                    // 重新渲染設定頁面以更新顯示
+                    App.renderSetupView();
+
+                    App.showNotification(`已選擇賽制：${formatName}`, 'success');
+                },
+
                 showImportModal() {
                     // 先保存設定頁面的表單值
                     App.saveSetupFormValues();
@@ -6981,8 +7235,7 @@
                             previewContainer.innerHTML = previewHTML;
                             previewContainer.style.display = 'flex';
                         } else {
-                            previewContainer.innerHTML = '<span class="format-preview-tag">請選擇賽制或建立自訂流程</span>';
-                            previewContainer.style.display = 'flex';
+                            previewContainer.style.display = 'none';
                         }
                     }
                 },
@@ -7173,6 +7426,26 @@
                 // 同步更新下拉選單
                 this.renderFormatDropdownItems(search);
                 this.updateFormatSearchDisplay();
+            },
+
+            filterModalFormats(searchTerm) {
+                const formatList = document.getElementById('modalFormatList');
+                if (!formatList) return;
+
+                const options = formatList.querySelectorAll('.format-option');
+                const groups = formatList.querySelectorAll('.format-group');
+
+                options.forEach(option => {
+                    const formatName = option.dataset.format?.toLowerCase() || '';
+                    option.style.display = formatName.includes(searchTerm) ? 'flex' : 'none';
+                });
+
+                // 隱藏沒有可見選項的分組
+                groups.forEach(group => {
+                    const visibleOptions = group.querySelectorAll('.format-option[style*="flex"], .format-option:not([style*="none"])');
+                    const hasVisible = Array.from(group.querySelectorAll('.format-option')).some(opt => opt.style.display !== 'none');
+                    group.style.display = hasVisible ? 'block' : 'none';
+                });
             },
 
             initFormatSearch() {
@@ -7683,47 +7956,28 @@
                                         比賽賽制
                                     </label>
                                     
-                                    <!-- 標籤篩選區域 -->
-                                    <div class="mb-3">
-                                        <div id="formatTagsContainer" class="flex flex-wrap gap-2">
-                                            ${this.renderFormatTags()}
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- 可搜尋的下拉選單 -->
+                                    <!-- 選擇賽制按鈕 -->
                                     <div class="flex gap-2">
-                                        <div class="searchable-dropdown relative flex-grow" id="formatDropdownContainer">
-                                            <!-- 搜尋輸入框 (也是觸發器) -->
-                                            <div class="relative">
-                                                <input type="text" 
-                                                    id="formatSearchInput" 
-                                                    class="modern-input pl-10 pr-10 w-full text-sm cursor-pointer" 
-                                                    placeholder="點擊選擇或搜尋賽制..."
-                                                    autocomplete="off">
-                                                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                                </div>
-                                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600 transition-all duration-200" id="formatDropdownArrow" data-action="toggleFormatDropdown">
-                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                        <button data-action="showFormatSelectorModal" class="flex-grow modern-input text-left flex items-center justify-between gap-3 hover:border-[var(--color-primary)] transition-colors group">
+                                            <div class="flex items-center gap-3">
+                                                <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 flex items-center justify-center text-lg">🏆</span>
+                                                <div class="text-left">
+                                                    <div id="selectedFormatName" class="font-semibold text-[var(--text-main)] ${this.state.selectedFormat ? '' : 'text-slate-400'}">${this.state.selectedFormat || '點擊選擇賽制...'}</div>
+                                                    <div class="text-xs text-slate-500">點擊選擇或更換比賽賽制</div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- 下拉選項列表 -->
-                                            <div id="formatDropdownList" class="searchable-dropdown-list hidden py-2 bg-[var(--surface-1)] border border-[var(--border-color)] rounded-xl shadow-xl max-h-72 overflow-y-auto" style="z-index: 99999 !important;">
-                                                <!-- 選項會由 JS 動態生成 -->
-                                            </div>
-                                            
-                                            <!-- 隱藏的原生 select 用於保持相容性 -->
-                                            <select id="formatSelect" data-change-action="formatChanged" class="hidden">
-                                                ${formatOptions}
-                                            </select>
-                                        </div>
-                                        <button data-action="deleteCustomFlow" title="刪除自訂流程" class="flex-shrink-0 w-11 h-11 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                                            <svg class="w-5 h-5 text-slate-400 group-hover:text-[var(--color-primary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                        </button>
+                                        <button data-action="deleteCustomFlow" title="刪除自訂流程" class="flex-shrink-0 w-12 h-12 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </div>
                                     
-                                    <div id="formatFilterInfo" class="text-xs text-slate-400 mt-2" style="display:none;"></div>
+                                    <!-- 隱藏的原生 select 用於保持相容性 -->
+                                    <select id="formatSelect" data-change-action="formatChanged" class="hidden">
+                                        ${formatOptions}
+                                    </select>
+                                    
                                     <div id="formatPreview" class="format-preview mt-3" style="display: none;"></div>
                                 </div>
                             </div>
@@ -7947,7 +8201,7 @@
                                         </label>
                                     </div>
                                     <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                                        <span class="text-sm font-medium">緩衝秒數</span>
+                                        <span class="text-sm font-medium">強制計時秒數</span>
                                         <div class="flex items-center gap-1 bg-white dark:bg-slate-700 rounded px-2 py-1 border">
                                             <input type="number" data-change-action="setGraceDuration" class="bg-transparent w-10 text-center font-mono font-bold focus:outline-none" value="${this.state.customGraceDuration}" min="0" max="300">
                                             <span class="text-xs text-slate-500">秒</span>
@@ -8163,33 +8417,34 @@
 
             renderDebateView() {
                 // 使用 Grid 佈局：左側是主計時區，右側是逐字稿
+                // 行動裝置只顯示：計時器、錄音介面、dock、贊助區
                 this.mainContent.innerHTML = `
             <div class="debate-layout grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 h-full pb-28">
                 <!-- 主計時區 -->
                 <div class="lg:col-span-8 flex flex-col gap-4 h-full">
-                    <!-- 頂部資訊列 -->
-                    <div id="debateInfoContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                    <!-- 頂部資訊列 - 行動裝置隱藏 -->
+                    <div id="debateInfoContainer" class="hidden md:grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     
-                    <!-- 比賽流程追蹤器 -->
-                    <div id="debateFlowTracker" class="debate-flow-tracker"></div>
+                    <!-- 比賽流程追蹤器 - 行動裝置隱藏 -->
+                    <div id="debateFlowTracker" class="debate-flow-tracker hidden md:flex"></div>
                     
-                    <!-- 計時器容器 -->
+                    <!-- 計時器容器 - 始終顯示 -->
                     <div id="timerContainer" class="flex-grow flex flex-col min-h-[280px]"></div>
                     
                     <!-- 當前階段講稿 -->
                     <div id="stageContainer"></div>
                 </div>
 
-                <!-- 逐字稿面板 -->
-                <div class="lg:col-span-4 h-full min-h-[280px] hidden lg:block">
+                <!-- 逐字稿面板 - 始終顯示 -->
+                <div class="lg:col-span-4 h-[400px] lg:h-[500px]">
                     <div id="transcriptionPanel" class="glass-panel transcription-card overflow-hidden h-full"></div>
                 </div>
             </div>
 
-            <!-- 控制列 -->
+            <!-- 控制列 - 始終顯示 -->
             <div id="debateControlsContainer"></div>
             
-            <!-- 贊助區 -->
+            <!-- 贊助區 - 始終顯示 -->
             <div id="promotionWrapper" class="mt-6 opacity-40 hover:opacity-100 transition-opacity duration-300">${this.renderPromotionArea()}</div>
         `;
                 this.renderDebateFlowTracker();
@@ -8352,11 +8607,13 @@
                 const positiveProgress = (positiveTimeLeft / initialDuration) * 100;
                 const negativeProgress = (negativeTimeLeft / initialDuration) * 100;
 
+                // 行動裝置只顯示：計時器、錄音介面、dock、贊助區
                 this.mainContent.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full pb-24">
                 <div class="lg:col-span-8 flex flex-col gap-6 h-full">
                     
-                    <div id="debateInfoContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 頂部資訊列 - 行動裝置隱藏 -->
+                    <div id="debateInfoContainer" class="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="md:col-span-2 glass-panel p-5 flex flex-col justify-center relative overflow-hidden min-h-[5rem]">
                             <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-primary-dark)]"></div>
                             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 pl-2">本場辯題</span>
@@ -8374,6 +8631,7 @@
                         </div>
                     </div>
 
+                    <!-- 計時器容器 - 始終顯示 -->
                     <div id="timerContainer" class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div id="posTimerCard" class="glass-panel p-6 md:p-10 rounded-3xl text-center flex flex-col justify-center items-center relative overflow-hidden transition-all duration-300 ${activeTeam === 'positive' && !isPaused ? 'ring-4 ring-green-500 shadow-lg shadow-green-500/20 scale-[1.02] opacity-100' : 'opacity-60 grayscale-[0.5] scale-95'}">
                             <p class="font-bold text-green-600 text-xl mb-2 uppercase tracking-wider">正方發言</p>
@@ -8394,6 +8652,7 @@
                         </div>
                     </div>
 
+                    <!-- 當前階段講稿 -->
                     <div id="stageContainer">
                         <div class="glass-panel p-6 flex items-start gap-5 animate-scale-in">
                             <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-[var(--surface-2)] text-red-500 flex items-center justify-center text-2xl shadow-inner">
@@ -8407,11 +8666,14 @@
                     </div>
                 </div>
 
-                <div class="lg:col-span-4 h-full min-h-[300px]">
+                <!-- 逐字稿面板 - 始終顯示 -->
+                <div class="lg:col-span-4 h-[400px] lg:h-[500px]">
                     <div id="transcriptionPanel" class="glass-panel transcription-card overflow-hidden h-full"></div>
                 </div>
             </div>
+            <!-- 控制列 - 始終顯示 -->
             <div id="debateControlsContainer"></div>
+            <!-- 贊助區 - 始終顯示 -->
             <div id="promotionWrapper" class="mt-8 opacity-50 hover:opacity-100 transition-opacity">${this.renderPromotionArea()}</div>
         `;
 
@@ -9201,51 +9463,58 @@
                 if (!container) return;
 
                 const { active, paused } = this.state.transcription;
-                const { isRecording, isAvailable } = this.state.recording;
+                const { isRecording, isPaused: isRecPaused, isAvailable, audioBlob, recordings } = this.state.recording;
 
                 container.innerHTML = `
-            <div class="flex flex-col border-b border-[var(--border-color)] bg-[var(--surface-2)] backdrop-blur-md sticky top-0 z-10">
+            <div class="flex flex-col h-full">
+            <div class="flex flex-col border-b border-[var(--border-color)] bg-[var(--surface-2)] backdrop-blur-md sticky top-0 z-10 flex-shrink-0">
                 
                 <div class="px-4 py-3 flex justify-between items-center">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                        <span class="font-bold text-sm">會議紀錄</span>
+                        <span class="font-bold text-sm">錄音與轉錄</span>
+                        ${recordings.length > 0 ? `<span class="text-xs bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">${recordings.length} 段</span>` : ''}
                     </div>
-                    ${isRecording ? '<span class="text-xs font-mono text-red-500 animate-pulse flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> REC</span>' : ''}
+                    <div class="flex items-center gap-2">
+                        ${recordings.length > 0 ? `<button data-action="openRecordingPlayer" class="text-xs font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            播放錄音
+                        </button>` : ''}
+                        ${isRecording && !isRecPaused ? '<span class="text-xs font-mono text-red-500 animate-pulse flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> REC</span>' : ''}
+                        ${isRecording && isRecPaused ? '<span class="text-xs font-mono text-amber-500 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> 暫停</span>' : ''}
+                    </div>
                 </div>
 
-                <div class="px-4 pb-3 grid grid-cols-2 gap-3">
-                    
-                    <button data-action="${isRecording ? 'stopRecording' : 'startRecording'}" 
-                            ${!isAvailable ? 'disabled' : ''}
-                            class="btn-record-toggle flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${isRecording ? 'bg-red-500 border-red-600 text-white shadow-inner hover:bg-red-600' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600'}">
-                        ${isRecording ?
-                        `<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg> 停止錄音` :
-                        `<span class="w-2 h-2 rounded-full bg-red-500"></span> 開始錄音`
-                    }
-                    </button>
-
-                    <div class="transcription-ctrl-group flex bg-slate-100 dark:bg-slate-700/50 rounded-lg p-1 shadow-inner border border-transparent dark:border-slate-600/50">
-                        ${!active ?
-                        `<button data-action="startTranscription" class="w-full rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-xs font-bold py-1.5 transition-colors shadow-sm">開啟轉錄</button>` :
-                        `
-                            ${!paused ? `<button data-action="pauseTranscription" class="flex-1 rounded-md text-amber-600 dark:text-amber-500 hover:bg-white dark:hover:bg-slate-600 text-xs font-bold py-1 transition-all">暫停</button>` : ''}
-                            ${paused ? `<button data-action="resumeTranscription" class="flex-1 rounded-md text-[var(--color-primary)] hover:bg-white dark:hover:bg-slate-600 text-xs font-bold py-1 transition-all">繼續</button>` : ''}
-                            <div class="w-[1px] bg-slate-300 dark:bg-slate-600 mx-1 my-2"></div>
-                            <button data-action="stopTranscription" class="flex-1 rounded-md text-red-500 hover:bg-white dark:hover:bg-slate-600 text-xs font-bold py-1 transition-all">停止</button>
-                            `
-                    }
-                    </div>
+                <div class="px-4 pb-3 flex gap-2">
+                    ${!isRecording ? `
+                        <button data-action="startRecording" 
+                                ${!isAvailable ? 'disabled' : ''}
+                                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all border bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> 開始錄音與轉錄
+                        </button>
+                    ` : `
+                        <button data-action="${isRecPaused ? 'resumeRecording' : 'pauseRecording'}" 
+                                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all border ${isRecPaused ? 'bg-amber-500 border-amber-600 text-white hover:bg-amber-600' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600'}">
+                            ${isRecPaused ?
+                        `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> 繼續錄音` :
+                        `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg> 暫停錄音`}
+                        </button>
+                        <button data-action="stopRecording" 
+                                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all border bg-red-500 border-red-600 text-white shadow-inner hover:bg-red-600">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg> 停止
+                        </button>
+                    `}
                 </div>
             </div>
 
-            <div id="paragraphsContainer" class="p-4 flex-grow overflow-y-auto scroll-smooth space-y-4"></div>
+            <div id="paragraphsContainer" class="flex-1 min-h-0 p-4 overflow-y-auto scroll-smooth space-y-4"></div>
             
-            <div class="p-3 border-t border-[var(--border-color)] bg-[var(--surface-1)] text-sm min-h-[3.5rem]">
+            <div class="p-3 border-t border-[var(--border-color)] bg-[var(--surface-1)] text-sm min-h-[3.5rem] flex-shrink-0">
                 <div class="flex">
                     <span class="text-[var(--color-primary)] font-mono mr-2">>></span>
                     <span id="interimContent" class="text-slate-500 italic">...</span>
                 </div>
+            </div>
             </div>
         `;
 
@@ -9260,7 +9529,7 @@
                 // 如果沒有內容，顯示空狀態提示
                 if (this.state.transcription.paragraphs.length === 0) {
                     container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full text-slate-400 text-sm animate-fade-in-up opacity-60">
+            <div class="flex flex-col items-center justify-center h-full text-slate-400 text-sm animate-fade-in-up opacity-60">
                         <svg class="w-12 h-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                         <p>等待發言...</p>
                     </div>`;
@@ -9273,7 +9542,7 @@
                         const avatarColor = isPos ? 'bg-green-500' : (isNeg ? 'bg-red-500' : 'bg-slate-500');
 
                         return `
-                        <div class="flex gap-3 animate-fade-in-up group">
+            <div class="flex gap-3 animate-fade-in-up group">
                             <div class="flex-shrink-0 w-8 h-8 rounded-full ${avatarColor} text-white flex items-center justify-center text-xs font-bold shadow-md mt-1 ring-2 ring-white dark:ring-slate-800">
                                 ${p.speaker.charAt(0)}
                             </div>
@@ -9286,7 +9555,7 @@
                                 </div>
                             </div>
                         </div>
-                    `;
+            `;
                     }).join('');
                 }
 
@@ -9296,7 +9565,7 @@
                 }
 
 
-                // 只有當使用者在底部附近時才自動滾動，避免閱讀時被打斷 (這裡簡單處理，強制滾動)
+                // 只有當使用者在底部附近時才自動滾動，避免閱讀時被打斷
                 requestAnimationFrame(() => {
                     container.scrollTop = container.scrollHeight;
                 });
@@ -9314,21 +9583,17 @@
                 if (existingModal) {
                     existingModal.remove();
                 }
-                // ---------------------------
-
-                // UX 優化 1：打開彈窗時，自動關閉側邊選單/控制中心
+                // ------------------------
                 const sidebar = document.getElementById('sidebar');
                 if (sidebar && !sidebar.classList.contains('hidden')) {
                     sidebar.classList.add('hidden');
                 }
 
                 const modal = document.createElement('div');
-
-                // UX 優化 2：將 z-index 設為最高，確保浮在所有介面之上
                 modal.className = 'modal-container fixed inset-0 z-[110] flex items-center justify-center p-4';
 
                 modal.innerHTML = `
-                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" data-action="closeModal"></div>
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" data-action="closeModal"></div>
                 <div class="relative glass-panel rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all scale-100 animate-scale-in border border-white/10">
                     <div class="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--surface-2)]">
                         <h3 class="font-bold text-xl text-[var(--text-main)]">${title}</h3>
@@ -9336,10 +9601,8 @@
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
-                    <div class="p-6 max-h-[60vh] overflow-y-auto text-[var(--text-main)]">${body}</div>
-                    <div class="p-4 modal-footer flex justify-end gap-3 bg-[var(--surface-1)] border-t border-[var(--border-color)]">
-                        ${footer || `<button data-action="closeModal" class="px-4 py-2 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--border-color)] transition-colors font-medium text-sm">關閉</button>`}
-                    </div>
+                    <div class="p-6 max-h-[70vh] overflow-y-auto text-[var(--text-main)]">${body}</div>
+                    ${footer ? `<div class="p-4 modal-footer flex justify-end gap-3 bg-[var(--surface-1)] border-t border-[var(--border-color)]">${footer}</div>` : ''}
                 </div>`;
 
                 document.body.appendChild(modal);
@@ -9357,7 +9620,7 @@
                         想了解更多功能嗎？點擊右上角選單探索或查看快捷鍵說明！
                     </p>
                 </div>
-            `;
+        `;
 
                 this.renderModal({
                     title: '🎉 歡迎來到辯時計 Pro 🎉',
@@ -9375,7 +9638,7 @@
                 const formatDuration = (sec) => {
                     const m = Math.floor(sec / 60);
                     const s = sec % 60;
-                    return m > 0 ? `${m} 分 ${s > 0 ? s + ' 秒' : ''}` : `${s} 秒`;
+                    return m > 0 ? `${m} 分 ${s > 0 ? s + ' 秒' : ''} ` : `${s} 秒`;
                 };
 
                 // 建立流程選擇器的選項
@@ -9395,9 +9658,9 @@
                 };
 
                 this.mainContent.innerHTML = `
-                <div class="max-w-3xl mx-auto pb-40 animate-fade-in-up px-4">
+            <div class="max-w-3xl mx-auto pb-40 animate-fade-in-up px-4">
                     
-                    <!-- 編輯器頂部面板 -->
+                    <!--編輯器頂部面板 -->
                     <div class="editor-top-panel glass-panel mb-6 mt-4 p-5 rounded-2xl">
                         <div class="flex flex-col md:flex-row md:items-center gap-4">
                             <!-- 左側：流程選擇 -->
@@ -9419,13 +9682,13 @@
                                 </div>
                                 <div class="text-center px-4 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-color)]">
                                     <div class="text-lg font-bold text-[var(--color-accent)]" id="editor-total-duration">${totalDuration > 0 ? formatDuration(totalDuration) : '--'}</div>
-                                    <div class="text-xs text-slate-500">預估總時長</div>
+                                    <div class="text-xs text-slate-500">預估總時間</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- 流程名稱輸入 -->
+                    <!--流程名稱輸入 -->
                     <div class="mb-6">
                         <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1 mb-2 block flex items-center gap-2">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -9442,7 +9705,7 @@
                         </div>
                     </div>
 
-                    <!-- 階段列表標題 -->
+                    <!--階段列表標題 -->
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
                             <svg class="w-4 h-4 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
@@ -9469,27 +9732,27 @@
                     </div>
                 </div>
 
-                <!-- 底部操作列 -->
-                <div class="editor-sticky-bar animate-fade-in-up">
-                    <div class="flex items-center gap-3">
-                        <button data-action="closeEditor" class="px-4 py-2.5 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-semibold text-sm flex items-center gap-2 border border-transparent hover:border-red-200 dark:hover:border-red-800">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            捨棄
-                        </button>
-                    </div>
-                    
-                    <div class="flex items-center gap-3">
-                        <div id="editor-unsaved-indicator" class="hidden items-center gap-1.5 text-xs text-amber-500 font-medium px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            未儲存
-                        </div>
-                        <button data-action="saveAndCloseEditor" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] hover:from-[var(--color-primary-dark)] hover:to-[var(--color-accent-hover)] text-white shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 transition-all font-bold text-sm flex items-center gap-2 transform hover:scale-105 active:scale-95">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                            儲存流程
-                        </button>
-                    </div>
+                <!--底部操作列 -->
+            <div class="editor-sticky-bar animate-fade-in-up">
+                <div class="flex items-center gap-3">
+                    <button data-action="closeEditor" class="px-4 py-2.5 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-semibold text-sm flex items-center gap-2 border border-transparent hover:border-red-200 dark:hover:border-red-800">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        捨棄
+                    </button>
                 </div>
-            `;
+
+                <div class="flex items-center gap-3">
+                    <div id="editor-unsaved-indicator" class="hidden items-center gap-1.5 text-xs text-amber-500 font-medium px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        未儲存
+                    </div>
+                    <button data-action="saveAndCloseEditor" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] hover:from-[var(--color-primary-dark)] hover:to-[var(--color-accent-hover)] text-white shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 transition-all font-bold text-sm flex items-center gap-2 transform hover:scale-105 active:scale-95">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        儲存流程
+                    </button>
+                </div>
+            </div>
+        `;
                 this.renderEditorStageList();
                 this.updateEditorUnsavedIndicator();
             },
@@ -9514,19 +9777,19 @@
                     if (!sec) return null;
                     const m = Math.floor(sec / 60);
                     const s = sec % 60;
-                    if (m > 0 && s > 0) return `${m}分${s}秒`;
-                    if (m > 0) return `${m}分鐘`;
-                    return `${s}秒`;
+                    if (m > 0 && s > 0) return `${m}分${s} 秒`;
+                    if (m > 0) return `${m} 分鐘`;
+                    return `${s} 秒`;
                 };
 
                 if (this.state.currentFlow.length === 0) {
                     container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-16 border-2 border-dashed border-[var(--border-color)] rounded-2xl bg-gradient-to-br from-[var(--surface-1)] to-[var(--surface-2)]">
+            <div class="flex flex-col items-center justify-center py-16 border-2 border-dashed border-[var(--border-color)] rounded-2xl bg-gradient-to-br from-[var(--surface-1)] to-[var(--surface-2)]">
                         <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center mb-4 text-4xl shadow-lg">📝</div>
                         <h3 class="text-lg font-bold text-slate-600 dark:text-slate-300">流程是空的</h3>
                         <p class="text-slate-500 text-sm mt-1">點擊下方按鈕開始建立您的辯論流程</p>
                     </div>
-                `;
+            `;
                 } else {
                     container.innerHTML = this.state.currentFlow.map((stage, index) => {
                         const config = stageConfig[stage.type] || stageConfig.default;
@@ -9536,7 +9799,7 @@
                             : '<span class="text-slate-400 text-xs italic">無時限</span>';
 
                         return `
-                    <div data-index="${index}" class="timeline-card group animate-fade-in-up" style="animation-delay: ${index * 40}ms">
+            <div data-index="${index}" class="timeline-card group animate-fade-in-up" style="animation-delay: ${index * 40}ms">
                         <div class="card-drag-handle" title="拖曳排序">
                             <div class="flex flex-col items-center gap-1">
                                 <svg class="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" /></svg>
@@ -9570,7 +9833,7 @@
                             </button>
                         </div>
                     </div>
-                    `;
+            `;
                     }).join('');
                 }
 
@@ -9625,7 +9888,7 @@
 
             renderStageEditorModal(stage = {}, index = NaN) {
                 const isNew = isNaN(index);
-                const title = isNew ? '新增階段' : `編輯階段: ${stage.name}`;
+                const title = isNew ? '新增階段' : `編輯階段: ${stage.name} `;
 
                 const current = { name: '', type: 'announcement', duration: '', script: '', timerLabel: '', graceDuration: 60, graceEndAction: 'auto_start', choosingTeam: 'positive', actionChoices: '', baseScript: '', baseTimerLabel: '', ...stage };
                 const typeOptions = [
@@ -9639,7 +9902,7 @@
                 ];
 
                 const formFields = `
-                <input type="hidden" name="index" value="${index}">
+            <input type="hidden" name="index" value="${index}">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">階段名稱</label>
@@ -9658,9 +9921,9 @@
                     title,
                     body: `<form id="stage-editor-form" class="p-1 pr-2">${formFields}</form>`,
                     footer: `
-                    <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>
-                    <button data-action="saveStage" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">儲存</button>
-                `
+                <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>
+                <button data-action="saveStage" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">儲存</button>
+        `
                 });
 
                 const typeSelector = document.getElementById('stageTypeSelector');
@@ -9686,8 +9949,8 @@
                         // 動態新增正方選手變數
                         for (let i = 0; i < playerCount; i++) {
                             variables.push({
-                                key: `{{positive_player_${i + 1}}}`,
-                                label: `正${numNames[i] || (i + 1)}`,
+                                key: `{ {positive_player_${i + 1} } } `,
+                                label: `正${numNames[i] || (i + 1)} `,
                                 color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
                             });
                         }
@@ -9695,8 +9958,8 @@
                         // 動態新增反方選手變數
                         for (let i = 0; i < playerCount; i++) {
                             variables.push({
-                                key: `{{negative_player_${i + 1}}}`,
-                                label: `反${numNames[i] || (i + 1)}`,
+                                key: `{ {negative_player_${i + 1} } } `,
+                                label: `反${numNames[i] || (i + 1)} `,
                                 color: 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
                             });
                         }
@@ -9709,8 +9972,8 @@
                         );
 
                         return `
-                            <div class="flex flex-wrap gap-1.5 mb-2">
-                                <span class="text-xs text-slate-500 mr-1 self-center">點擊插入：</span>
+            <div class="flex flex-wrap gap-1.5 mb-2">
+                <span class="text-xs text-slate-500 mr-1 self-center">點擊插入：</span>
                                 ${variables.map(v => `
                                     <button type="button" 
                                         class="variable-tag px-2 py-0.5 rounded text-xs font-medium ${v.color} hover:opacity-80 transition-opacity cursor-pointer"
@@ -9719,19 +9982,20 @@
                                         onclick="App.insertVariable(this)">
                                         ${v.label}
                                     </button>
-                                `).join('')}
+                                `).join('')
+                            }
                             </div>
-                        `;
+            `;
                     };
 
                     // 建立一個區塊的函式，方便重複使用
                     const createSection = (title, content) => {
                         return `
-                        <div class="border-t border-[var(--border-color)] pt-4 mt-4">
+            <div class="border-t border-[var(--border-color)] pt-4 mt-4">
                             <h4 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">${title}</h4>
                             <div class="space-y-4">${content}</div>
                         </div>
-                    `;
+            `;
                     };
 
                     let mainSettings = '';
@@ -9740,48 +10004,48 @@
 
                     // 1. 收集主要設定
                     if (['manual_prep', 'speech_auto', 'choice_speech', 'free_debate'].includes(type)) {
-                        mainSettings += `<div><label class="block text-sm font-medium mb-1">主要時長 (秒)</label><input name="duration" type="number" class="${inputClasses}" value="${current.duration || ''}"></div>`;
+                        mainSettings += `<div ><label class="block text-sm font-medium mb-1">主要時間 (秒)</label><input name="duration" type="number" class="${inputClasses}" value="${current.duration || ''}"></div>`;
                     }
                     if (['manual_prep', 'speech_auto'].includes(type)) {
-                        mainSettings += `<div><label class="block text-sm font-medium mb-1">計時器標籤</label><input name="timerLabel" type="text" class="${inputClasses}" value="${current.timerLabel || ''}"></div>`;
+                        mainSettings += `<div ><label class="block text-sm font-medium mb-1">計時器標籤</label><input name="timerLabel" type="text" class="${inputClasses}" value="${current.timerLabel || ''}"></div>`;
                     }
                     if (!['choice_speech', 'judge_comment'].includes(type)) {
                         mainSettings += `
-                            <div>
-                                <label class="block text-sm font-medium mb-1">主持人講稿</label>
+            <div >
+            <label class="block text-sm font-medium mb-1">主持人講稿</label>
                                 ${renderVariableTags('script-textarea')}
-                                <textarea name="script" id="script-textarea" rows="4" class="${inputClasses}" placeholder="輸入講稿，可點擊上方標籤插入變數...">${current.script || ''}</textarea>
-                            </div>`;
+        <textarea name="script" id="script-textarea" rows="4" class="${inputClasses}" placeholder="輸入講稿，可點擊上方標籤插入變數...">${current.script || ''}</textarea>
+                            </div> `;
                     }
 
                     // 裁判講評特別說明
                     if (type === 'judge_comment') {
                         mainSettings += `
-                            <div class="bg-violet-50 dark:bg-violet-900/20 p-3 rounded-lg text-sm text-violet-700 dark:text-violet-300">
-                                <p class="flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    裁判講評不設計時器。進入此階段時，系統會彈出選擇視窗讓您選擇講評裁判的順序。
-                                </p>
-                            </div>`;
+            <div class="bg-violet-50 dark:bg-violet-900/20 p-3 rounded-lg text-sm text-violet-700 dark:text-violet-300">
+                <p class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    裁判講評不設計時器。進入此階段時，系統會彈出選擇視窗讓您選擇講評裁判的順序。
+                </p>
+                            </div> `;
                     }
 
                     // 2. 收集緩衝期設定
                     if (type === 'speech_auto' || type === 'choice_speech') {
-                        graceSettings += `<div><label class="block text-sm font-medium mb-1">語音緩衝期 (秒)</label><input name="graceDuration" type="number" class="${inputClasses}" value="${current.graceDuration || ''}"></div>`;
-                        graceSettings += `<div><label class="block text-sm font-medium mb-1">緩衝期結束動作</label><select name="graceEndAction" class="${inputClasses}"><option value="auto_start" ${current.graceEndAction === 'auto_start' ? 'selected' : ''}>自動開始</option><option value="manual_start" ${current.graceEndAction === 'manual_start' ? 'selected' : ''}>手動開始</option><option value="auto_skip" ${current.graceEndAction === 'auto_skip' ? 'selected' : ''}>自動跳過</option></select></div>`;
+                        graceSettings += `<div ><label class="block text-sm font-medium mb-1">語音緩衝期 (秒)</label><input name="graceDuration" type="number" class="${inputClasses}" value="${current.graceDuration || ''}"></div>`;
+                        graceSettings += `<div ><label class="block text-sm font-medium mb-1">緩衝期結束動作</label><select name="graceEndAction" class="${inputClasses}"><option value="auto_start" ${current.graceEndAction === 'auto_start' ? 'selected' : ''}>自動開始</option><option value="manual_start" ${current.graceEndAction === 'manual_start' ? 'selected' : ''}>手動開始</option><option value="auto_skip" ${current.graceEndAction === 'auto_skip' ? 'selected' : ''}>自動跳過</option></select></div> `;
                     }
 
                     // 3. 收集辯革盃發言設定
                     if (type === 'choice_speech') {
-                        choiceSettings += `<div><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div>`;
-                        choiceSettings += `<div><label class="block text-sm font-medium mb-1">可選動作 (以逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
+                        choiceSettings += `<div ><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div> `;
+                        choiceSettings += `<div ><label class="block text-sm font-medium mb-1">可選動作 (以逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
                         choiceSettings += `
-                            <div>
-                                <label class="block text-sm font-medium mb-1">基礎講稿樣板</label>
+            <div>
+            <label class="block text-sm font-medium mb-1">基礎講稿樣板</label>
                                 ${renderVariableTags('baseScript-textarea')}
-                                <textarea name="baseScript" id="baseScript-textarea" rows="3" class="${inputClasses}" placeholder="例：請 {{choosingTeam}} 辯士上台進行 {{selected_action_type}}">${current.baseScript || ''}</textarea>
-                            </div>`;
-                        choiceSettings += `<div><label class="block text-sm font-medium mb-1">基礎計時器標籤樣板</label><input name="baseTimerLabel" type="text" class="${inputClasses}" placeholder="例：{{choosingTeam}} {{selected_action_type}}" value="${current.baseTimerLabel || ''}"></div>`;
+        <textarea name="baseScript" id="baseScript-textarea" rows="3" class="${inputClasses}" placeholder="例：請 {{choosingTeam}} 辯士上台進行 {{selected_action_type}}">${current.baseScript || ''}</textarea>
+                            </div> `;
+                        choiceSettings += `<div ><label class="block text-sm font-medium mb-1">基礎計時器標籤樣板</label><input name="baseTimerLabel" type="text" class="${inputClasses}" placeholder="例：{{choosingTeam}} {{selected_action_type}}" value="${current.baseTimerLabel || ''}"></div>`;
                     }
 
                     // 4. 組合區塊
@@ -9819,18 +10083,18 @@
             },
             renderPromotionArea() {
                 return `
-                <div class="mt-12 p-6 sm:p-8 rounded-2xl promo-card">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                        <div class="md:col-span-2">
-                            <h3 class="text-xl font-bold mb-2">探索「辯時計」的更多可能</h3>
-                            <p class="text-slate-600 mb-4 text-sm">
-                                感謝您使用本系統！我們致力於提供最專業的辯論計時體驗。點擊下方按鈕與我們合作或贊助我們的開發。
-                            </p>
-                            <a href="#" data-action="showPremiumModal" class="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors shadow">
-                                了解更多
-                            </a>
-                        </div>
+            <div class="mt-12 p-6 sm:p-8 rounded-2xl promo-card">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div class="md:col-span-2">
+                        <h3 class="text-xl font-bold mb-2">探索「辯時計」的更多可能</h3>
+                        <p class="text-slate-600 mb-4 text-sm">
+                            感謝您使用本系統！我們致力於提供最專業的辯論計時體驗。點擊下方按鈕與我們合作或贊助我們的開發。
+                        </p>
+                        <a href="#" data-action="showPremiumModal" class="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors shadow">
+                            了解更多
+                        </a>
                     </div>
+                </div>
                 </div>
             `;
             },
@@ -9842,7 +10106,7 @@
                 const isDark = document.documentElement.classList.contains('dark');
 
                 const renderToggle = (label, action, checked, icon) => `
-                <div class="menu-item" onclick="document.querySelector('input[data-change-action=\\'${action}\\']').click()">
+            <div class="menu-item" onclick="document.querySelector('input[data-change-action=\\'${action}\\']').click()">
                     <div class="menu-toggle-wrapper">
                         <div class="menu-icon">${icon}</div>
                         <span class="font-semibold text-sm">${label}</span>
@@ -9855,7 +10119,7 @@
             `;
 
                 const renderAction = (label, action, icon, subtext = '') => `
-                <button data-action="${action}" class="menu-item w-full text-left group">
+            <button data-action="${action}" class="menu-item w-full text-left group">
                     <div class="menu-toggle-wrapper">
                         <div class="menu-icon group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">${icon}</div>
                         <div class="flex flex-col">
@@ -9868,7 +10132,7 @@
             `;
 
                 sidebarPanel.innerHTML = `
-                <div class="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--surface-1)] rounded-t-[1.5rem] md:rounded-none sticky top-0 z-10">
+            <div class="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--surface-1)] rounded-t-[1.5rem] md:rounded-none sticky top-0 z-10">
                     <div><h2 class="font-bold text-xl">控制中心</h2><p class="text-xs text-slate-500">Control Center</p></div>
                     
                     <button data-action="toggleSidebar" class="sidebar-close-btn p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
@@ -9976,8 +10240,8 @@
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 v2.1 <br> 技術，為了更好的思辯</div>
-            `;
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 v2.2 <br> 技術，為了更好的思辯</div>
+        `;
             },
 
             // --- SPEECH & SOUND ---
@@ -10116,13 +10380,13 @@
                 try {
                     // 準備辯手資料
                     const positiveDebaters = (this.state.positiveTeamPlayers || []).map((name, idx) => ({
-                        position: ['一辯', '二辯', '三辯', '四辯'][idx] || `${idx + 1}辯`,
+                        position: ['一辯', '二辯', '三辯', '四辯'][idx] || `${idx + 1} 辯`,
                         name: name || '',
                         isClosing: idx === this.state.positiveClosingIndex
                     }));
 
                     const negativeDebaters = (this.state.negativeTeamPlayers || []).map((name, idx) => ({
-                        position: ['一辯', '二辯', '三辯', '四辯'][idx] || `${idx + 1}辯`,
+                        position: ['一辯', '二辯', '三辯', '四辯'][idx] || `${idx + 1} 辯`,
                         name: name || '',
                         isClosing: idx === this.state.negativeClosingIndex
                     }));
@@ -10208,7 +10472,7 @@
                 this.renderModal({
                     title: '投影模式不可用',
                     body: `
-                        <div class="text-center space-y-4">
+            <div class="text-center space-y-4">
                             <div class="text-5xl">📺</div>
                             <p class="text-slate-600 dark:text-slate-300">
                                 您的瀏覽器不支援投影模式功能。
@@ -10222,7 +10486,7 @@
                                 </ul>
                             </div>
                         </div>
-                    `,
+            `,
                     footer: `<button data-action="closeModal" class="w-full px-4 py-2 rounded-lg text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors font-bold">我知道了</button>`
                 });
             },
@@ -10354,7 +10618,7 @@
                         this.state.isRecognizing = false;
                         this.state.speechRecognitionStatus = 'error';
                         if (this.state.transcription.active) {
-                            this.showNotification(`語音轉錄錯誤: ${event.error}`, 'error');
+                            this.showNotification(`語音轉錄錯誤: ${event.error} `, 'error');
                             this.actions.stopTranscription();
                         }
                         if (this.state.currentView === 'debate') this.renderTranscriptionPanel();
@@ -10522,7 +10786,7 @@
                 }
                 const mode = this.state.audioSourceModes[team];
                 if (!mode) {
-                    console.warn(`No audio source mode found for team: ${team}. Aborting.`);
+                    console.warn(`No audio source mode found for team: ${team}.Aborting.`);
                     return;
                 }
                 if (typeof vad === "undefined") {
@@ -10775,7 +11039,7 @@
                     if (totalDuration > 0) {
                         const m = Math.floor(totalDuration / 60);
                         const s = totalDuration % 60;
-                        totalDurationEl.textContent = m > 0 ? `${m} 分 ${s > 0 ? s + ' 秒' : ''}` : `${s} 秒`;
+                        totalDurationEl.textContent = m > 0 ? `${m} 分 ${s > 0 ? s + ' 秒' : ''} ` : `${s} 秒`;
                     } else {
                         totalDurationEl.textContent = '--';
                     }
@@ -10812,7 +11076,7 @@
                     const sharedFlow = JSON.parse(decompressedString);
 
                     if (Array.isArray(sharedFlow)) {
-                        const flowName = `匯入的流程 (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+                        const flowName = `匯入的流程(${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
 
                         // [重要] 將匯入的流程視為「自訂流程」
                         if (!App.debateFormatGroups['自訂流程']) {
@@ -10855,7 +11119,7 @@
                 const container = document.getElementById('notification-container');
                 const a = { info: 'bg-blue-500', success: 'bg-green-500', error: 'bg-red-500' };
                 const div = document.createElement('div');
-                div.className = `px-4 py-2 text-white rounded-lg shadow-lg ${a[type] || a.info}`;
+                div.className = `px-4 py-2 text-white rounded-lg shadow-lg ${a[type] || a.info} `;
                 div.textContent = message;
                 container.appendChild(div);
                 setTimeout(() => {
@@ -10886,13 +11150,13 @@
                 // 動態新增正反方選手變數 (支援 1-6 位辯士)
                 const numNames = ['一', '二', '三', '四', '五', '六'];
                 for (let i = 0; i < 6; i++) {
-                    replacements[`positive_player_${i + 1}`] = this.state.positiveTeamPlayers[i] || `正${numNames[i] || (i + 1)}`;
-                    replacements[`negative_player_${i + 1}`] = this.state.negativeTeamPlayers[i] || `反${numNames[i] || (i + 1)}`;
+                    replacements[`positive_player_${i + 1} `] = this.state.positiveTeamPlayers[i] || `正${numNames[i] || (i + 1)} `;
+                    replacements[`negative_player_${i + 1} `] = this.state.negativeTeamPlayers[i] || `反${numNames[i] || (i + 1)} `;
                 }
 
                 // 動態新增裁判變數 (支援 1-5 位裁判)
                 for (let i = 0; i < 5; i++) {
-                    replacements[`judge_${i + 1}`] = this.state.judges[i] || `裁判${numNames[i] || (i + 1)}`;
+                    replacements[`judge_${i + 1} `] = this.state.judges[i] || `裁判${numNames[i] || (i + 1)} `;
                 }
 
                 return script.replace(/\{\{(\w+)\}\}/g, (match, key) => replacements[key] || match);
@@ -10950,9 +11214,9 @@
             // 統一的計時器狀態判斷函數
             // 返回: 'normal' | 'warning' | 'danger'
             getTimerState(timeLeft, initialDuration) {
-                // 危急狀態：剩餘 10 秒以下（總時長需大於 30 秒才觸發）
+                // 危急狀態：剩餘 10 秒以下（總時間需大於 30 秒才觸發）
                 if (initialDuration > 30 && timeLeft <= 10) return 'danger';
-                // 警告狀態：剩餘 30 秒以下（總時長需大於 60 秒才觸發）
+                // 警告狀態：剩餘 30 秒以下（總時間需大於 60 秒才觸發）
                 if (initialDuration > 60 && timeLeft <= 30) return 'warning';
                 // 正常狀態
                 return 'normal';
@@ -11040,7 +11304,7 @@
                     }
                 }
                 if (progressEl && this.state.timer.initialDuration > 0) {
-                    progressEl.style.width = `${(time / this.state.timer.initialDuration) * 100}%`;
+                    progressEl.style.width = `${(time / this.state.timer.initialDuration) * 100}% `;
                 }
             },
 
@@ -11142,7 +11406,7 @@
                 const finalLabel = timerLabel || this.interpolateScript(stage.timerLabel);
                 const timerStatusEl = document.getElementById('timerStatus');
                 if (timerStatusEl) {
-                    timerStatusEl.textContent = `準備 (${finalLabel})`;
+                    timerStatusEl.textContent = `準備(${finalLabel})`;
                 }
 
                 this.updateTimerDisplay(this.state.timer.timeLeft);
@@ -11216,6 +11480,19 @@
             loadStage(index) {
                 const stage = this.state.currentFlow[index];
                 if (!stage) return;
+
+                // 時間戳功能：記錄階段切換時間
+                if (this.state.recording.isRecording && this.state.recording.recordingStartTime) {
+                    // 計算經過時間，需扣除暫停期間累計的時間
+                    const totalElapsed = Date.now() - this.state.recording.recordingStartTime;
+                    const actualRecordingTime = totalElapsed - this.state.recording.pausedDuration;
+                    const elapsedSeconds = actualRecordingTime / 1000;
+                    this.state.recording.timestamps.push({
+                        time: elapsedSeconds,
+                        stageName: this.interpolateScript(stage.name || stage.timerLabel || `階段 ${index + 1}`),
+                        stageIndex: index
+                    });
+                }
 
                 // 記錄上一個視圖狀態，用於判斷是否需要重新渲染整個視圖
                 const previousView = this.state.currentView;
@@ -11345,7 +11622,11 @@
                         const selectedAction = stage.fixedAction;
 
                         // 增加對應動作的計數
+                        // [FIX] 確保 key 存在於 counts 中，避免 Unicode 編碼差異問題
                         const counts = (team === 'positive') ? this.state.positiveActionCounts : this.state.negativeActionCounts;
+                        if (typeof counts[selectedAction] !== 'number') {
+                            counts[selectedAction] = 0;
+                        }
                         counts[selectedAction]++;
 
                         // 在當前階段物件中記錄已執行的動作，以便 "上一階段" 功能可以撤銷
@@ -11371,13 +11652,9 @@
                         const isDisabled = remaining <= 0;
 
                         if (isDisabled) {
-                            return `<button disabled class="px-8 py-4 rounded-xl text-white font-bold text-lg bg-gray-400 cursor-not-allowed opacity-50">
-                            ${action} (已用完)
-                        </button>`;
+                            return `<button disabled class="px-8 py-4 rounded-xl text-white font-bold text-lg bg-gray-400 cursor-not-allowed opacity-50">${action} (已用完)</button>`;
                         }
-                        return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-8 py-4 rounded-xl text-white font-bold text-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-all hover:scale-105 shadow-lg">
-                        ${action} (剩${remaining}次)
-                    </button>`;
+                        return `<button data-action="confirmStageChoice" data-choice="${action}" class="px-8 py-4 rounded-xl text-white font-bold text-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-all hover:scale-105 shadow-lg">${action} (剩${remaining}次)</button>`;
                     }).join('');
 
                     this.renderModal({
@@ -11409,13 +11686,13 @@
                     let introText = '';
                     if (isFirstJudge) {
                         introText = `
-                            <div class="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 p-4 rounded-xl mb-4 text-center">
-                                <p class="text-slate-700 dark:text-slate-300 text-lg">
-                                    感謝雙方隊伍帶來一場精彩的比賽，<br>
-                                    接下來讓我們欣賞更精彩的裁判講評。
-                                </p>
+            <div class="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 p-4 rounded-xl mb-4 text-center">
+                <p class="text-slate-700 dark:text-slate-300 text-lg">
+                    感謝雙方隊伍帶來一場精彩的比賽，<br>
+                        接下來讓我們欣賞更精彩的裁判講評。
+                </p>
                             </div>
-                        `;
+            `;
                     }
 
                     const optionsHTML = judges.map((judge, index) => {
@@ -11424,13 +11701,13 @@
 
                         if (hasCommented) {
                             return `<button disabled class="px-6 py-4 rounded-xl text-white font-bold text-lg bg-gray-400 cursor-not-allowed opacity-50 min-w-[120px]">
-                                <div class="text-sm opacity-75">第${orderNum}位</div>
+            <div class="text-sm opacity-75">第${orderNum}位</div>
                                 ${judge}
-                                <div class="text-xs mt-1">✓ 已講評</div>
+        <div class="text-xs mt-1">✓ 已講評</div>
                             </button>`;
                         }
                         return `<button data-action="confirmJudgeChoice" data-judge-index="${index}" class="px-6 py-4 rounded-xl text-white font-bold text-lg bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 transition-all hover:scale-105 shadow-lg min-w-[120px]">
-                            <div class="text-2xl mb-1">🎓</div>
+            <div class="text-2xl mb-1">🎓</div>
                             ${judge}
                         </button>`;
                     }).join('');
@@ -11458,13 +11735,13 @@
                         : '';
 
                     this.renderModal({
-                        title: `🎓 ${hintText}`,
+                        title: `🎓 ${hintText} `,
                         body: `
                             ${introText}
                             ${orderInfo}
                             <div class="flex justify-center flex-wrap gap-4 py-4">${optionsHTML}</div>
                             <div class="text-center mt-4">${resetBtn}</div>
-                        `,
+        `,
                         footer: `<button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>`
                     });
                 });
@@ -11526,6 +11803,18 @@
                     }
                     this.state.recording.recordedChunks = [];
                     this.state.recording.intermediateBlobs = []; // [記憶體優化] 清空中間 Blobs
+                    // 時間戳功能：初始化
+                    this.state.recording.timestamps = [];
+                    this.state.recording.recordingStartTime = Date.now();
+                    // 記錄當前階段作為第一個時間戳
+                    const currentStage = this.state.currentFlow[this.state.currentStageIndex];
+                    if (currentStage) {
+                        this.state.recording.timestamps.push({
+                            time: 0,
+                            stageName: this.interpolateScript(currentStage.name || currentStage.timerLabel || '開始'),
+                            stageIndex: this.state.currentStageIndex
+                        });
+                    }
 
                     const options = { mimeType: 'audio/webm; codecs=opus' };
                     this.state.recording.mediaRecorder = new MediaRecorder(this.state.recording.mediaStream, options);
@@ -11543,8 +11832,20 @@
                     this.state.recording.mediaRecorder.onstop = () => {
                         // [記憶體優化] 最終合併：先處理剩餘的 chunks，再合併所有 intermediateBlobs
                         this._consolidateRecordingChunks();
-                        const { intermediateBlobs } = this.state.recording;
-                        this.state.recording.audioBlob = new Blob(intermediateBlobs, { type: 'audio/webm' });
+                        const { intermediateBlobs, timestamps, recordingStartTime } = this.state.recording;
+                        const audioBlob = new Blob(intermediateBlobs, { type: 'audio/webm' });
+
+                        // 儲存當前錄音到 recordings 陣列
+                        this.state.recording.recordings.push({
+                            audioBlob: audioBlob,
+                            timestamps: [...timestamps],
+                            startTime: recordingStartTime,
+                            endTime: Date.now()
+                        });
+
+                        // 更新當前 audioBlob（保持向下相容）
+                        this.state.recording.audioBlob = audioBlob;
+
                         // 清空中間資料
                         this.state.recording.intermediateBlobs = [];
                         this.state.recording.recordedChunks = [];
@@ -11555,7 +11856,9 @@
                         }
                         this.state.recording.isRecording = false;
                         this.renderTranscriptionPanel(); // 更新UI
-                        this.showNotification("錄音已停止。", "info");
+
+                        const recordingCount = this.state.recording.recordings.length;
+                        this.showNotification(`錄音段落 ${recordingCount} 已儲存。`, "info");
 
                         // 如果是因為比賽結束而停止，則顯示下載畫面
                         if (this.state.currentStageIndex >= this.state.currentFlow.length - 1) {
@@ -11565,12 +11868,20 @@
 
                     this.state.recording.mediaRecorder.start();
                     this.state.recording.isRecording = true;
+
+                    // 自動啟動轉錄功能
+                    if (!this.state.transcription.active) {
+                        this.state.transcription.active = true;
+                        this.state.transcription.paused = false;
+                        this.startRecognition();
+                    }
+
                     this.renderTranscriptionPanel(); // 更新UI
                     this.renderDebateControls();
                     if (this.state.currentFlow[this.state.currentStageIndex]?.type === 'free_debate') {
                         this.renderFreeDebateControls(); // [新增] 如果在自由辯，也更新控制項
                     }
-                    this.showNotification("錄音已開始。", "success");
+                    this.showNotification("錄音與轉錄已開始。", "success");
 
                 } catch (err) {
                     console.error("Error starting recording:", err);
@@ -11580,11 +11891,71 @@
 
             stopRecording() {
                 if (this.state.recording.mediaRecorder && this.state.recording.isRecording) {
+                    // 如果正在暫停，先恢復再停止
+                    if (this.state.recording.isPaused) {
+                        this.state.recording.mediaRecorder.resume();
+                    }
                     this.state.recording.mediaRecorder.stop();
                     this.state.recording.micAudioTrack = null;
                     this.state.recording.isMicMuted = false;
+                    this.state.recording.isPaused = false;
+
+                    // 同時停止轉錄
+                    if (this.state.transcription.active) {
+                        this.state.transcription.active = false;
+                        this.state.transcription.paused = false;
+                        this.stopRecognition();
+                    }
                 }
             },
+
+            pauseRecording() {
+                const { recording } = this.state;
+                if (!recording.mediaRecorder || !recording.isRecording || recording.isPaused) {
+                    return;
+                }
+
+                // 暫停 MediaRecorder
+                recording.mediaRecorder.pause();
+                recording.isPaused = true;
+                recording.pauseStartTime = Date.now();
+
+                // 同時暫停轉錄
+                if (this.state.transcription.active && !this.state.transcription.paused) {
+                    this.state.transcription.paused = true;
+                    this.stopRecognition();
+                }
+
+                this.renderTranscriptionPanel();
+                this.showNotification("錄音已暫停", "info");
+            },
+
+            resumeRecording() {
+                const { recording } = this.state;
+                if (!recording.mediaRecorder || !recording.isRecording || !recording.isPaused) {
+                    return;
+                }
+
+                // 恢復 MediaRecorder
+                recording.mediaRecorder.resume();
+
+                // 累計暫停時間
+                if (recording.pauseStartTime) {
+                    recording.pausedDuration += (Date.now() - recording.pauseStartTime);
+                    recording.pauseStartTime = null;
+                }
+                recording.isPaused = false;
+
+                // 同時恢復轉錄
+                if (this.state.transcription.active && this.state.transcription.paused) {
+                    this.state.transcription.paused = false;
+                    this.startRecognition();
+                }
+
+                this.renderTranscriptionPanel();
+                this.showNotification("錄音已繼續", "success");
+            },
+
             toggleMicMute() {
                 const { recording } = this.state;
                 if (!recording.micAudioTrack) {
@@ -11598,7 +11969,7 @@
                 // 直接控制音訊軌道的啟用/禁用
                 recording.micAudioTrack.enabled = !recording.isMicMuted;
 
-                this.showNotification(`麥克風已 ${recording.isMicMuted ? '靜音' : '開啟'}`, "info");
+                this.showNotification(`麥克風已 ${recording.isMicMuted ? '靜音' : '開啟'} `, "info");
 
                 // 重新渲染UI，更新按鈕的樣式
                 if (this.state.currentFlow[this.state.currentStageIndex]?.type === 'free_debate') {
@@ -11624,6 +11995,301 @@
                 a.remove();
             },
 
+            // 時間戳播放器
+            renderRecordingPlayer() {
+                // 移除已存在的播放器
+                const existingPlayer = document.getElementById('recordingPlayerPanel');
+                if (existingPlayer) existingPlayer.remove();
+
+                if (!this.state.recording.audioBlob) return;
+
+                const { timestamps } = this.state.recording;
+                const formatTime = (seconds) => {
+                    const m = Math.floor(seconds / 60);
+                    const s = Math.floor(seconds % 60);
+                    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                };
+
+                // 產生時間戳列表
+                let timestampListHTML = '';
+                if (timestamps.length > 0) {
+                    timestampListHTML = timestamps.map((ts, i) => `
+                        <button data-action="seekToTimestamp" data-timestamp-index="${i}" class="timestamp-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all hover:bg-[var(--color-primary)] hover:text-white group">
+                            <span class="timestamp-time font-mono text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-600 group-hover:bg-white/20">${formatTime(ts.time)}</span>
+                            <span class="text-sm font-medium truncate">${ts.stageName}</span>
+                        </button>
+                    `).join('');
+                } else {
+                    timestampListHTML = '<p class="text-sm text-slate-500 text-center py-4">沒有記錄到任何階段</p>';
+                }
+
+                // 建立播放器面板
+                const playerPanel = document.createElement('div');
+                playerPanel.id = 'recordingPlayerPanel';
+                playerPanel.className = 'recording-player-panel fixed bottom-24 right-4 z-50 w-80 max-w-[calc(100%-2rem)] glass-panel rounded-2xl shadow-2xl overflow-hidden animate-scale-in';
+                playerPanel.innerHTML = `
+                    <!-- 標題列 -->
+                    <div class="flex justify-between items-center px-4 py-3 border-b border-[var(--border-color)] bg-[var(--surface-2)]">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.97l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                            </svg>
+                            <span class="font-bold text-sm">錄音播放器</span>
+                        </div>
+                        <button data-action="closeRecordingPlayer" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!--音訊播放器 -->
+                    <div class="px-4 py-3 bg-[var(--surface-1)]">
+                        <audio id="recordingAudioPlayer" controls class="w-full h-10"></audio>
+                    </div>
+
+                    <!--階段列表 -->
+                    <div class="px-3 py-2 max-h-64 overflow-y-auto space-y-1 bg-[var(--surface-1)]">
+                        <p class="text-xs font-bold text-slate-500 uppercase px-1 mb-2">階段跳轉</p>
+                        ${timestampListHTML}
+                    </div>
+
+                    <!--下載按鈕 -->
+            <div class="p-3 border-t border-[var(--border-color)] bg-[var(--surface-2)]">
+                <button data-action="downloadAudio" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:bg-[var(--color-primary-dark)] transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    下載錄音檔案
+                </button>
+            </div>
+        `;
+
+                document.body.appendChild(playerPanel);
+
+                // 設定音訊來源
+                const audioPlayer = document.getElementById('recordingAudioPlayer');
+                if (audioPlayer && this.state.recording.audioBlob) {
+                    audioPlayer.src = URL.createObjectURL(this.state.recording.audioBlob);
+                }
+            },
+
+            seekToRecordingTimestamp(index) {
+                const { timestamps } = this.state.recording;
+                const audioPlayer = document.getElementById('recordingAudioPlayer');
+
+                if (!audioPlayer || !timestamps[index]) return;
+
+                // timestamps.time 已經是秒為單位
+                audioPlayer.currentTime = timestamps[index].time;
+                audioPlayer.play().catch(err => console.log("Audio play prevented:", err));
+
+                // 高亮當前選中的時間戳
+                const allBtns = document.querySelectorAll('[data-timestamp-index]');
+                allBtns.forEach(btn => btn.classList.remove('active', 'bg-[var(--color-primary)]', 'text-white'));
+                const activeBtn = document.querySelector(`[data-timestamp-index="${index}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active', 'bg-[var(--color-primary)]', 'text-white');
+                }
+            },
+
+            seekToEndScreenTimestamp(index) {
+                const { timestamps } = this.state.recording;
+                const audioPlayer = document.getElementById('endScreenAudioPlayer');
+
+                if (!audioPlayer || !timestamps[index]) return;
+
+                // timestamps.time 已經是秒為單位
+                audioPlayer.currentTime = timestamps[index].time;
+                audioPlayer.play().catch(err => console.log("Audio play prevented:", err));
+
+                // 高亮當前選中的時間戳
+                const allBtns = document.querySelectorAll('[data-timestamp-index]');
+                allBtns.forEach(btn => btn.classList.remove('active', 'bg-[var(--color-primary)]', 'text-white'));
+                const activeBtn = document.querySelector(`[data-timestamp-index="${index}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active', 'bg-[var(--color-primary)]', 'text-white');
+                }
+            },
+
+            // 多段錄音：跳轉到特定錄音段落的特定時間戳
+            seekToMultiRecording(recIndex, tsIndex) {
+                const { recordings } = this.state.recording;
+                if (!recordings[recIndex]) return;
+
+                const rec = recordings[recIndex];
+                const audioPlayer = document.getElementById(`endScreenAudioPlayer_${recIndex}`);
+
+                if (!audioPlayer || !rec.timestamps[tsIndex]) return;
+
+                // timestamps.time 已經是秒為單位
+                audioPlayer.currentTime = rec.timestamps[tsIndex].time;
+                audioPlayer.play().catch(err => console.log("Audio play prevented:", err));
+            },
+
+            // 下載單個錄音段落
+            downloadSingleRecording(recIndex) {
+                const { recordings } = this.state.recording;
+                if (!recordings[recIndex]) return;
+
+                const rec = recordings[recIndex];
+                const url = URL.createObjectURL(rec.audioBlob);
+                const a = document.createElement('a');
+                document.body.appendChild(a);
+                a.style = 'display: none';
+                a.href = url;
+                const filename = `辯論錄音_段落${recIndex + 1}_${new Date().toISOString().slice(0, 10)}.webm`;
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                this.showNotification(`已下載錄音段落 ${recIndex + 1} `, "success");
+            },
+
+            // 下載全部錄音（合併為一個檔案或分開下載）
+            async downloadAllRecordings() {
+                const { recordings } = this.state.recording;
+                if (recordings.length === 0) return;
+
+                // 嘗試合併所有錄音
+                try {
+                    const allBlobs = recordings.map(r => r.audioBlob);
+                    const mergedBlob = new Blob(allBlobs, { type: 'audio/webm' });
+
+                    const url = URL.createObjectURL(mergedBlob);
+                    const a = document.createElement('a');
+                    document.body.appendChild(a);
+                    a.style = 'display: none';
+                    a.href = url;
+                    const filename = `辯論錄音_完整_${new Date().toISOString().slice(0, 10)}.webm`;
+                    a.download = filename;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+
+                    this.showNotification(`已下載全部 ${recordings.length} 段錄音`, "success");
+                } catch (err) {
+                    console.error("Error merging recordings:", err);
+                    this.showNotification("合併失敗，請分別下載各段落", "error");
+                }
+            },
+
+            // 使用 Web Share API 分享錄音
+            async shareSingleRecording(recIndex) {
+                const { recordings } = this.state.recording;
+                if (!recordings[recIndex]) return;
+
+                const rec = recordings[recIndex];
+                const filename = `辯論錄音_段落${recIndex + 1}_${new Date().toISOString().slice(0, 10)}.webm`;
+
+                // 格式化時間為 mm:ss
+                const formatTime = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+
+                // 生成時間標記文字清單
+                let timestampText = '';
+                if (rec.timestamps && rec.timestamps.length > 0) {
+                    timestampText = '\n\n📍 時間標記（可用於跳轉）：\n';
+                    timestampText += rec.timestamps.map((ts, idx) =>
+                        `${formatTime(ts.time)} - ${ts.stageName}`
+                    ).join('\n');
+                }
+
+                // 組合分享文字
+                const shareText = `🎙️ 辯論錄音 - 段落 ${recIndex + 1}\n` +
+                    `📝 辯題：${this.state.debateTopic}\n` +
+                    `🟢 正方：${this.state.positiveTeamName}\n` +
+                    `🔴 反方：${this.state.negativeTeamName}` +
+                    timestampText;
+
+                // 檢查瀏覽器是否支援 Web Share API
+                if (!navigator.share) {
+                    // 不支援分享，複製到剪貼簿
+                    try {
+                        await navigator.clipboard.writeText(shareText);
+                        this.showNotification("時間標記已複製到剪貼簿，請先下載錄音後一併分享", "success");
+                    } catch (e) {
+                        this.showNotification("您的瀏覽器不支援分享功能，請使用下載按鈕", "warning");
+                    }
+                    return;
+                }
+
+                // 檢查是否支援檔案分享
+                const file = new File([rec.audioBlob], filename, { type: 'audio/webm' });
+
+                if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+                    // 如果不支援檔案分享，嘗試只分享文字（含時間標記）
+                    try {
+                        await navigator.share({
+                            title: `辯論錄音 - ${this.state.debateTopic}`,
+                            text: shareText
+                        });
+                        this.showNotification("已分享資訊（請先下載錄音後附加）", "info");
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            console.error("Share failed:", err);
+                            this.showNotification("分享失敗", "error");
+                        }
+                    }
+                    return;
+                }
+
+                // 支援檔案分享 - 同時分享檔案和時間標記
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: `辯論錄音 - ${this.state.debateTopic}`,
+                        text: shareText
+                    });
+                    this.showNotification("已分享錄音與時間標記", "success");
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        // 使用者取消分享，不顯示錯誤
+                        return;
+                    }
+                    console.error("Share failed:", err);
+                    this.showNotification("分享失敗，請嘗試下載後手動分享", "error");
+                }
+            },
+
+            // 複製時間標記到剪貼簿
+            async copyTimestamps(recIndex) {
+                const { recordings } = this.state.recording;
+                if (!recordings[recIndex]) return;
+
+                const rec = recordings[recIndex];
+                if (!rec.timestamps || rec.timestamps.length === 0) {
+                    this.showNotification("此錄音段落沒有時間標記", "info");
+                    return;
+                }
+
+                // 格式化時間為 mm:ss
+                const formatTime = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+
+                // 生成時間標記文字
+                const timestampText = `📍 辯論錄音時間標記（段落 ${recIndex + 1}）\n` +
+                    `📝 辯題：${this.state.debateTopic}\n\n` +
+                    rec.timestamps.map((ts) =>
+                        `${formatTime(ts.time)} - ${ts.stageName}`
+                    ).join('\n');
+
+                try {
+                    await navigator.clipboard.writeText(timestampText);
+                    this.showNotification("時間標記已複製到剪貼簿", "success");
+                } catch (e) {
+                    console.error("Copy failed:", e);
+                    this.showNotification("複製失敗", "error");
+                }
+            },
+
             downloadTranscript() {
                 const { paragraphs } = this.state.transcription;
                 if (paragraphs.length === 0) {
@@ -11643,15 +12309,15 @@
                 }, {});
 
                 // 2. 產生檔案標頭
-                let transcriptContent = `辯題：${this.state.debateTopic}\n`;
-                transcriptContent += `正方：${this.state.positiveTeamName}\n`;
-                transcriptContent += `反方：${this.state.negativeTeamName}\n\n`;
+                let transcriptContent = `辯題：${this.state.debateTopic} \n`;
+                transcriptContent += `正方：${this.state.positiveTeamName} \n`;
+                transcriptContent += `反方：${this.state.negativeTeamName} \n\n`;
                 transcriptContent += "--- 逐字稿 ---\n\n";
 
                 // 3. 遍歷分組後的物件，產生最終格式的文字
                 for (const stageName in groupedByStage) {
                     transcriptContent += `[${stageName}]\n`;
-                    transcriptContent += `${groupedByStage[stageName].trim()}\n\n`;
+                    transcriptContent += `${groupedByStage[stageName].trim()} \n\n`;
                 }
 
                 // 4. 建立 Blob 並觸發下載
@@ -11668,27 +12334,190 @@
                 a.remove();
             },
             renderEndDebateDownloads() {
-                const container = document.getElementById('debateControlsContainer');
-                if (!container) return;
+                // 設定視圖為結束畫面
+                this.state.currentView = 'end';
 
-                const hasAudio = !!this.state.recording.audioBlob;
+                const { recordings } = this.state.recording;
+                const hasRecordings = recordings.length > 0;
                 const hasTranscript = this.state.transcription.paragraphs.length > 0;
 
-                container.innerHTML = `
-                <div class="glass-card p-6 rounded-2xl shadow-lg text-center space-y-4">
-                    <h3 class="font-bold text-xl">比賽結束</h3>
-                    <p class="text-slate-600 dark:text-slate-300">您可以下載本次比賽的紀錄：</p>
-                    <div class="flex flex-wrap items-center justify-center gap-4">
-                        <button data-action="downloadAudio" class="flex-grow btn-secondary font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${!hasAudio ? 'opacity-50 cursor-not-allowed' : ''}" ${!hasAudio ? 'disabled' : ''}>
-                            下載錄音 (.webm)
-                        </button>
-                        <button data-action="downloadTranscript" class="flex-grow btn-secondary font-semibold rounded-lg text-base px-5 py-3 transition-colors duration-200 ${!hasTranscript ? 'opacity-50 cursor-not-allowed' : ''}" ${!hasTranscript ? 'disabled' : ''}>
+                // 時間格式化
+                const formatTime = (seconds) => {
+                    const m = Math.floor(seconds / 60);
+                    const s = Math.floor(seconds % 60);
+                    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                };
+
+                // 產生錄音段落選擇器和播放器
+                let recordingsHTML = '';
+                if (hasRecordings) {
+                    recordingsHTML = recordings.map((rec, recIndex) => {
+                        const duration = (rec.endTime - rec.startTime) / 1000;
+                        const timestampsHTML = rec.timestamps.map((ts, tsIndex) => `
+                            <button data-action="seekToMultiRecording" data-rec-index="${recIndex}" data-timestamp-index="${tsIndex}" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all bg-white/50 dark:bg-slate-700/50 hover:bg-[var(--color-primary)] hover:text-white group text-xs">
+                                <span class="font-mono px-2 py-1 rounded bg-slate-200 dark:bg-slate-600 group-hover:bg-white/20 min-w-[50px] text-center">${formatTime(ts.time)}</span>
+                                <span class="flex-1 truncate">${ts.stageName}</span>
+                            </button>
+                        `).join('');
+
+                        return `
+                            <div class="recording-segment bg-[var(--surface-2)] rounded-xl p-4 border border-[var(--border-color)]">
+                                <div class="flex items-center justify-between mb-3">
+                                    <p class="text-sm font-bold flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white text-xs flex items-center justify-center">${recIndex + 1}</span>
+                                        錄音段落 ${recIndex + 1}
+                                    </p>
+                                    <span class="text-xs text-slate-500">${formatTime(duration)}</span>
+                                </div>
+                                <audio id="endScreenAudioPlayer_${recIndex}" controls class="w-full h-10 mb-3"></audio>
+                                ${rec.timestamps.length > 0 ? `
+                                    <div class="max-h-40 overflow-y-auto space-y-1 pr-1">
+                                        ${timestampsHTML}
+                                    </div>
+                                ` : ''}
+                                <div class="mt-3 pt-3 border-t border-[var(--border-color)] flex gap-2 flex-wrap">
+                                    <button data-action="downloadSingleRecording" data-rec-index="${recIndex}" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-[var(--color-primary)] hover:text-white transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                        下載
+                                    </button>
+                                    <button data-action="shareSingleRecording" data-rec-index="${recIndex}" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:opacity-90 transition-opacity">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                                        </svg>
+                                        分享
+                                    </button>
+                                    ${rec.timestamps.length > 0 ? `
+                                    <button data-action="copyTimestamps" data-rec-index="${recIndex}" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-amber-500 hover:text-white transition-colors" title="複製時間標記">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z" />
+                                        </svg>
+                                        複製標記
+                                    </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // 渲染整個 mainContent 區域
+                this.mainContent.innerHTML = `
+                <div class="min-h-[80vh] flex items-center justify-center p-4 animate-fade-in-up">
+                <div class="glass-panel p-8 rounded-3xl shadow-2xl space-y-6 max-w-3xl w-full">
+                    <!-- 標題 -->
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white text-4xl mb-4 shadow-xl animate-bounce-subtle">
+                            🎉
+                        </div>
+                        <h2 class="font-black text-3xl mb-2 bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">比賽結束</h2>
+                        <p class="text-slate-600 dark:text-slate-300 text-lg">恭喜完成比賽！您可以下載或回放本次比賽的紀錄</p>
+                    </div>
+
+                    <!-- 比賽資訊摘要 -->
+                    <div class="bg-[var(--surface-2)] rounded-xl p-4 border border-[var(--border-color)] text-center">
+                        <p class="text-sm text-slate-500 mb-1">辯題</p>
+                        <p class="font-bold text-lg">${this.state.debateTopic}</p>
+                        <div class="flex justify-center gap-4 mt-3 text-sm">
+                            <span class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">${this.state.positiveTeamName}</span>
+                            <span class="text-slate-400">vs</span>
+                            <span class="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium">${this.state.negativeTeamName}</span>
+                        </div>
+                    </div>
+
+                    <!-- 錄音段落列表 -->
+                    ${hasRecordings ? `
+                            <div class="border-t border-[var(--border-color)] pt-6">
+                                <p class="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2 justify-center">
+                                    <svg class="w-5 h-5 text-[var(--color-primary)]" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                    錄音回放 (${recordings.length} 段)
+                                </p>
+                                <div class="space-y-4 max-h-80 overflow-y-auto pr-2">
+                                    ${recordingsHTML}
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="text-center py-8 text-slate-500">
+                                <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                </svg>
+                                <p>本場比賽沒有錄音紀錄</p>
+                            </div>
+                        `}
+
+                    <!-- 逐字稿顯示區域 -->
+                    ${hasTranscript ? `
+                            <div class="border-t border-[var(--border-color)] pt-6">
+                                <p class="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2 justify-center">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                                    </svg>
+                                    逐字稿內容
+                                </p>
+                                <div class="bg-[var(--surface-2)] rounded-xl border border-[var(--border-color)] max-h-64 overflow-y-auto">
+                                    <div class="p-4 space-y-4">
+                                        ${this.state.transcription.paragraphs.map(p => {
+                    const isPos = p.team === 'positive';
+                    const isNeg = p.team === 'negative';
+                    const avatarColor = isPos ? 'bg-green-500' : (isNeg ? 'bg-red-500' : 'bg-slate-500');
+                    return `
+                                                <div class="flex gap-3">
+                                                    <div class="flex-shrink-0 w-8 h-8 rounded-full ${avatarColor} text-white flex items-center justify-center text-xs font-bold shadow-md">
+                                                        ${p.speaker.charAt(0)}
+                                                    </div>
+                                                    <div class="flex-grow">
+                                                        <div class="text-xs font-bold text-slate-500 mb-1">${p.speaker}</div>
+                                                        <div class="text-sm leading-relaxed bg-white dark:bg-slate-700/50 rounded-lg px-3 py-2 shadow-sm">${p.content}</div>
+                                                    </div>
+                                                </div>
+                                            `;
+                }).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                    <!-- 下載全部按鈕 -->
+                    <div class="flex flex-wrap items-center justify-center gap-4 pt-4 border-t border-[var(--border-color)]">
+                        ${hasRecordings && recordings.length > 1 ? `
+                                <button data-action="downloadAllRecordings" class="flex items-center gap-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-semibold rounded-xl text-base px-6 py-3 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    下載全部錄音
+                                </button>
+                            ` : ''}
+                        <button data-action="downloadTranscript" class="flex items-center gap-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold rounded-xl text-base px-6 py-3 transition-all duration-200 shadow-lg hover:shadow-xl ${!hasTranscript ? 'opacity-50 cursor-not-allowed' : ''}" ${!hasTranscript ? 'disabled' : ''}>
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
                             下載逐字稿 (.txt)
                         </button>
                     </div>
-                    <button data-action="confirmReset" class="mt-4 text-sm text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400">返回主畫面</button>
+
+                    <!-- 返回按鈕 -->
+                    <div class="text-center pt-4">
+                        <button data-action="confirmReset" class="inline-flex items-center gap-2 text-base text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400 font-semibold py-2 px-4 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                            </svg>
+                            返回主畫面
+                        </button>
+                    </div>
+                </div>
                 </div>
             `;
+
+                // 設定所有錄音播放器的音訊來源
+                recordings.forEach((rec, i) => {
+                    const audioPlayer = document.getElementById(`endScreenAudioPlayer_${i}`);
+                    if (audioPlayer && rec.audioBlob) {
+                        audioPlayer.src = URL.createObjectURL(rec.audioBlob);
+                    }
+                });
             },
 
             // --- PICTURE-IN-PICTURE ---
@@ -11725,10 +12554,10 @@
                     // --- 繪製正方計時器 (左側) ---
                     ctx.fillStyle = (activeTeam === 'positive' && !isPaused) ? posColor : secondaryTextColor;
                     ctx.font = bodyFont(28);
-                    ctx.fillText(positiveTeamName, halfWidth / 2, 60);
+                    ctx.fillText(positiveTeamName, halfWidth / 2, 80);
 
                     ctx.fillStyle = (activeTeam === 'positive' && !isPaused) ? posColor : textColor;
-                    ctx.font = monoFont(100);
+                    ctx.font = monoFont(80);
                     ctx.fillText(this.formatTime(positiveTimeLeft), halfWidth / 2, canvas.height / 2 + 10);
 
                     // 正方進度條
@@ -11741,10 +12570,10 @@
                     // --- 繪製反方計時器 (右側) ---
                     ctx.fillStyle = (activeTeam === 'negative' && !isPaused) ? negColor : secondaryTextColor;
                     ctx.font = bodyFont(28);
-                    ctx.fillText(negativeTeamName, halfWidth + halfWidth / 2, 60);
+                    ctx.fillText(negativeTeamName, halfWidth + halfWidth / 2, 80);
 
                     ctx.fillStyle = (activeTeam === 'negative' && !isPaused) ? negColor : textColor;
-                    ctx.font = monoFont(100);
+                    ctx.font = monoFont(80);
                     ctx.fillText(this.formatTime(negativeTimeLeft), halfWidth + halfWidth / 2, canvas.height / 2 + 10);
 
                     // 反方進度條
@@ -11791,7 +12620,7 @@
 
                     ctx.font = bodyFont(28);
                     ctx.fillStyle = secondaryTextColor;
-                    ctx.fillText(timerLabel, canvas.width / 2, 60, canvas.width - 40);
+                    ctx.fillText(timerLabel, canvas.width / 2, 80, canvas.width - 40);
 
                     ctx.font = monoFont(128);
                     // 使用統一的計時器狀態判斷
@@ -11844,9 +12673,9 @@
 
                 if (isBlocked) {
                     // 3. 如果是，就隱藏網頁內容並顯示禁止存取的訊息
-                    console.warn(`Access denied for IP: ${userIp}`);
+                    console.warn(`Access denied for IP: ${userIp} `);
                     document.body.innerHTML = `
-                    <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+            <div style="text-align: center; padding: 50px; font-family: sans-serif;">
                         <h1>Access Denied</h1>
                         <p>您所在的網路位置已被限制存取此服務。</p>
                     </div>
@@ -11898,4 +12727,3 @@
 </body>
 
 </html>
-
