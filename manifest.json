@@ -1,16 +1,102 @@
 {
   "name": "辯時計",
   "short_name": "辯時計",
-  "start_url": "./app.html",
+  "start_url": "/app.html",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "tabbed", "standalone"],
   "background_color": "#f1f5f9",
   "theme_color": "#4f46e5",
   "orientation": "any",
+  "description": "專為臺灣辯論而生的計時系統。完全本地運行、開源透明，支援自動化主席稿、智慧語音偵測、語音即時轉錄等功能。",
+  "categories": ["productivity"],
+  "screenshots": [
+    {
+      "src": "./og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
   "icons": [
     {
       "src": "favicon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml"
+    },
+    {
+      "src": "./appstore-images/android/launchericon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./appstore-images/android/launchericon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "開新比賽",
+      "short_name": "新比賽",
+      "description": "開啟一個全新的比賽",
+      "url": "./app.html?action=new",
+      "icons": [{"src": "favicon.svg", "sizes": "512x512", "type": "image/svg+xml"}]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./app.html",
+      "accept": {
+        "text/plain": [".txt"],
+        "application/json": [".json"]
+      }
+    }
+  ],
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+debate",
+      "url": "./app.html?url=%s"
+    }
+  ],
+  "share_target": {
+    "action": "./app.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "widgets": [
+    {
+      "name": "小部件",
+      "description": "小部件",
+      "tag": "timer",
+      "template_url": "widget.html",
+      "ms_ac_template": "widget.json",
+      "data": "widget-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "favicon.svg",
+          "sizes": "512x512",
+          "label": "小部件"
+        }
+      ]
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "note_handling": {
+    "action": "./app.html?new_note=true"
+  },
+  "new_note_url": "./app.html?new_note=true"
 }
