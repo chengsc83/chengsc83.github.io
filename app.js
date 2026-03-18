@@ -6334,7 +6334,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.4 beta (c) <br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.4 <br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -9478,17 +9478,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedText = urlParams.get('text') || urlParams.get('url');
-        
+
         if (sharedText) {
             // 將分享的文字作為流程碼解碼
             const decodedFlowName = App.decodeFlow(sharedText);
-            
+
             if (decodedFlowName) {
                 // 自動選取匯入的新流程
                 App.state.selectedFormat = decodedFlowName;
                 App.showNotification(`已從分享功能成功匯入流程："${decodedFlowName}"`, "success", 5000);
                 App.render();
-                
+
                 // 更新 dropdown
                 setTimeout(() => {
                     const formatSelect = document.getElementById('formatSelect');
@@ -9497,7 +9497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }, 50);
-                
+
                 // 清除非必要的查詢參數，避免刷新重複匯入
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else {
