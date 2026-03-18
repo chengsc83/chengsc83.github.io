@@ -133,10 +133,20 @@
                         </svg>
                         <span class="text-xl font-bold text-white">辯時計</span>
                     </div>
-                    <button onclick="window.location.href='app.html'"
-                        class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200">
-                        開始使用
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <a href="#"
+                            class="desktop-download-btn px-4 py-2.5 text-sm font-semibold text-gray-300 border border-gray-600 rounded-lg hover:border-indigo-500 hover:text-white hover:bg-white/5 transition-all duration-200 inline-flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                            </svg>
+                            <span class="dl-label">下載電腦版</span>
+                        </a>
+                        <button onclick="window.location.href='app.html'"
+                            class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200">
+                            開始使用
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -154,6 +164,19 @@
                     class="px-8 py-4 text-lg font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-transform duration-200 hover:scale-105">
                     立即開始，無需註冊
                 </button>
+                <div class="mt-4 flex flex-col items-center gap-2">
+                    <a id="desktopDownloadBtn" href="#"
+                        class="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-gray-300 border border-gray-600 rounded-full hover:border-indigo-500 hover:text-white hover:bg-white/5 transition-all duration-200 hover:scale-105">
+                        <svg id="downloadIcon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                        </svg>
+                        <span id="downloadLabel">下載電腦版</span>
+                    </a>
+                    <button id="switchPlatformBtn" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                    </button>
+                </div>
             </main>
         </div>
 
@@ -257,7 +280,7 @@
                             </svg>
                         </button>
                         <div class="faq-content hidden px-6 pb-5">
-                            <p class="text-gray-400">是的，辯時計完全免費使用，無需註冊、無廣告，也沒有任何隱藏費用。</p>
+                            <p class="text-gray-400">是的，辯時計完全免費使用，無需註冊，也沒有任何隱藏費用。</p>
                         </div>
                     </div>
                     <div class="card-bg border border-gray-700 rounded-2xl overflow-hidden" data-aos="fade-up"
@@ -352,11 +375,19 @@
                 <p class="mt-6 text-lg text-gray-400 leading-relaxed">
                     我們明白，辯論圈有其特殊的社群結構與人情網絡。但我們也相信，好的工具能讓思辨的交流更加純粹。辯時計已經準備好了，也許有一天，它真的能「技術宅拯救世界」，至少，是辯論世界的一小部分。
                 </p>
-                <div class="mt-12">
+                <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
                     <button onclick="window.location.href='app.html'"
                         class="px-8 py-4 text-lg font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-transform duration-200 hover:scale-105">
                         立即體驗辯時計
                     </button>
+                    <a href="#"
+                        class="desktop-download-btn inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-gray-300 border border-gray-600 rounded-full hover:border-indigo-500 hover:text-white hover:bg-white/5 transition-all duration-200 hover:scale-105">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                        </svg>
+                        <span class="dl-label">下載電腦版</span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -455,6 +486,58 @@
                 document.addEventListener('DOMContentLoaded', initFAQ);
             } else {
                 initFAQ();
+            }
+        })();
+    </script>
+
+    <!-- Desktop Download Auto-Detection -->
+    <script>
+        (function () {
+            // TODO: 替換為實際下載連結
+            var WINDOWS_URL = '#';
+            var MAC_URL = '#';
+
+            function detectOS() {
+                var ua = navigator.userAgent || '';
+                if (ua.indexOf('Mac') !== -1) return 'mac';
+                return 'windows';
+            }
+
+            var currentOS = detectOS();
+
+            function updateAll(os) {
+                currentOS = os;
+                var url = os === 'mac' ? MAC_URL : WINDOWS_URL;
+                var text = os === 'mac' ? '下載 macOS 版' : '下載 Windows 版';
+
+                // 更新 Hero 區域按鈕
+                var heroBtn = document.getElementById('desktopDownloadBtn');
+                var heroLabel = document.getElementById('downloadLabel');
+                if (heroBtn) heroBtn.href = url;
+                if (heroLabel) heroLabel.textContent = text;
+
+                // 更新所有 .desktop-download-btn（Header + 底部 CTA）
+                var btns = document.querySelectorAll('.desktop-download-btn');
+                for (var i = 0; i < btns.length; i++) {
+                    btns[i].href = url;
+                    var label = btns[i].querySelector('.dl-label');
+                    if (label) label.textContent = text;
+                }
+
+                // 更新切換按鈕
+                var switchBtn = document.getElementById('switchPlatformBtn');
+                if (switchBtn) {
+                    switchBtn.textContent = os === 'mac' ? '尋找 Windows 版？' : '尋找 macOS 版？';
+                }
+            }
+
+            updateAll(currentOS);
+
+            var switchBtn = document.getElementById('switchPlatformBtn');
+            if (switchBtn) {
+                switchBtn.onclick = function () {
+                    updateAll(currentOS === 'windows' ? 'mac' : 'windows');
+                };
             }
         })();
     </script>
