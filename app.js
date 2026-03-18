@@ -54,6 +54,11 @@ const App = {
         isSpeaking: false,
         isRinging: false,
         isAudioUnlocked: false,
+        audioContext: null,                // Web Audio API AudioContext（讓 Meet 分享可擷取音訊）
+        routedAudioElements: new Set(),    // 已路由至 AudioContext 的 <audio> 元素 ID
+        googleTtsAudio: null,              // Google TTS 用的 <audio> 元素
+        isGoogleTtsPlaying: false,         // Google TTS 是否正在播放
+        googleTtsAbortController: null,    // 用於中斷 Google TTS 播放鏈
         currentChoice: {
             stage: null,
             resolve: null,
@@ -1339,6 +1344,22 @@ const App = {
         this.initAmbientBackground();
         this.initSpotlightEffect();
         this.initOnboarding();
+
+        // [FIX] 在頁面載入時就預先初始化 VAD（載入 Silero ONNX 模型 + 取得麥克風權限），
+        // 避免使用者點「開始比賽」後還要等待 VAD 載入。
+        if (this.state.enableSpeechDetection) {
+            this.initPersistentVAD().catch(err => {
+                console.warn('VAD preload during init failed (will retry on match start):', err);
+            });
+        }
+
+        // [NEW] 頁面載入時就在 Worker 背景預載 Piper TTS 模型（~63MB），
+        // 不等使用者點擊，確保開始比賽時語音已就緒。
+        if (this.state.enableSpeech) {
+            this._loadPiperTTS().then(() => {
+                console.log('[Piper TTS] Pre-loaded on page init.');
+            }).catch(() => { });
+        }
     },
 
     loadState() {
@@ -1401,7 +1422,7 @@ const App = {
             }
 
             // 重新渲染控制列以確保狀態正確（無論進入或退出全螢幕都需更新）
-            if (App.state.currentView === 'debate') App.renderDebateControls();
+            if (App.state.currentView === 'debate') App.scheduleRenderDebateControls();
             if (App.state.currentView === 'free_debate') App.renderFreeDebateControls();
 
             this.renderHeader(); // 更新 Header 上的狀態 (如果有必要)
@@ -1428,6 +1449,17 @@ const App = {
                 // 如果音訊不知為何已在播放，也標記為已解鎖
                 App.state.isAudioUnlocked = true;
             }
+        }
+        // [Meet 音訊修復] 首次互動時建立 AudioContext 並路由所有音效元素
+        if (!App.state.audioContext) {
+            App.ensureAudioContext();
+            ['ringSound', 'stageAdvanceSound', 'speechDetectedSound', 'drawSound'].forEach(id => {
+                App.routeAudioElement(id);
+            });
+            // 預載入 Piper TTS 庫和語音模型（背景執行，不阻擋 UI）
+            App._loadPiperTTS().then(() => {
+                console.log('[Piper TTS] Pre-load complete.');
+            }).catch(() => { });
         }
         const actionTarget = e.target.closest('[data-action]');
         if (actionTarget) {
@@ -1626,6 +1658,34 @@ const App = {
                 App.renderSetupView();
                 // 滾動到頂部
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                // [TTS 預合成] 從步驟 1 進到步驟 2 時，背景載入 Piper TTS 並預合成第一階段語音
+                if (App.state.setupStep === 2 && App.state.currentFlow && App.state.currentFlow.length > 0) {
+                    App._loadPiperTTS().then(() => {
+                        if (!App._piperWorker) return;
+                        const firstStage = App.state.currentFlow[0];
+                        if (firstStage && firstStage.script) {
+                            const text = App.interpolateScript(firstStage.script);
+                            if (text) {
+                                const sentences = App._splitSentences(text);
+                                console.log(`[Piper TTS] Pre-synthesizing ${sentences.length} sentences for first stage...`);
+                                (async () => {
+                                    for (const sentence of sentences) {
+                                        if (App._piperTtsCache.has(sentence)) continue;
+                                        try {
+                                            const wav = await App._workerPredict(sentence);
+                                            App._piperTtsCache.set(sentence, wav);
+                                            console.log('[Piper TTS] Pre-synthesized:', sentence.substring(0, 20) + '...');
+                                        } catch (e) {
+                                            console.warn('[Piper TTS] Pre-synthesis failed:', e.message);
+                                            break;
+                                        }
+                                    }
+                                })();
+                            }
+                        }
+                    }).catch(() => { });
+                }
             }
         },
         prevSetupStep() {
@@ -1790,8 +1850,14 @@ const App = {
 
                 // [CRITICAL FIX] 確保進入比賽畫面就開啟語音辨識（全時段監聽）
                 if (App.state.enableSpeechDetection) {
-                    // [方案 A] 預先初始化持久 VAD（載入 Silero 模型 + 取得麥克風），之後 grace period 只需激活
-                    await App.initPersistentVAD();
+                    // VAD 已在頁面載入時預先初始化（init() 中呼叫 initPersistentVAD）。
+                    // 此處僅做 fallback：若預載因故失敗或尚未完成，則嘗試補初始化（不 await 以免阻塞）。
+                    if (!App.state.audioDetection.vad) {
+                        console.warn('VAD not yet preloaded, attempting fallback init...');
+                        App.initPersistentVAD().catch(err => {
+                            console.error('Fallback VAD init failed:', err);
+                        });
+                    }
                     // 等待音訊管線穩定後再啟動 SpeechRecognition，避免 Chrome 的 aborted 錯誤
                     console.log("Starting continuous SpeechRecognition for the debate.");
                     setTimeout(() => App.startRecognition(), 500);
@@ -2029,6 +2095,7 @@ const App = {
 
             // 如果正在播報抽籤結果時手動點擊，必須強制取消語音
             if (currentStage && currentStage.type === 'draw_rebuttal_order') {
+                App.cancelGoogleTTS();
                 if (window.speechSynthesis && App.state.isSpeaking) {
                     window.speechSynthesis.cancel();
                 }
@@ -2164,6 +2231,7 @@ const App = {
                 else clearInterval(App.state.timer.interval);
                 // [FIX] Removed App.stopRecognition() so emergency keywords can still be heard while paused
                 // [NEW] 同步暫停系統語音朗讀
+                App.pauseGoogleTTS();
                 if (window.speechSynthesis && window.speechSynthesis.speaking) {
                     window.speechSynthesis.pause();
                     if (App.state.speechWatchdog) {
@@ -2182,6 +2250,7 @@ const App = {
                     }
                 }
                 // [NEW] 恢復系統語音朗讀
+                App.resumeGoogleTTS();
                 if (window.speechSynthesis && window.speechSynthesis.paused) {
                     window.speechSynthesis.resume();
                 }
@@ -2190,7 +2259,7 @@ const App = {
             if (App.state.projector.isActive) {
                 App.sendProjectorUpdate();
             }
-            App.renderDebateControls(); // Re-render controls to update button text
+            App.scheduleRenderDebateControls(); // Re-render controls to update button text
         },
         resetDebate() {
             App.renderModal({
@@ -2729,7 +2798,7 @@ const App = {
                 App.state.isPresentationMode = false;
 
                 // 3. 恢復 UI 控制列
-                if (App.state.currentView === 'debate') App.renderDebateControls();
+                if (App.state.currentView === 'debate') App.scheduleRenderDebateControls();
                 if (App.state.currentView === 'free_debate') App.renderFreeDebateControls();
                 App.renderHeader(); // 確保標題列回來
 
@@ -2805,7 +2874,7 @@ const App = {
                         if (currentStage && currentStage.type === 'free_debate') {
                             App.renderFreeDebateControls();
                         } else {
-                            App.renderDebateControls();
+                            App.scheduleRenderDebateControls();
                         }
                         // [FIX END]
                     };
@@ -2820,7 +2889,7 @@ const App = {
                     if (currentStage && currentStage.type === 'free_debate') {
                         App.renderFreeDebateControls();
                     } else {
-                        App.renderDebateControls();
+                        App.scheduleRenderDebateControls();
                     }
                     // [FIX END]
                 }
@@ -3123,7 +3192,7 @@ const App = {
         toggleAutoMode() {
             App.state.isAutoMode = !App.state.isAutoMode; // 直接反轉狀態
             localStorage.setItem('debateAutoMode', App.state.isAutoMode);
-            App.renderDebateControls(); // 重新渲染以更新按鈕顏色
+            App.scheduleRenderDebateControls(); // 重新渲染以更新按鈕顏色
             App.showNotification(App.state.isAutoMode ? "已開啟自動模式" : "已關閉自動模式", "info");
         },
 
@@ -3134,7 +3203,7 @@ const App = {
             if (!App.state.enableSpeech && App.synth && App.synth.speaking) {
                 App.synth.cancel();
             }
-            App.renderDebateControls(); // 重新渲染以更新按鈕顏色
+            App.scheduleRenderDebateControls(); // 重新渲染以更新按鈕顏色
             App.showNotification(App.state.enableSpeech ? "已開啟語音朗讀" : "已關閉語音朗讀", "info");
         },
     },
@@ -4507,7 +4576,7 @@ const App = {
             }
 
             html += `
-                <div class="flow-stage ${stateClass}" title="${stage.name || '階段'}" data-action="goToStage" data-stage="${i}">
+                <div class="flow-stage ${stateClass}" title="${stage.name || '階段'}">
                     <span>${icon}</span>
                     <span>${shortName}</span>
                     ${isCompleted ? '<svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
@@ -5077,7 +5146,7 @@ const App = {
 
         if (!stage) {
             stageContainer.innerHTML = `<div class="text-center p-8 text-slate-500">準備就緒...</div>`;
-            this.renderDebateControls();
+            this.scheduleRenderDebateControls();
             return;
         }
 
@@ -5308,12 +5377,27 @@ const App = {
                     `;
         }
 
-        this.renderDebateControls();
+        this.scheduleRenderDebateControls();
+    },
+
+    _controlsRafPending: false,
+
+    /**
+     * 節流版 renderDebateControls：用 rAF 合併同一幀內的多次呼叫。
+     * 避免連續狀態變化（暫停+語音+投影同步）導致重複 DOM 重建。
+     */
+    scheduleRenderDebateControls() {
+        if (this._controlsRafPending) return; // 已排程，跳過
+        this._controlsRafPending = true;
+        requestAnimationFrame(() => {
+            this.renderDebateControls();
+        });
     },
 
     renderDebateControls() {
         const container = document.getElementById('debateControlsContainer');
         if (!container) return;
+        this._controlsRafPending = false; // 清除排程標記
 
         const { timer, currentStageIndex, currentFlow, isAutoMode, recording, enableSpeech, pip } = this.state;
         const isPaused = timer.isPaused;
@@ -5341,8 +5425,8 @@ const App = {
         let isMainBtnDisabled = false;
 
         // [NEW] 優先判斷是否正在朗讀 (若正在朗讀，允許玩家隨時開關)
-        const isTtsActive = window.speechSynthesis && window.speechSynthesis.speaking;
-        const isTtsPaused = window.speechSynthesis && window.speechSynthesis.paused;
+        const isTtsActive = (window.speechSynthesis && window.speechSynthesis.speaking) || this.state.isGoogleTtsPlaying;
+        const isTtsPaused = (window.speechSynthesis && window.speechSynthesis.paused) || (this.state.isGoogleTtsPlaying && this.state.googleTtsAudio && this.state.googleTtsAudio.paused);
 
         if (isTtsActive || isTtsPaused) {
             mainBtnIconType = isPaused ? 'play' : 'pause';
@@ -5691,7 +5775,7 @@ const App = {
                                 </div>
                                 <div class="text-center px-4 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-color)]">
                                     <div class="text-lg font-bold text-[var(--color-accent)]" id="editor-total-duration">${totalDuration > 0 ? formatDuration(totalDuration) : '--'}</div>
-                                    <div class="text-xs text-slate-500">預估總時間</div>
+                                    <div class="text-xs text-slate-500">預估時間</div>
                                 </div>
                             </div>
                         </div>
@@ -5725,6 +5809,7 @@ const App = {
                             拖曳排序
                         </span>
                     </div>
+
 
                     <div class="space-y-3">
                         <div id="editor-stage-list" class="min-h-[200px]">
@@ -6249,7 +6334,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.3 <br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.4 beta (c) <br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -6267,6 +6352,349 @@ const App = {
             loadVoices();
         }
     },
+
+    // --- Web Audio API 路由（讓 Meet 分享可擷取音效）---
+    ensureAudioContext() {
+        if (!this.state.audioContext) {
+            try {
+                this.state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('[AudioContext] Created successfully.');
+            } catch (e) {
+                console.warn('[AudioContext] Failed to create:', e);
+                return null;
+            }
+        }
+        if (this.state.audioContext.state === 'suspended') {
+            this.state.audioContext.resume().catch(() => { });
+        }
+        return this.state.audioContext;
+    },
+
+    routeAudioElement(elementId) {
+        if (this.state.routedAudioElements.has(elementId)) return;
+        const ctx = this.ensureAudioContext();
+        if (!ctx) return;
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        try {
+            const source = ctx.createMediaElementSource(el);
+            source.connect(ctx.destination);
+            this.state.routedAudioElements.add(elementId);
+            console.log(`[AudioContext] Routed "${elementId}" through AudioContext.`);
+        } catch (e) {
+            // 已經路由過或元素無效，靜默處理
+            console.warn(`[AudioContext] Failed to route "${elementId}":`, e);
+        }
+    },
+
+    // --- Piper TTS WASM（讓 Meet 分享可擷取朗讀聲）---
+    // speechSynthesis 的音訊走作業系統音訊輸出，Chrome 分頁分享無法擷取。
+    // 改用 Piper TTS (WASM/ONNX Runtime) 在瀏覽器本地合成音訊，
+    // 透過 <audio> 元素播放，走分頁音訊管線，Meet 可擷取。
+    // 語音模型首次下載 (~63MB)，之後從瀏覽器快取讀取。
+
+    _piperTtsModule: null, // 保留相容性，但不再直接使用
+    _piperTtsVoice: 'zh_CN-huayan-medium',
+    _piperTtsLoading: false,
+    _piperTtsLoadFailed: false,
+    _piperTtsCache: new Map(), // text -> WAV Blob cache
+    _piperWorker: null,        // Web Worker 實體
+    _piperMsgId: 0,            // 訊息 ID 計數器
+    _piperCallbacks: {},       // id -> { resolve, reject }
+
+    _splitSentences(text) {
+        if (!text) return [];
+        // 按中文句號、問號、驚嘆號、換行切割，保留分隔符
+        const parts = text.split(/(?<=[。！？\n])/);
+        const sentences = [];
+        let current = '';
+        for (const part of parts) {
+            current += part;
+            // 累積到至少 30 個字再切一句（減少句子數量，降低合成次數）
+            if (current.trim().length >= 30) {
+                sentences.push(current.trim());
+                current = '';
+            }
+        }
+        if (current.trim()) sentences.push(current.trim());
+        return sentences.filter(s => s.length > 0);
+    },
+
+    async _loadPiperTTS() {
+        if (this._piperWorker) return this._piperWorker;
+        if (this._piperTtsLoading || this._piperTtsLoadFailed) return null;
+
+        this._piperTtsLoading = true;
+        try {
+            console.log('[Piper TTS] Starting Web Worker...');
+            const worker = new Worker('piper-worker.js', { type: 'module' });
+
+            // 設定全域訊息處理器
+            worker.onmessage = (e) => {
+                const { type, id, wav, error, loaded, total } = e.data;
+                if (type === 'progress') {
+                    if (total > 0) {
+                        const pct = Math.round(loaded * 100 / total);
+                        if (pct % 10 === 0) console.log(`[Piper TTS] Download: ${pct}%`);
+                    }
+                    return;
+                }
+                const cb = this._piperCallbacks[id];
+                if (!cb) return;
+                delete this._piperCallbacks[id];
+
+                if (type === 'error') {
+                    cb.reject(new Error(error));
+                } else if (type === 'loaded') {
+                    cb.resolve(true);
+                } else if (type === 'result') {
+                    // Worker 傳回 ArrayBuffer，轉回 Blob
+                    cb.resolve(new Blob([wav], { type: 'audio/wav' }));
+                }
+            };
+
+            worker.onerror = (err) => {
+                console.error('[Piper TTS] Worker error:', err);
+            };
+
+            // 傳送 load 指令並等待完成
+            const loadId = ++this._piperMsgId;
+            await new Promise((resolve, reject) => {
+                this._piperCallbacks[loadId] = { resolve, reject };
+                worker.postMessage({ type: 'load', id: loadId, voiceId: this._piperTtsVoice });
+            });
+
+            this._piperWorker = worker;
+            this._piperTtsModule = worker; // 相容性（非 null 表示已載入）
+            this._piperTtsLoading = false;
+            console.log('[Piper TTS] Worker loaded and ready.');
+            return worker;
+        } catch (e) {
+            console.warn('[Piper TTS] Worker failed to load:', e);
+            this._piperTtsLoading = false;
+            this._piperTtsLoadFailed = true;
+            return null;
+        }
+    },
+
+    /**
+     * 透過 Web Worker 合成語音（不阻塞主線程）。
+     * 回傳 Promise<Blob>（WAV 格式）。
+     */
+    async _workerPredict(text) {
+        if (!this._piperWorker) throw new Error('Piper Worker not loaded');
+        const id = ++this._piperMsgId;
+        return new Promise((resolve, reject) => {
+            this._piperCallbacks[id] = { resolve, reject };
+            this._piperWorker.postMessage({ type: 'predict', id, text, voiceId: this._piperTtsVoice });
+        });
+    },
+
+    /**
+     * 透過 Piper TTS WASM 合成語音並播放。回傳 Promise<boolean>。
+     * 使用 AudioContext 串流排程播放：每句合成完立刻排程，句間零間隔。
+     * true = 成功播放完畢，false = 失敗（需 fallback 到 speechSynthesis）。
+     */
+    async playPiperTTS(text) {
+        if (!text) return false;
+
+        const tts = await this._loadPiperTTS();
+        if (!tts) return false;
+
+        const ctx = this.ensureAudioContext();
+        if (!ctx) return false;
+
+        // 建立 AbortController
+        const controller = new AbortController();
+        this.state.googleTtsAbortController = controller;
+        this.state.isGoogleTtsPlaying = true;
+        this.state._piperSources = []; // 追蹤所有播放中的 source
+
+        try {
+            if (controller.signal.aborted) {
+                this.state.isGoogleTtsPlaying = false;
+                this.state.googleTtsAbortController = null;
+                return true;
+            }
+
+            const sentences = this._splitSentences(text);
+            if (sentences.length === 0) {
+                this.state.isGoogleTtsPlaying = false;
+                this.state.googleTtsAbortController = null;
+                return false;
+            }
+
+            // 串流排程：每句合成完立刻排入 AudioContext 播放佇列
+            let nextPlaybackTime = ctx.currentTime;
+            let lastSource = null;
+
+            for (let i = 0; i < sentences.length; i++) {
+                if (controller.signal.aborted) {
+                    this.state.isGoogleTtsPlaying = false;
+                    this.state.googleTtsAbortController = null;
+                    return true;
+                }
+
+                const sentence = sentences[i];
+                let wav;
+                const cached = this._piperTtsCache.get(sentence);
+                if (cached) {
+                    console.log(`[Piper TTS] Cache hit (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
+                    wav = cached;
+                } else {
+                    console.log(`[Piper TTS] Synthesizing (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
+                    wav = await this._workerPredict(sentence);
+                }
+
+                if (controller.signal.aborted) {
+                    this.state.isGoogleTtsPlaying = false;
+                    this.state.googleTtsAbortController = null;
+                    return true;
+                }
+
+                // 解碼 WAV → AudioBuffer
+                const arrayBuffer = await wav.arrayBuffer();
+                const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+
+                // 如果合成太慢導致排程時間已過，從現在開始播
+                if (nextPlaybackTime < ctx.currentTime) {
+                    nextPlaybackTime = ctx.currentTime;
+                }
+
+                // 建立 source 並排程播放
+                const source = ctx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(ctx.destination);
+                source.start(nextPlaybackTime);
+                this.state._piperSources.push(source);
+                lastSource = source;
+
+                console.log(`[Piper TTS] Scheduled (${i + 1}/${sentences.length}) at ${nextPlaybackTime.toFixed(2)}s, duration=${audioBuffer.duration.toFixed(2)}s`);
+                nextPlaybackTime += audioBuffer.duration;
+            }
+
+            if (!lastSource) {
+                this.state.isGoogleTtsPlaying = false;
+                this.state.googleTtsAbortController = null;
+                return false;
+            }
+
+            // 等待最後一個 source 播放完畢
+            return new Promise((resolve) => {
+                const onAbort = () => {
+                    // 停止所有排程中的 source
+                    for (const s of (this.state._piperSources || [])) {
+                        try { s.stop(); } catch (e) { }
+                    }
+                    this.state._piperSources = [];
+                    this.state.isGoogleTtsPlaying = false;
+                    this.state.googleTtsAbortController = null;
+                    resolve(true);
+                };
+                controller.signal.addEventListener('abort', onAbort, { once: true });
+
+                lastSource.onended = () => {
+                    controller.signal.removeEventListener('abort', onAbort);
+                    this.state._piperSources = [];
+                    this.state.isGoogleTtsPlaying = false;
+                    this.state.googleTtsAbortController = null;
+                    resolve(true);
+                };
+            });
+        } catch (err) {
+            this.state.isGoogleTtsPlaying = false;
+            this.state.googleTtsAbortController = null;
+            this.state._piperSources = [];
+            console.warn('[Piper TTS] Synthesis failed:', err.message);
+            return false;
+        }
+    },
+
+    cancelGoogleTTS() {
+        if (this.state.googleTtsAbortController) {
+            this.state.googleTtsAbortController.abort();
+            this.state.googleTtsAbortController = null;
+        }
+        // 停止所有排程中的 Piper TTS source
+        for (const s of (this.state._piperSources || [])) {
+            try { s.stop(); } catch (e) { }
+        }
+        this.state._piperSources = [];
+        if (this.state._piperSource) {
+            try { this.state._piperSource.stop(); } catch (e) { }
+            this.state._piperSource = null;
+        }
+        if (this.state.googleTtsAudio) {
+            this.state.googleTtsAudio.pause();
+            this.state.googleTtsAudio.removeAttribute('src');
+        }
+        this.state.isGoogleTtsPlaying = false;
+    },
+
+    pauseGoogleTTS() {
+        // AudioContext 暫停（暫停所有 AudioBufferSourceNode 播放）
+        if (this.state.audioContext && this.state.audioContext.state === 'running' && this.state.isGoogleTtsPlaying) {
+            this.state.audioContext.suspend().then(() => {
+                console.log('[Piper TTS] AudioContext suspended (paused).');
+            }).catch(() => { });
+        }
+        if (this.state.googleTtsAudio && this.state.isGoogleTtsPlaying) {
+            this.state.googleTtsAudio.pause();
+        }
+    },
+
+    resumeGoogleTTS() {
+        // AudioContext 恢復（繼續所有 AudioBufferSourceNode 播放）
+        if (this.state.audioContext && this.state.audioContext.state === 'suspended' && this.state.isGoogleTtsPlaying) {
+            this.state.audioContext.resume().then(() => {
+                console.log('[Piper TTS] AudioContext resumed.');
+            }).catch(() => { });
+        }
+        if (this.state.googleTtsAudio && this.state.googleTtsAudio.paused && this.state.isGoogleTtsPlaying) {
+            this.state.googleTtsAudio.play().catch(() => { });
+        }
+    },
+
+    /**
+     * 預合成下一階段的語音（背景執行）。
+     * 在當前階段開始後呼叫，預先合成下一階段的所有句子並快取。
+     */
+    async _prefetchNextStageTTS() {
+        try {
+            const flow = this.state.currentFlow;
+            const nextIdx = this.state.currentStageIndex + 1;
+            if (!flow || nextIdx >= flow.length) return;
+
+            const nextStage = flow[nextIdx];
+            if (!nextStage || !nextStage.script) return;
+
+            const tts = this._piperWorker; // 只用已載入的 Worker，不觸發新的載入
+            if (!tts) return;
+
+            const text = this.interpolateScript(nextStage.script);
+            if (!text) return;
+
+            const sentences = this._splitSentences(text);
+            console.log(`[Piper TTS] Prefetching ${sentences.length} sentences for next stage...`);
+
+            for (const sentence of sentences) {
+                if (this._piperTtsCache.has(sentence)) continue; // 已快取
+
+                try {
+                    const wav = await this._workerPredict(sentence);
+                    this._piperTtsCache.set(sentence, wav);
+                    console.log('[Piper TTS] Prefetched:', sentence.substring(0, 20) + '...');
+                } catch (e) {
+                    console.warn('[Piper TTS] Prefetch failed for sentence:', e.message);
+                    break; // 停止預合成，不影響其他功能
+                }
+            }
+        } catch (e) {
+            // 預合成失敗不影響主流程
+            console.warn('[Piper TTS] Prefetch error:', e.message);
+        }
+    },
+
 
     // --- 投影模式 (Projector Mode) ---
     initProjectorChannel() {
@@ -6583,7 +7011,9 @@ const App = {
                 }
 
                 // [第一層] 精確喚醒詞匹配 → 即時觸發
-                if (this.state.timer.type === 'grace' && this.state.timer.graceInterval && !this.state.timer.isPaused && !this.state.mainSpeechTimerStartedByGrace) {
+                // 只有當當前監聽模式是 microphone 時才透過 SpeechRecognition 觸發
+                // （如果當前階段用 display 音訊，SpeechRecognition 聽到的是麥克風，屬於錯誤的來源）
+                if (this.state.timer.type === 'grace' && this.state.timer.graceInterval && !this.state.timer.isPaused && !this.state.mainSpeechTimerStartedByGrace && this.state._currentListeningMode !== 'display') {
                     const combinedTranscript = finalTranscript + interimTranscript;
                     if (/(主席好|各位好|大家好|謝謝主席|謝謝|豬洗好|竹溪好|出息好|出席好|熟悉好|祖席好|楚溪好|出戲好|主媳好|主席號|儲蓄好|大加好|打家好|打架好|大家號|大甲好|達佳好|大叫好|大假好|各為好|各為號|哥餵好|割胃好|各位號|主席|對方便有|對方辯友|對方變有|對方變油|對方便由|退房辯友|堆放便有|對方沒有|兌放辯友|謝謝出席|寫寫主席|謝謝出息|歇歇主席|謝謝主廚)/.test(combinedTranscript)) {
                         console.log("Layer 1 - Wake word detected:", combinedTranscript);
@@ -6594,9 +7024,9 @@ const App = {
                         this.playSound('speechDetectedSound');
                         this.speak("開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
                     }
-                    // [第 1.5 層] 寬鬆文字匹配 → 辨識出任何 >2 字的文字即觸發
+                    // [第 1.5 層] 寬鬆文字匹配 → 辨識出任何 >4 字的文字即觸發
                     // 排除含「系統」的文字（系統暫停/系統開始及其 interim 片段），避免誤觸發
-                    else if (combinedTranscript.trim().length > 2 && !combinedTranscript.includes('系統')) {
+                    else if (combinedTranscript.trim().length > 4 && !combinedTranscript.includes('系統')) {
                         console.log("Layer 1.5 - Speech text detected (>3 chars), triggering:", combinedTranscript);
                         if (this.state.graceOnresultTimeout) { clearTimeout(this.state.graceOnresultTimeout); this.state.graceOnresultTimeout = null; }
                         this.state.mainSpeechTimerStartedByGrace = true;
@@ -6773,22 +7203,25 @@ const App = {
     },
 
     speak(text, onEndCallback) {
-        // If speech is not supported or text is empty, execute callback immediately.
-        if (!this.synth || !text) {
+        // If text is empty, execute callback immediately.
+        if (!text) {
             if (onEndCallback) {
                 try {
                     onEndCallback();
                 } catch (e) {
-                    console.error("Error in speak's onEndCallback (no synth):", e);
+                    console.error("Error in speak's onEndCallback (no text):", e);
                 }
             }
             return;
         }
 
         // If a new, important message comes in, clear the old queue and cancel any current speech.
-        if (this.synth.speaking) {
-            this.state.speechQueue = []; // Clear the queue of any pending utterances
+        this.cancelGoogleTTS();
+        if (this.synth && this.synth.speaking) {
             this.synth.cancel(); // Stop the current utterance
+        }
+        if (this.state.isSpeaking || this.state.speechQueue.length > 0) {
+            this.state.speechQueue = []; // Clear the queue of any pending utterances
             this.state.isSpeaking = false;
         }
 
@@ -6798,7 +7231,7 @@ const App = {
         setTimeout(() => this.processSpeechQueue(), 100);
     },
 
-    processSpeechQueue() {
+    async processSpeechQueue() {
         if (this.state.isSpeaking || this.state.speechQueue.length === 0) {
             return;
         }
@@ -6824,6 +7257,48 @@ const App = {
         this.state.vadSuppressed = true;
         const { text, onEndCallback } = this.state.speechQueue.shift();
 
+        // --- 通用的完成回調 ---
+        const onDone = (event) => {
+            if (this.state.speechWatchdog) {
+                clearInterval(this.state.speechWatchdog);
+                this.state.speechWatchdog = null;
+            }
+            this.state.currentOnDoneCallback = null;
+            // Make sure we are not already processing the next item
+            if (this.state.isSpeaking) {
+                this.state.isSpeaking = false;
+                // [VAD 抑制] 延遲 200ms 解除抑制（Piper TTS 走 AudioContext，不經 OS 音訊，麥克風不會拾取）
+                if (this.state.vadSuppressionTimeout) clearTimeout(this.state.vadSuppressionTimeout);
+                this.state.vadSuppressionTimeout = setTimeout(() => {
+                    this.state.vadSuppressed = false;
+                    this.state.vadSuppressionTimeout = null;
+                }, 200);
+                if (onEndCallback) {
+                    try {
+                        onEndCallback();
+                    } catch (e) {
+                        console.error("Error in onEndCallback:", e, "for text:", text);
+                    }
+                }
+                // Process next item in the queue with a small delay
+                setTimeout(() => this.processSpeechQueue(), 50);
+            }
+        };
+
+        // --- 嘗試 Piper TTS WASM（音訊走分頁管線，Meet 可擷取）---
+        try {
+            const piperSuccess = await this.playPiperTTS(text);
+            if (piperSuccess) {
+                console.log('[TTS] Piper TTS playback completed for:', text.substring(0, 30) + '...');
+                onDone();
+                return;
+            }
+        } catch (e) {
+            console.warn('[TTS] Piper TTS attempt failed:', e.message);
+        }
+
+        // --- Fallback: speechSynthesis（Piper TTS 失敗時）---
+        console.log('[TTS] Falling back to speechSynthesis for:', text.substring(0, 30) + '...');
         if (!this.synth) {
             if (onEndCallback) onEndCallback();
             this.state.isSpeaking = false;
@@ -6837,33 +7312,6 @@ const App = {
             utterance.voice = voice;
         }
 
-        const onDone = (event) => {
-            if (this.state.speechWatchdog) {
-                clearInterval(this.state.speechWatchdog);
-                this.state.speechWatchdog = null;
-            }
-            this.state.currentOnDoneCallback = null;
-            // Make sure we are not already processing the next item
-            if (this.state.isSpeaking) {
-                this.state.isSpeaking = false;
-                // [VAD 抑制] 延遲 500ms 解除抑制，讓 TTS 餘音消散後再重新偵測
-                if (this.state.vadSuppressionTimeout) clearTimeout(this.state.vadSuppressionTimeout);
-                this.state.vadSuppressionTimeout = setTimeout(() => {
-                    this.state.vadSuppressed = false;
-                    this.state.vadSuppressionTimeout = null;
-                }, 500);
-                if (onEndCallback) {
-                    try {
-                        onEndCallback();
-                    } catch (e) {
-                        console.error("Error in onEndCallback:", e, "for text:", text);
-                    }
-                }
-                // Process next item in the queue with a small delay
-                setTimeout(() => this.processSpeechQueue(), 50);
-            }
-        };
-
         utterance.onend = onDone;
         utterance.onerror = (e) => {
             if (e.error === 'interrupted' || e.error === 'canceled') {
@@ -6874,17 +7322,14 @@ const App = {
             onDone(e);
         };
 
-        // [FIX] Chrome 有時候會瘋狂觸發 onresume，導致產生上百個計時器。
-        // 我們改用單一的檢查機制：如果超過 15 秒沒有任何反應（並且不是暫停狀態），才強制跳過。
+        // [FIX] Chrome watchdog：超過 30 秒強制跳過
         if (this.state.speechWatchdog) clearInterval(this.state.speechWatchdog);
         let timeSpeaking = 0;
         this.state.speechWatchdog = setInterval(() => {
-            // 如果被暫停，就不計算經過時間
             if (window.speechSynthesis && window.speechSynthesis.paused) {
                 return;
             }
             timeSpeaking++;
-            // 如果朗讀超過 30 秒（或引擎死機停在 true 狀態），強制終止以防死縮
             if (timeSpeaking >= 30) {
                 console.warn("Speech synthesis watchdog triggered (max time exceeded). Forcing queue to advance for text:", text);
                 onDone();
@@ -6988,13 +7433,23 @@ const App = {
                 return;
             }
 
+            // [RMS 音量分析] 建立 AnalyserNode 用於測量即時音量
+            const rmsCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const rmsSource = rmsCtx.createMediaStreamSource(stream);
+            const analyser = rmsCtx.createAnalyser();
+            analyser.fftSize = 512;
+            rmsSource.connect(analyser);
+            this.state._vadAnalyser = analyser;
+            this.state._vadAmbientRMS = 0;      // 環境噪音基線
+            this.state._vadAmbientCalibrated = false;
+
             const myvad = await vad.MicVAD.new({
                 stream: stream,
                 // 調整 Silero VAD 閾值，針對辯論場景優化
-                positiveSpeechThreshold: 0.8,  // 預設 0.5 → 提高至 0.8 以過濾咳嗽/清喉嚨等非語音聲
-                negativeSpeechThreshold: 0.35, // 預設 0.35 → 維持
-                minSpeechFrames: 6,            // 預設 6 → 維持，需 6 幀連續語音（≈180ms）才觸發 onSpeechStart
-                redemptionFrames: 8,           // 預設 8 → 維持，讓短暫氣音不會過早切斷
+                positiveSpeechThreshold: 0.7,  // 平衡靈敏度與準確度（原 0.8 太嚴格，0.6 連咳嗽都觸發）
+                negativeSpeechThreshold: 0.35, // 維持
+                minSpeechFrames: 9,            // ~270ms 連續語音才觸發（咳嗽通常 <200ms，會被過濾）
+                redemptionFrames: 8,           // 維持，讓短暫氣音不會過早切斷
                 onSpeechStart: () => {
                     // 只有在偵測被激活時才處理
                     if (!this.state.audioDetection.isActive) return;
@@ -7002,6 +7457,16 @@ const App = {
                     if (this.state.vadSuppressed) {
                         console.log("Layer 2 (VAD) - Suppressed: system is speaking or just finished.");
                         return;
+                    }
+
+                    // [RMS 音量門檻] 檢查即時音量是否顯著高於環境噪音
+                    if (this.state._vadAnalyser && this.state._vadAmbientCalibrated) {
+                        const rms = this._getCurrentRMS();
+                        const threshold = this.state._vadAmbientRMS * 3.0 + 0.008; // 環境噪音的 3 倍 + 底線
+                        if (rms < threshold) {
+                            console.log(`Layer 2 (VAD) - Volume too low (RMS=${rms.toFixed(4)}, threshold=${threshold.toFixed(4)}), ignoring.`);
+                            return;
+                        }
                     }
 
                     const { timer, mainSpeechTimerStartedByGrace } = this.state;
@@ -7013,16 +7478,22 @@ const App = {
                             console.log("Layer 2 (VAD) - Short pause tolerated, speech resumed.");
                         }
 
+                        // [語音事件計數] 累計 onSpeechStart 次數，至少要 2 次才開始計時
+                        // 咳嗽通常只觸發 1 次，而正常說話會持續觸發多次
+                        this.state._vadSpeechEventCount = (this.state._vadSpeechEventCount || 0) + 1;
+                        console.log(`Layer 2 (VAD) - Speech event #${this.state._vadSpeechEventCount}`);
+
                         if (!this.state.vadSpeechStartTime) {
                             this.state.vadSpeechStartTime = Date.now();
                             console.log("Layer 2 (VAD) - Speech activity started.");
                         }
-                        // 啟動 1.2 秒後強制觸發的 timeout（從 2 秒降低）
-                        if (!this.state.vadFallbackTimeout) {
+
+                        // 需要至少 2 次語音事件才啟動確認計時器
+                        if (this.state._vadSpeechEventCount >= 2 && !this.state.vadFallbackTimeout) {
                             this.state.vadFallbackTimeout = setTimeout(() => {
                                 const { timer: t, mainSpeechTimerStartedByGrace: started } = this.state;
                                 if (!started && t.type === 'grace' && t.graceInterval && !t.isPaused) {
-                                    console.log("Layer 2 (VAD) - 1.2s speech detected, forcing timer start.");
+                                    console.log("Layer 2 (VAD) - Confirmed speech, forcing timer start.");
                                     this.state.mainSpeechTimerStartedByGrace = true;
                                     this.deactivateAudioDetection();
                                     clearInterval(this.state.timer.graceInterval);
@@ -7030,7 +7501,7 @@ const App = {
                                     this.speak("開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
                                 }
                                 this.state.vadFallbackTimeout = null;
-                            }, 3000);
+                            }, 1500);
                         }
                     }
                 },
@@ -7038,17 +7509,16 @@ const App = {
                     // 只有在偵測被激活時才處理
                     if (!this.state.audioDetection.isActive) return;
 
-                    // [優化 2] 不立即重置，給 800ms 緩衝期
-                    // 如果辯手只是換氣/短暫停頓，800ms 內 onSpeechStart 會再次觸發
+                    // [優化] 不立即重置，給 800ms 緩衝期
                     if (this.state.vadFallbackTimeout && !this.state.vadPauseBufferTimeout) {
                         this.state.vadPauseBufferTimeout = setTimeout(() => {
-                            // 800ms 過去了，仍然沒有新的語音 → 視為真正停止
                             if (this.state.vadFallbackTimeout) {
                                 clearTimeout(this.state.vadFallbackTimeout);
                                 this.state.vadFallbackTimeout = null;
                             }
                             this.state.vadSpeechStartTime = null;
                             this.state.vadPauseBufferTimeout = null;
+                            this.state._vadSpeechEventCount = 0; // 重置語音事件計數
                             console.log("Layer 2 (VAD) - Sustained silence (800ms), resetting.");
                         }, 1200);
                     }
@@ -7115,13 +7585,12 @@ const App = {
                 const stream = new MediaStream([this.state.sharedDisplay.audioTrack.clone()]);
                 const myvad = await vad.MicVAD.new({
                     stream: stream,
-                    positiveSpeechThreshold: 0.8,
+                    positiveSpeechThreshold: 0.7,
                     negativeSpeechThreshold: 0.35,
-                    minSpeechFrames: 6,
+                    minSpeechFrames: 9,
                     redemptionFrames: 8,
                     onSpeechStart: () => {
                         if (!this.state.audioDetection.isActive) return;
-                        // [VAD 抑制] 系統 TTS 朗讀中或剛結束，忽略此次偵測
                         if (this.state.vadSuppressed) {
                             console.log("Layer 2 (VAD/display) - Suppressed: system is speaking or just finished.");
                             return;
@@ -7133,15 +7602,16 @@ const App = {
                                 this.state.vadPauseBufferTimeout = null;
                                 console.log("Layer 2 (VAD/display) - Short pause tolerated, speech resumed.");
                             }
+                            this.state._vadSpeechEventCount = (this.state._vadSpeechEventCount || 0) + 1;
                             if (!this.state.vadSpeechStartTime) {
                                 this.state.vadSpeechStartTime = Date.now();
                                 console.log("Layer 2 (VAD/display) - Speech started.");
                             }
-                            if (!this.state.vadFallbackTimeout) {
+                            if (this.state._vadSpeechEventCount >= 2 && !this.state.vadFallbackTimeout) {
                                 this.state.vadFallbackTimeout = setTimeout(() => {
                                     const { timer: t, mainSpeechTimerStartedByGrace: started } = this.state;
                                     if (!started && t.type === 'grace' && t.graceInterval && !t.isPaused) {
-                                        console.log("Layer 2 (VAD/display) - 1.2s speech, forcing start.");
+                                        console.log("Layer 2 (VAD/display) - Confirmed speech, forcing start.");
                                         this.state.mainSpeechTimerStartedByGrace = true;
                                         this.deactivateAudioDetection();
                                         clearInterval(this.state.timer.graceInterval);
@@ -7149,7 +7619,7 @@ const App = {
                                         this.speak("開始計時", () => this.startMainSpeechTimer(this.state.currentFlow[this.state.currentStageIndex].duration));
                                     }
                                     this.state.vadFallbackTimeout = null;
-                                }, 3000);
+                                }, 1500);
                             }
                         }
                     },
@@ -7163,6 +7633,7 @@ const App = {
                                 }
                                 this.state.vadSpeechStartTime = null;
                                 this.state.vadPauseBufferTimeout = null;
+                                this.state._vadSpeechEventCount = 0;
                                 console.log("Layer 2 (VAD/display) - Sustained silence (800ms), resetting.");
                             }, 1200);
                         }
@@ -7184,7 +7655,38 @@ const App = {
         }
 
         this.state.audioDetection.isActive = true;
+
+        // [環境噪音校準] 測量 500ms 的環境音量作為基線
+        if (this.state._vadAnalyser) {
+            this.state._vadAmbientCalibrated = false;
+            const samples = [];
+            const calibrate = setInterval(() => {
+                samples.push(this._getCurrentRMS());
+                if (samples.length >= 10) { // 10 次 × 50ms ≈ 500ms
+                    clearInterval(calibrate);
+                    this.state._vadAmbientRMS = samples.reduce((a, b) => a + b, 0) / samples.length;
+                    this.state._vadAmbientCalibrated = true;
+                    console.log(`[VAD RMS] Ambient noise calibrated: RMS=${this.state._vadAmbientRMS.toFixed(5)}, threshold=${(this.state._vadAmbientRMS * 2.5 + 0.005).toFixed(5)}`);
+                }
+            }, 50);
+        }
+
         console.log("Audio detection activated (persistent VAD, no reload).");
+    },
+
+    /**
+     * 從 AnalyserNode 計算即時 RMS 音量（0~1 範圍）
+     */
+    _getCurrentRMS() {
+        const analyser = this.state._vadAnalyser;
+        if (!analyser) return 0;
+        const data = new Float32Array(analyser.fftSize);
+        analyser.getFloatTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+            sum += data[i] * data[i];
+        }
+        return Math.sqrt(sum / data.length);
     },
 
     // 輕量停用：只關閉 isActive flag，不銷毀 VAD
@@ -7195,7 +7697,12 @@ const App = {
             clearTimeout(this.state.vadFallbackTimeout);
             this.state.vadFallbackTimeout = null;
         }
+        if (this.state.vadPauseBufferTimeout) {
+            clearTimeout(this.state.vadPauseBufferTimeout);
+            this.state.vadPauseBufferTimeout = null;
+        }
         this.state.vadSpeechStartTime = null;
+        this.state._vadSpeechEventCount = 0;
         console.debug("Audio detection deactivated (VAD still alive).");
     },
 
@@ -7594,6 +8101,7 @@ const App = {
     clearAllTimers() {
         // [FIX] 如果 TTS 處於暫停狀態（例如「系統暫停」後手動跳下一步），
         // 必須先 resume 再 cancel，否則 TTS 引擎會卡在暫停狀態，導致後續朗讀和自動跳轉失效
+        this.cancelGoogleTTS();
         if (window.speechSynthesis && window.speechSynthesis.paused) {
             window.speechSynthesis.resume();
         }
@@ -7692,7 +8200,7 @@ const App = {
             }
 
             // [關鍵] 只有在狀態真正改變(時間到/暫停/開始)時，才需要重新渲染控制按鈕
-            App.renderDebateControls();
+            App.scheduleRenderDebateControls();
         }
     },
 
@@ -7729,6 +8237,7 @@ const App = {
                     this.state.sharedDisplay.audioTrack.enabled = true;
                 }
 
+                this.state._currentListeningMode = listeningMode; // 記錄當前階段的監聽模式
                 this.startAudioDetection(team);
 
                 // [方案 A] 由於 deactivateAudioDetection() 不再殺掉麥克風軌道，
@@ -7752,7 +8261,7 @@ const App = {
         } else {
             this.state.timer.graceInterval = setInterval(this.runTimerInterval.bind(this), 1000);
         }
-        this.renderDebateControls();
+        this.scheduleRenderDebateControls();
     },
 
     startMainSpeechTimer(duration) {
@@ -7768,7 +8277,7 @@ const App = {
         }
         this.updateTimerDisplay(duration);
         this.state.timer.interval = setInterval(this.runTimerInterval.bind(this), 1000);
-        this.renderDebateControls();
+        this.scheduleRenderDebateControls();
 
         // [方案 A] 麥克風軌道不再被銷毀，SpeechRecognition 無需重啟。
     },
@@ -7782,7 +8291,7 @@ const App = {
         document.getElementById('timerStatus').textContent = `${this.interpolateScript(stage.timerLabel)} 進行中...`;
         this.updateTimerDisplay(duration);
         this.state.timer.interval = setInterval(this.runTimerInterval.bind(this), 1000);
-        this.renderDebateControls();
+        this.scheduleRenderDebateControls();
 
         // [方案 A] 麥克風軌道不再被銷毀，SpeechRecognition 無需重啟。
     },
@@ -7890,7 +8399,7 @@ const App = {
                         if (this.state.isAutoMode) {
                             this.startManualPrepTimer(stage.duration);
                         } else {
-                            this.renderDebateControls();
+                            this.scheduleRenderDebateControls();
                         }
                         break;
                     case 'choice_speech':
@@ -7904,7 +8413,7 @@ const App = {
                         if (this.state.isAutoMode) this.state.autoAdvanceTimeout = setTimeout(() => this.actions.nextStage(), 2000);
                         break;
                     case 'draw_rebuttal_order':
-                        this.renderDebateControls();
+                        this.scheduleRenderDebateControls();
                         // [全局語音控制] 語音辨識由 onend 自動管理，不需手動重啟
                         break;
                 }
@@ -7917,6 +8426,9 @@ const App = {
                 const scriptToSpeak = this.interpolateScript(stage.script || stage.baseScript, choiceResult);
                 this.speak(scriptToSpeak, speakCallback);
             }
+
+            // [預合成] 預先合成下一階段的語音
+            this._prefetchNextStageTTS();
         };
 
         executeStage();
@@ -8179,7 +8691,7 @@ const App = {
             }
 
             this.renderTranscriptionPanel(); // 更新UI
-            this.renderDebateControls();
+            this.scheduleRenderDebateControls();
             if (this.state.currentFlow[this.state.currentStageIndex]?.type === 'free_debate') {
                 this.renderFreeDebateControls(); // [新增] 如果在自由辯，也更新控制項
             }
@@ -8277,7 +8789,7 @@ const App = {
         if (this.state.currentFlow[this.state.currentStageIndex]?.type === 'free_debate') {
             this.renderFreeDebateControls();
         } else {
-            this.renderDebateControls();
+            this.scheduleRenderDebateControls();
         }
     },
     downloadAudio() {
