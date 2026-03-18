@@ -2055,22 +2055,13 @@
             background: transparent;
             color: var(--text-muted);
             border: 1px solid transparent;
-            cursor: pointer;
-        }
-
-        .flow-stage:hover {
-            background: var(--surface-2);
-            border-color: var(--border-color);
+            cursor: default;
         }
 
         .flow-stage.completed {
             background: rgba(34, 197, 94, 0.1);
             color: var(--color-success);
             border-color: rgba(34, 197, 94, 0.2);
-        }
-
-        .flow-stage.completed:hover {
-            background: rgba(34, 197, 94, 0.2);
         }
 
         .flow-stage.current {
@@ -2085,10 +2076,6 @@
 
         .flow-stage.upcoming {
             opacity: 0.5;
-        }
-
-        .flow-stage.upcoming:hover {
-            opacity: 0.8;
         }
 
         .flow-connector {
