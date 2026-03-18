@@ -4,7 +4,6 @@ const ASSETS_TO_CACHE = [
   './index.html',
   './app.html',
   './display.html',
-  './formal_timer.html',
   './manifest.json',
   './favicon.svg',
   './ring.m4a',
@@ -16,7 +15,6 @@ self.addEventListener('install', (event) => {
   console.log('SW: Installing v2.3.1...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // 使用 addAll 但允許個別檔案失敗
       return Promise.allSettled(
         ASSETS_TO_CACHE.map(url =>
           cache.add(url).catch(err => {
@@ -26,7 +24,6 @@ self.addEventListener('install', (event) => {
       );
     })
   );
-  // 強制新的 Service Worker 立即啟用
   self.skipWaiting();
 });
 
@@ -54,3 +51,71 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// PWABuilder 建議功能：後台同步 (Background Sync)
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-debate-data') {
+    event.waitUntil(
+      Promise.resolve()
+    );
+  }
+});
+
+// PWABuilder 建議功能：週期性同步 (Periodic Sync)
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'update-debate-content') {
+    event.waitUntil(
+      Promise.resolve()
+    );
+  }
+});
+
+// PWABuilder 建議功能：推播通知 (Push Notifications)
+self.addEventListener('push', (event) => {
+  const options = {
+    body: event.data ? event.data.text() : '辯時計有了新通知！',
+    icon: './favicon.svg',
+    badge: './favicon.svg'
+  };
+
+  event.waitUntil(
+    self.registration.showNotification('辯時計', options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow('./app.html')
+  );
+});
+
+// PWABuilder 建議功能：Widget Events (小部件)
+if ('widgets' in self) {
+  self.addEventListener('widgetinstall', event => {
+    event.waitUntil(
+      self.widgets.updateByTag(event.widget.tag, {
+        data: JSON.stringify({
+          title: "辯時計",
+          status: "系統已就緒，請開啟應用程式進行比賽。"
+        })
+      })
+    );
+  });
+
+  self.addEventListener('widgetresume', event => {
+    event.waitUntil(
+      self.widgets.updateByTag(event.widget.tag, {
+        data: JSON.stringify({
+          title: "辯時計",
+          status: "請開啟應用程式查看目前進度。"
+        })
+      })
+    );
+  });
+
+  self.addEventListener('widgetclick', event => {
+    if (event.action === 'openApp') {
+      event.waitUntil(clients.openWindow('./app.html'));
+    }
+  });
+}
