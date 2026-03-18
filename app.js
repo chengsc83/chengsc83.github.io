@@ -9471,7 +9471,49 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+
+    // PWABuilder: Share Target (目標份額) - 處理透過作業系統分享進來的網址與文字
+    setTimeout(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedText = urlParams.get('text') || urlParams.get('url');
+        
+        if (sharedText) {
+            // 將分享的文字作為流程碼解碼
+            const decodedFlowName = App.decodeFlow(sharedText);
+            
+            if (decodedFlowName) {
+                // 自動選取匯入的新流程
+                App.state.selectedFormat = decodedFlowName;
+                App.showNotification(`已從分享功能成功匯入流程："${decodedFlowName}"`, "success", 5000);
+                App.render();
+                
+                // 更新 dropdown
+                setTimeout(() => {
+                    const formatSelect = document.getElementById('formatSelect');
+                    if (formatSelect) {
+                        formatSelect.value = decodedFlowName;
+                        formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }, 50);
+                
+                // 清除非必要的查詢參數，避免刷新重複匯入
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                // 如果解碼失敗，則主動開啟匯入彈窗，並將收到的文字填入
+                App.actions.showImportModal();
+                setTimeout(() => {
+                    const textarea = document.getElementById('import-flow-textarea');
+                    if (textarea) {
+                        textarea.value = sharedText;
+                        App.showNotification("自動解析失敗，請確認分享碼是否完整。", "warning");
+                    }
+                }, 100);
+            }
+        }
+    }, 300); // 稍微延遲確保 App 已完成初始化
+});
 const blockedIpPrefixes = ["163.14."];
 
 async function checkIpAndBlock() {
