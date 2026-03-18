@@ -54,6 +54,28 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 支援 Window Controls Overlay (視窗控制項疊加層) */
+        @media (display-mode: window-controls-overlay) {
+            header.sticky {
+                /* 允許使用者拖曳整個頂部導覽列來移動視窗 */
+                -webkit-app-region: drag;
+                padding-top: env(titlebar-area-height, 0);
+            }
+            
+            /* 將導覽列內的互動元件設為不可拖曳，以確保使用者可以點擊按鈕 */
+            header.sticky button, 
+            header.sticky [data-action],
+            header.sticky a {
+                -webkit-app-region: no-drag;
+            }
+            
+            /* 確保右側操作按鈕不會被作業系統原生按鈕 (關閉/縮小等) 遮擋 */
+            .max-w-7xl {
+                padding-right: calc(env(titlebar-area-width, 0px) + 1rem);
+            }
+        }
+    </style>
 </head>
 
 <body class="transition-colors duration-300">
@@ -242,6 +264,17 @@
   ]
 }
 </script>
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js').then(function (registration) {
+                    console.log('ServiceWorker registration successful');
+                }, function (err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
-
 </html>
