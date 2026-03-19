@@ -1,0 +1,85 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.6",
+  "body": [
+    {
+      "type": "Container",
+      "style": "emphasis",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "auto",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "${iconUrl}",
+                  "size": "Small",
+                  "style": "Person"
+                }
+              ],
+              "verticalContentAlignment": "Center"
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "辯時計",
+                  "weight": "Bolder",
+                  "size": "Medium",
+                  "color": "Accent"
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${statusText}",
+                  "spacing": "None",
+                  "size": "Small",
+                  "isSubtle": true
+                }
+              ],
+              "verticalContentAlignment": "Center"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "${timerDisplay}",
+          "weight": "Bolder",
+          "size": "ExtraLarge",
+          "horizontalAlignment": "Center",
+          "color": "accent",
+          "fontType": "Monospace"
+        },
+        {
+          "type": "TextBlock",
+          "text": "${stageName}",
+          "horizontalAlignment": "Center",
+          "size": "Medium",
+          "spacing": "Small"
+        }
+      ],
+      "spacing": "Medium"
+    },
+    {
+      "type": "ActionSet",
+      "actions": [
+        {
+          "type": "Action.Execute",
+          "title": "開啟辯時計",
+          "verb": "open_app"
+        }
+      ],
+      "spacing": "Medium"
+    }
+  ]
+}
