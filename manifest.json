@@ -1,137 +1,102 @@
 {
-  "name": "辯時計 - 專業辯論計時系統",
+  "name": "辯時計",
   "short_name": "辯時計",
-  "description": "專為臺灣辯論而生的計時系統。完全本地運行、開源透明，支援自動化主席稿、智慧語音偵測、語音即時轉錄等功能。",
-  "start_url": "./app.html",
-  "scope": "./",
+  "start_url": "/app.html",
+  "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#0f172a",
+  "display_override": ["window-controls-overlay", "tabbed", "standalone"],
+  "background_color": "#f1f5f9",
   "theme_color": "#4f46e5",
   "orientation": "any",
-  "lang": "zh-TW",
-  "dir": "ltr",
-  "categories": ["utilities", "productivity", "education"],
-  "id": "debate-timer-pro",
+  "description": "專為臺灣辯論而生的計時系統。完全本地運行、開源透明，支援自動化主席稿、智慧語音偵測、語音即時轉錄等功能。",
+  "categories": ["productivity"],
+  "screenshots": [
+    {
+      "src": "./og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
   "icons": [
     {
       "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./appstore-images/android/launchericon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "og-image.png",
-      "sizes": "1200x630",
+      "src": "./appstore-images/android/launchericon-512x512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "form_factor": "wide",
-      "label": "辯時計主畫面"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "開始新比賽",
+      "name": "開新比賽",
       "short_name": "新比賽",
-      "description": "直接進入比賽設定頁面",
-      "url": "./app.html",
-      "icons": [
-        {
-          "src": "favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "投影顯示",
-      "short_name": "投影",
-      "description": "開啟投影顯示視窗",
-      "url": "./display.html",
-      "icons": [
-        {
-          "src": "favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ]
-    }
-  ],
-  "widgets": [
-    {
-      "name": "辯時計快速計時",
-      "short_name": "計時器",
-      "description": "快速查看當前比賽計時狀態",
-      "tag": "debate-timer-widget",
-      "ms_ac_template": "widget/timer-widget.json",
-      "data": "./widget/timer-data.json",
-      "type": "application/json",
-      "screenshots": [
-        {
-          "src": "og-image.png",
-          "sizes": "1200x630",
-          "type": "image/png",
-          "label": "計時器小工具"
-        }
-      ],
-      "icons": [
-        {
-          "src": "favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ],
-      "backgrounds": [
-        {
-          "src": "favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ]
+      "description": "開啟一個全新的比賽",
+      "url": "./app.html?action=new",
+      "icons": [{"src": "favicon.svg", "sizes": "512x512", "type": "image/svg+xml"}]
     }
   ],
   "file_handlers": [
     {
       "action": "./app.html",
       "accept": {
+        "text/plain": [".txt"],
         "application/json": [".json"]
       }
     }
   ],
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
   "protocol_handlers": [
     {
-      "protocol": "web+debatimer",
-      "url": "./app.html?flow=%s"
+      "protocol": "web+debate",
+      "url": "./app.html?url=%s"
     }
   ],
   "share_target": {
     "action": "./app.html",
     "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url"
     }
   },
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
+  "widgets": [
+    {
+      "name": "小部件",
+      "description": "小部件",
+      "tag": "timer",
+      "template_url": "widget.html",
+      "ms_ac_template": "widget.json",
+      "data": "widget-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "favicon.svg",
+          "sizes": "512x512",
+          "label": "小部件"
+        }
+      ]
+    }
+  ],
   "edge_side_panel": {
     "preferred_width": 400
   },
-  "handle_links": "preferred",
-  "note_taking": {
-    "new_note_url": "./app.html"
+  "note_handling": {
+    "action": "./app.html?new_note=true"
   },
-  "tab_strip": {
-    "home_tab": "auto",
-    "new_tab_button": "auto"
-  }
+  "new_note_url": "./app.html?new_note=true"
 }
