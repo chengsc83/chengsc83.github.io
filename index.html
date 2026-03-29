@@ -31,11 +31,9 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- AOS Animation Library -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"
-        integrity="sha384-wILdp22jSfD0E7s9+/SqzSzlN7hI7M4m2vfvvQ4kV2HgA/XRi6HeIC/UBlSlN4rB" crossorigin="anonymous">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="manifest" href="manifest.json">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
         rel="stylesheet">
@@ -432,15 +430,15 @@
     </script>
 
     <!-- AOS Animation Library -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"
-        integrity="sha384-X8xEdUmNYCTx2GQ8M7SO5d81ySgT/1Wg+mUDTnNYR/20/MPNVvsJO6An+Mr0JQKY"
-        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        // Initialize AOS
-        AOS.init({
-            once: true,
-            easing: 'ease-out-cubic'
-        });
+        // Initialize AOS (with safety check for PWABuilder compatibility)
+        if (typeof AOS !== 'undefined') {
+            AOS.init({
+                once: true,
+                easing: 'ease-out-cubic'
+            });
+        }
     </script>
 
     <!-- FAQ Accordion - 獨立腳本確保執行 -->
