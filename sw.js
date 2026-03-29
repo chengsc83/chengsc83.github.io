@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debate-clock-v2.4c';
+const CACHE_NAME = 'debate-clock-v2.3.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -7,23 +7,18 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './favicon.svg',
   './ring.m4a',
-  './og-image.png',
-  './style.css',
-  './app.js',
-  './piper-worker.js',
-  './widget/timer-widget.json',
-  './widget/timer-data.json'
+  './og-image.png'
 ];
 
-// ==================== 安裝 ====================
+// 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing v2.4c...');
+  console.log('SW: Installing v2.3.1...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
         ASSETS_TO_CACHE.map(url =>
           cache.add(url).catch(err => {
-            console.warn(`[SW] Failed to cache: ${url}`, err);
+            console.warn(`Failed to cache: ${url}`, err);
           })
         )
       );
@@ -32,24 +27,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// ==================== 啟用（清除舊快取）====================
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[SW] Removing old cache:', key);
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-// ==================== 攔截請求（快取優先）====================
+// 攔截網路請求 (優先使用快取，若無則請求網路)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
@@ -58,93 +36,49 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// ==================== 訊息處理 ====================
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+// 更新 Service Worker 時清除舊快取
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keyList) => {
+      return Promise.all(
+        keyList.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
 });
 
-// ==================== Widget 支援 ====================
-
-// Widget 安裝事件
-self.addEventListener('widgetinstall', (event) => {
-  event.waitUntil(updateWidget(event));
-});
-
-// Widget 點擊事件
-self.addEventListener('widgetclick', (event) => {
-  if (event.action === 'open_app') {
+// PWABuilder 建議功能：後台同步 (Background Sync)
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-debate-data') {
     event.waitUntil(
-      clients.openWindow('./app.html')
+      Promise.resolve()
     );
   }
 });
 
-// Widget 恢復事件（系統重啟後）
-self.addEventListener('widgetresume', (event) => {
-  event.waitUntil(updateWidget(event));
-});
-
-// 週期性同步（背景更新 Widget）
+// PWABuilder 建議功能：週期性同步 (Periodic Sync)
 self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'widget-update') {
-    event.waitUntil(updateAllWidgets());
+  if (event.tag === 'update-debate-content') {
+    event.waitUntil(
+      Promise.resolve()
+    );
   }
 });
 
-/**
- * 更新單個 Widget
- */
-async function updateWidget(event) {
-  try {
-    // 從快取或網路取得 Widget 模板
-    const templateResponse = await caches.match('./widget/timer-widget.json') ||
-                              await fetch('./widget/timer-widget.json');
-    const template = await templateResponse.text();
-
-    // 從快取或網路取得 Widget 資料
-    const dataResponse = await caches.match('./widget/timer-data.json') ||
-                          await fetch('./widget/timer-data.json');
-    const data = await dataResponse.text();
-
-    // 使用 Widget API 更新
-    if (self.widgets) {
-      await self.widgets.updateByTag('debate-timer-widget', { template, data });
-    }
-  } catch (err) {
-    console.warn('[SW] Widget update failed:', err);
-  }
-}
-
-/**
- * 更新所有 Widget
- */
-async function updateAllWidgets() {
-  if (!self.widgets) return;
-
-  try {
-    const widgetList = await self.widgets.getByTag('debate-timer-widget');
-    if (widgetList && widgetList.length > 0) {
-      await updateWidget({ tag: 'debate-timer-widget' });
-    }
-  } catch (err) {
-    console.warn('[SW] Widget batch update failed:', err);
-  }
-}
-
-// ==================== 推播通知（可選）====================
+// PWABuilder 建議功能：推播通知 (Push Notifications)
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
+  const options = {
+    body: event.data ? event.data.text() : '辯時計有了新通知！',
+    icon: './favicon.svg',
+    badge: './favicon.svg'
+  };
 
-  const data = event.data.json();
   event.waitUntil(
-    self.registration.showNotification(data.title || '辯時計', {
-      body: data.body || '',
-      icon: './favicon.svg',
-      badge: './favicon.svg',
-      tag: 'debate-timer-notification'
-    })
+    self.registration.showNotification('辯時計', options)
   );
 });
 
@@ -154,3 +88,34 @@ self.addEventListener('notificationclick', (event) => {
     clients.openWindow('./app.html')
   );
 });
+
+// PWABuilder 建議功能：Widget Events (小部件)
+if ('widgets' in self) {
+  self.addEventListener('widgetinstall', event => {
+    event.waitUntil(
+      self.widgets.updateByTag(event.widget.tag, {
+        data: JSON.stringify({
+          title: "辯時計",
+          status: "系統已就緒，請開啟應用程式進行比賽。"
+        })
+      })
+    );
+  });
+
+  self.addEventListener('widgetresume', event => {
+    event.waitUntil(
+      self.widgets.updateByTag(event.widget.tag, {
+        data: JSON.stringify({
+          title: "辯時計",
+          status: "請開啟應用程式查看目前進度。"
+        })
+      })
+    );
+  });
+
+  self.addEventListener('widgetclick', event => {
+    if (event.action === 'openApp') {
+      event.waitUntil(clients.openWindow('./app.html'));
+    }
+  });
+}
