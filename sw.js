@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debate-clock-v2.3.1';
+const CACHE_NAME = 'debate-clock-v2.4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
