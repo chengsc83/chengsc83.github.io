@@ -983,7 +983,7 @@ const App = {
             ],
         },
         "新加坡制": {
-            "新加坡制 (正方開場3min, 自由辯4min)": [
+            "新加坡制 (申論3分鐘, 自由辯4分鐘)": [
                 { name: "賽前介紹", type: "announcement", script: "歡迎各位。本次比賽採新加坡制，辯題為：「{{debate_topic}}」。正方為{{positive_team_name}}，反方為{{negative_team_name}}。" },
                 { name: "正方一辯 陳詞", type: "speech_auto", duration: 180, script: "請正方一辯上臺陳詞，時間三分鐘。", timerLabel: "正方一辯 陳詞", graceEndAction: "auto_start" },
                 { name: "反方一辯 陳詞", type: "speech_auto", duration: 180, script: "請反方一辯上臺陳詞，時間三分鐘。", timerLabel: "反方一辯 陳詞", graceEndAction: "auto_start" },
@@ -996,7 +996,7 @@ const App = {
                 { name: "正方四辯 總結", type: "speech_auto", duration: 240, script: "請正方四辯上臺總結，時間四分鐘。", timerLabel: "正方總結", graceEndAction: "auto_start" },
                 { name: "比賽結束", type: "announcement", script: "比賽結束，感謝各位。" }
             ],
-            "新加坡制 (正方開場4min, 自由辯4min)": [
+            "新加坡制 (申論4分鐘, 自由辯4分鐘)": [
                 { name: "賽前介紹", type: "announcement", script: "歡迎各位。本次比賽採新加坡制，辯題為：「{{debate_topic}}」。正方為{{positive_team_name}}，反方為{{negative_team_name}}。" },
                 { name: "正方一辯 陳詞", type: "speech_auto", duration: 240, script: "請正方一辯上臺陳詞，時間四分鐘。", timerLabel: "正方一辯 陳詞", graceEndAction: "auto_start" },
                 { name: "反方一辯 陳詞", type: "speech_auto", duration: 180, script: "請反方一辯上臺陳詞，時間三分鐘。", timerLabel: "反方一辯 陳詞", graceEndAction: "auto_start" },
@@ -1009,7 +1009,7 @@ const App = {
                 { name: "正方四辯 總結", type: "speech_auto", duration: 240, script: "請正方四辯上臺總結，時間四分鐘。", timerLabel: "正方總結", graceEndAction: "auto_start" },
                 { name: "比賽結束", type: "announcement", script: "比賽結束，感謝各位。" }
             ],
-            "新加坡制 (正方開場4min, 自由辯5min)": [
+            "新加坡制 (申論4分鐘, 自由辯5分鐘)": [
                 { name: "賽前介紹", type: "announcement", script: "歡迎各位。本次比賽採新加坡制，辯題為：「{{debate_topic}}」。正方為{{positive_team_name}}，反方為{{negative_team_name}}。" },
                 { name: "正方一辯 陳詞", type: "speech_auto", duration: 240, script: "請正方一辯上臺陳詞，時間四分鐘。", timerLabel: "正方一辯 陳詞", graceEndAction: "auto_start" },
                 { name: "反方一辯 陳詞", type: "speech_auto", duration: 180, script: "請反方一辯上臺陳詞，時間三分鐘。", timerLabel: "反方一辯 陳詞", graceEndAction: "auto_start" },
@@ -1358,6 +1358,8 @@ const App = {
         if (this.state.enableSpeech) {
             this._loadPiperTTS().then(() => {
                 console.log('[Piper TTS] Pre-loaded on page init.');
+                // [ONNX 預熱] 模型載入後用極短文字跑一次推論，讓 WASM/ONNX Runtime 完成 JIT 編譯
+                this._warmUpOnnx();
             }).catch(() => { });
         }
     },
@@ -1659,32 +1661,10 @@ const App = {
                 // 滾動到頂部
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                // [TTS 預合成] 從步驟 1 進到步驟 2 時，背景載入 Piper TTS 並預合成第一階段語音
-                if (App.state.setupStep === 2 && App.state.currentFlow && App.state.currentFlow.length > 0) {
-                    App._loadPiperTTS().then(() => {
-                        if (!App._piperWorker) return;
-                        const firstStage = App.state.currentFlow[0];
-                        if (firstStage && firstStage.script) {
-                            const text = App.interpolateScript(firstStage.script);
-                            if (text) {
-                                const sentences = App._splitSentences(text);
-                                console.log(`[Piper TTS] Pre-synthesizing ${sentences.length} sentences for first stage...`);
-                                (async () => {
-                                    for (const sentence of sentences) {
-                                        if (App._piperTtsCache.has(sentence)) continue;
-                                        try {
-                                            const wav = await App._workerPredict(sentence);
-                                            App._piperTtsCache.set(sentence, wav);
-                                            console.log('[Piper TTS] Pre-synthesized:', sentence.substring(0, 20) + '...');
-                                        } catch (e) {
-                                            console.warn('[Piper TTS] Pre-synthesis failed:', e.message);
-                                            break;
-                                        }
-                                    }
-                                })();
-                            }
-                        }
-                    }).catch(() => { });
+                // [TTS 預合成] 從步驟 1 進到步驟 2、或步驟 2 進到步驟 3 時，
+                // 背景載入 Piper TTS 並預合成前幾個階段語音
+                if (App.state.setupStep >= 2 && App.state.selectedFormat && App.state.selectedFormat !== 'CUSTOM_EMPTY') {
+                    App._preSynthesizeForFormat(App.state.selectedFormat);
                 }
             }
         },
@@ -1848,7 +1828,11 @@ const App = {
                 App.state.currentFlow = JSON.parse(JSON.stringify(format));
                 App.state.currentView = 'debate';
 
-                // [CRITICAL FIX] 確保進入比賽畫面就開啟語音辨識（全時段監聽）
+                // [TTS 提前預合成] currentFlow 已設定完畢，在進入 loadStage 之前
+                // 立即觸發前幾階段的背景合成（利用等待 render 的微小空隙）
+                App._eagerPreSynthesizeFlow();
+
+                // [CRITICAL FIX] 確保進入比賽畫面就開啟語音辨識（全時段監聯）
                 if (App.state.enableSpeechDetection) {
                     // VAD 已在頁面載入時預先初始化（init() 中呼叫 initPersistentVAD）。
                     // 此處僅做 fallback：若預載因故失敗或尚未完成，則嘗試補初始化（不 await 以免阻塞）。
@@ -6334,7 +6318,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.4 <br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.4.1 <br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -6408,12 +6392,16 @@ const App = {
         const parts = text.split(/(?<=[。！？\n])/);
         const sentences = [];
         let current = '';
+        let isFirst = true;
         for (const part of parts) {
             current += part;
-            // 累積到至少 30 個字再切一句（減少句子數量，降低合成次數）
-            if (current.trim().length >= 30) {
+            // [優化] 首句門檻降低到 15 字，讓第一段音訊更快播出
+            // 後續句子維持 30 字以減少合成次數
+            const threshold = isFirst ? 15 : 30;
+            if (current.trim().length >= threshold) {
                 sentences.push(current.trim());
                 current = '';
+                isFirst = false;
             }
         }
         if (current.trim()) sentences.push(current.trim());
@@ -6474,6 +6462,23 @@ const App = {
             this._piperTtsLoading = false;
             this._piperTtsLoadFailed = true;
             return null;
+        }
+    },
+
+    /**
+     * [ONNX 預熱] 載入模型後用極短文字跑一次推論，
+     * 讓 WASM/ONNX Runtime 完成 JIT 編譯 + 記憶體配置。
+     * 後續正式合成速度可提升 2-3 倍。
+     */
+    async _warmUpOnnx() {
+        if (!this._piperWorker) return;
+        try {
+            console.log('[Piper TTS] Warming up ONNX runtime...');
+            const start = performance.now();
+            await this._workerPredict('預備。');
+            console.log(`[Piper TTS] ONNX warm-up done in ${(performance.now() - start).toFixed(0)}ms`);
+        } catch (e) {
+            console.warn('[Piper TTS] ONNX warm-up failed:', e.message);
         }
     },
 
@@ -6662,37 +6667,126 @@ const App = {
     async _prefetchNextStageTTS() {
         try {
             const flow = this.state.currentFlow;
-            const nextIdx = this.state.currentStageIndex + 1;
-            if (!flow || nextIdx >= flow.length) return;
-
-            const nextStage = flow[nextIdx];
-            if (!nextStage || !nextStage.script) return;
+            const currentIdx = this.state.currentStageIndex;
+            if (!flow) return;
 
             const tts = this._piperWorker; // 只用已載入的 Worker，不觸發新的載入
             if (!tts) return;
 
-            const text = this.interpolateScript(nextStage.script);
-            if (!text) return;
+            // [優化] 預先合成接下來 3 個階段（而非僅 1 個），利用辯手發言的空檔合成更多
+            const maxPrefetch = 3;
+            for (let offset = 1; offset <= maxPrefetch; offset++) {
+                const nextIdx = currentIdx + offset;
+                if (nextIdx >= flow.length) break;
 
-            const sentences = this._splitSentences(text);
-            console.log(`[Piper TTS] Prefetching ${sentences.length} sentences for next stage...`);
+                const nextStage = flow[nextIdx];
+                if (!nextStage || !nextStage.script) continue;
 
-            for (const sentence of sentences) {
-                if (this._piperTtsCache.has(sentence)) continue; // 已快取
+                const text = this.interpolateScript(nextStage.script);
+                if (!text) continue;
 
-                try {
-                    const wav = await this._workerPredict(sentence);
-                    this._piperTtsCache.set(sentence, wav);
-                    console.log('[Piper TTS] Prefetched:', sentence.substring(0, 20) + '...');
-                } catch (e) {
-                    console.warn('[Piper TTS] Prefetch failed for sentence:', e.message);
-                    break; // 停止預合成，不影響其他功能
+                const sentences = this._splitSentences(text);
+                let allCached = true;
+                for (const sentence of sentences) {
+                    if (this._piperTtsCache.has(sentence)) continue;
+                    allCached = false;
+                }
+                if (allCached) continue; // 此階段已全部快取，跳到下一階段
+
+                console.log(`[Piper TTS] Prefetching ${sentences.length} sentences for stage +${offset}...`);
+
+                for (const sentence of sentences) {
+                    if (this._piperTtsCache.has(sentence)) continue;
+
+                    try {
+                        const wav = await this._workerPredict(sentence);
+                        this._piperTtsCache.set(sentence, wav);
+                        console.log('[Piper TTS] Prefetched:', sentence.substring(0, 20) + '...');
+                    } catch (e) {
+                        console.warn('[Piper TTS] Prefetch failed for sentence:', e.message);
+                        return; // 出錯就停止所有預合成
+                    }
                 }
             }
         } catch (e) {
             // 預合成失敗不影響主流程
             console.warn('[Piper TTS] Prefetch error:', e.message);
         }
+    },
+
+    /**
+     * [新增] 根據賽制名稱預合成前幾階段的語音（設定頁面使用）。
+     * 使用 getDebateFormat() 取得流程，不依賴 currentFlow。
+     */
+    _preSynthesizeForFormat(formatName) {
+        if (!formatName || formatName === 'CUSTOM_EMPTY') return;
+
+        App._loadPiperTTS().then(() => {
+            if (!App._piperWorker) return;
+
+            const format = App.getDebateFormat(formatName);
+            if (!format || format.length === 0) return;
+
+            // 預合成前 3 個有 script 的階段
+            const stagesToPresynth = format.filter(s => s.script).slice(0, 3);
+            if (stagesToPresynth.length === 0) return;
+
+            console.log(`[Piper TTS] Pre-synthesizing for format "${formatName}" (${stagesToPresynth.length} stages)...`);
+
+            (async () => {
+                for (const stage of stagesToPresynth) {
+                    const text = App.interpolateScript(stage.script);
+                    if (!text) continue;
+
+                    const sentences = App._splitSentences(text);
+                    for (const sentence of sentences) {
+                        if (App._piperTtsCache.has(sentence)) continue;
+                        try {
+                            const wav = await App._workerPredict(sentence);
+                            App._piperTtsCache.set(sentence, wav);
+                            console.log('[Piper TTS] Pre-synthesized:', sentence.substring(0, 20) + '...');
+                        } catch (e) {
+                            console.warn('[Piper TTS] Pre-synthesis failed:', e.message);
+                            return; // 出錯停止
+                        }
+                    }
+                }
+            })();
+        }).catch(() => { });
+    },
+
+    /**
+     * [新增] 在 startDebate 中、loadStage 之前立即觸發的預合成。
+     * 此時 currentFlow 已經設定完畢，可以直接預合成。
+     */
+    _eagerPreSynthesizeFlow() {
+        if (!this._piperWorker) return;
+        const flow = this.state.currentFlow;
+        if (!flow || flow.length === 0) return;
+
+        // 預合成前 3 個有 script 的階段
+        const stagesToPresynth = flow.filter(s => s.script).slice(0, 3);
+        if (stagesToPresynth.length === 0) return;
+
+        console.log(`[Piper TTS] Eager pre-synthesis for ${stagesToPresynth.length} stages...`);
+
+        (async () => {
+            for (const stage of stagesToPresynth) {
+                const text = this.interpolateScript(stage.script);
+                if (!text) continue;
+
+                const sentences = this._splitSentences(text);
+                for (const sentence of sentences) {
+                    if (this._piperTtsCache.has(sentence)) continue;
+                    try {
+                        const wav = await this._workerPredict(sentence);
+                        this._piperTtsCache.set(sentence, wav);
+                    } catch (e) {
+                        return;
+                    }
+                }
+            }
+        })();
     },
 
 
