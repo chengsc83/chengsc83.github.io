@@ -1,18 +1,26 @@
-const CACHE_NAME = 'debate-clock-v2.4.3';
+const CACHE_NAME = 'debate-clock-v2.5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './app.html',
   './display.html',
+  './widget.html',
   './manifest.json',
   './favicon.svg',
   './ring.m4a',
-  './og-image.png'
+  './og-image.png',
+  // 程式碼與樣式（原本缺漏，導致離線白屏）
+  './app.js',
+  './piper-worker.js',
+  './style.css',
+  './style.min.css',
+  // 賽制資料
+  './debateFormatGroups.json'
 ];
 
 // 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing v2.4.3...');
+  console.log('SW: Installing v2.5...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
