@@ -6096,7 +6096,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5 BETA <br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5 <br> 技術，為了更好的思辯</div>
         `;
     },
 
