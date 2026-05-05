@@ -83,7 +83,7 @@ const App = {
         vadSuppressionTimeout: null,  // TTS 結束後的抑制延遲計時器
         speechDetectionLockController: null, // Web Locks API 的 AbortController，用於多分頁衝突防護
         history: [], // 用來存放狀態歷史紀錄
-        MAX_HISTORY_STATES: 20,
+        MAX_HISTORY_STATES: 10,
         isPresentationMode: false, // 是否為簡報模式
         // [ADD THIS START]
         recording: {
@@ -356,22 +356,7 @@ const App = {
             document.getElementById('tour-next').addEventListener('click', () => this.nextTourStep());
             document.getElementById('tour-prev').addEventListener('click', () => this.prevTourStep());
             document.getElementById('tour-skip').addEventListener('click', () => this.endTour());
-
-            // 鍵盤導航支援
-            this._tourKeyboardHandler = (e) => {
-                if (!this.state.onboarding.isActive) return;
-                if (e.key === 'ArrowRight' || e.key === 'Enter') {
-                    e.preventDefault();
-                    this.nextTourStep();
-                } else if (e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    this.prevTourStep();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    this.endTour();
-                }
-            };
-            document.addEventListener('keydown', this._tourKeyboardHandler);
+            // [FIX Bug AA] 鍵盤 listener 改由 startTour/endTour 成對掛載，避免殘留在 document 上
         }
     },
 
@@ -398,6 +383,25 @@ const App = {
             overlay.classList.add('active');
         }
 
+        // [FIX Bug AA] 每次啟動教學時掛載鍵盤導航 listener（若已存在先移除避免重複）
+        if (this._tourKeyboardHandler) {
+            document.removeEventListener('keydown', this._tourKeyboardHandler);
+        }
+        this._tourKeyboardHandler = (e) => {
+            if (!this.state.onboarding.isActive) return;
+            if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                e.preventDefault();
+                this.nextTourStep();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                this.prevTourStep();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                this.endTour();
+            }
+        };
+        document.addEventListener('keydown', this._tourKeyboardHandler);
+
         this.updateTourStep();
     },
 
@@ -417,6 +421,11 @@ const App = {
         if (this._tourResizeHandler) {
             window.removeEventListener('resize', this._tourResizeHandler);
             this._tourResizeHandler = null;
+        }
+        // [FIX Bug AA] 移除鍵盤導航 listener，避免教學結束後仍掛在 document 上每次按鍵都觸發
+        if (this._tourKeyboardHandler) {
+            document.removeEventListener('keydown', this._tourKeyboardHandler);
+            this._tourKeyboardHandler = null;
         }
 
         // 根據模式儲存已完成狀態
@@ -710,64 +719,103 @@ const App = {
     },
     saveState(actionName = 'unknown') {
         try {
-            // [關鍵修復] 完全手動建立可序列化的狀態物件
-            // 不使用展開運算符來避免複製無法序列化的物件
+            // 完全手動建立可序列化的狀態物件，排除所有無法序列化的 runtime 物件
             const stateToSave = {
-                // 基本狀態值
+                // 比賽核心狀態
                 currentView: this.state.currentView,
                 currentStageIndex: this.state.currentStageIndex,
-                timeRemaining: this.state.timeRemaining,
-                isRunning: this.state.isRunning,
-                isPaused: this.state.isPaused,
-                totalElapsed: this.state.totalElapsed,
-                debateTopic: this.state.debateTopic,
-                positiveTeamName: this.state.positiveTeamName,
-                negativeTeamName: this.state.negativeTeamName,
+                currentFlow: this.state.currentFlow || [],
                 selectedFormat: this.state.selectedFormat,
-                stages: JSON.parse(JSON.stringify(this.state.stages || [])),
                 formatFilterTag: this.state.formatFilterTag,
 
-                // 設定值
-                settings: this.state.settings ? { ...this.state.settings } : {},
-                audioSourceModes: this.state.audioSourceModes ? { ...this.state.audioSourceModes } : {},
+                // 計時器狀態（排除 interval 參照）
+                timer: {
+                    type: this.state.timer.type,
+                    timeLeft: this.state.timer.timeLeft,
+                    initialDuration: this.state.timer.initialDuration,
+                    isPaused: this.state.timer.isPaused,
+                    interval: null,
+                    graceInterval: null,
+                },
+                mainSpeechTimerStartedByGrace: this.state.mainSpeechTimerStartedByGrace,
 
-                // 自由辯論狀態
+                // 隊伍資訊
+                debateTopic: this.state.debateTopic,
+                tournamentName: this.state.tournamentName,
+                positiveTeamName: this.state.positiveTeamName,
+                negativeTeamName: this.state.negativeTeamName,
+                positiveTeamPlayers: [...(this.state.positiveTeamPlayers || [])],
+                negativeTeamPlayers: [...(this.state.negativeTeamPlayers || [])],
+                judges: [...(this.state.judges || [])],
+                positiveClosingIndex: this.state.positiveClosingIndex,
+                negativeClosingIndex: this.state.negativeClosingIndex,
+
+                // 計數與抽籤
+                positiveActionCounts: { ...this.state.positiveActionCounts },
+                negativeActionCounts: { ...this.state.negativeActionCounts },
+                rebuttalOrder: this.state.rebuttalOrder,
+
+                // 設定
+                audioSourceModes: { ...(this.state.audioSourceModes || {}) },
+                isAutoMode: this.state.isAutoMode,
+                enableSpeech: this.state.enableSpeech,
+                enableSpeechDetection: this.state.enableSpeechDetection,
+                customGraceDuration: this.state.customGraceDuration,
+
+                // 自由辯論狀態（欄位名稱與實際 state 一致）
                 freeDebate: this.state.freeDebate ? {
-                    isActive: this.state.freeDebate.isActive,
-                    currentTeam: this.state.freeDebate.currentTeam,
-                    posTime: this.state.freeDebate.posTime,
-                    negTime: this.state.freeDebate.negTime,
-                    totalTime: this.state.freeDebate.totalTime
+                    initialDuration: this.state.freeDebate.initialDuration,
+                    positiveTimeLeft: this.state.freeDebate.positiveTimeLeft,
+                    negativeTimeLeft: this.state.freeDebate.negativeTimeLeft,
+                    activeTeam: this.state.freeDebate.activeTeam,
+                    isPaused: this.state.freeDebate.isPaused,
+                    firstSpeakerSelected: this.state.freeDebate.firstSpeakerSelected,
+                    stage: this.state.freeDebate.stage || null,
+                    interval: null,
                 } : null,
 
-                // UI 狀態
-                theme: this.state.theme,
-                showTranscription: this.state.showTranscription,
+                // 逐字稿（全部可序列化）
+                transcription: {
+                    active: this.state.transcription.active,
+                    paused: this.state.transcription.paused,
+                    paragraphs: this.state.transcription.paragraphs || [],
+                    currentParagraphId: this.state.transcription.currentParagraphId,
+                    interimContent: this.state.transcription.interimContent,
+                    MAX_PARAGRAPHS: this.state.transcription.MAX_PARAGRAPHS,
+                },
 
-                // 不可序列化的物件設為 null
+                // 不可序列化的物件 — 設為 null 或簡化值
                 wakeLock: null,
                 sortableInstance: null,
                 pip: { isActive: this.state.pip?.isActive || false, videoElement: null },
                 audioDetection: {
-                    isEnabled: this.state.audioDetection?.isEnabled || false,
-                    isListening: this.state.audioDetection?.isListening || false,
+                    isActive: this.state.audioDetection?.isActive || false,
                     vad: null,
                     stream: null,
-                    analyser: null
                 },
                 recording: {
                     isRecording: this.state.recording?.isRecording || false,
                     isPaused: this.state.recording?.isPaused || false,
+                    isAvailable: this.state.recording?.isAvailable || false,
+                    isMicMuted: this.state.recording?.isMicMuted || false,
+                    isPlayerOpen: this.state.recording?.isPlayerOpen || false,
+                    pausedDuration: this.state.recording?.pausedDuration || 0,
+                    timestamps: JSON.parse(JSON.stringify(this.state.recording?.timestamps || [])),
+                    // 以下為 runtime 硬體物件，無法序列化，由 restoreState preservedRuntime 保留
                     mediaRecorder: null,
                     mediaStream: null,
                     micAudioTrack: null,
                     recordedChunks: [],
-                    audioBlob: null
+                    intermediateBlobs: [],
+                    audioBlob: null,
+                    recordings: [],
+                    recordingStartTime: null,
+                    pauseStartTime: null,
                 },
                 sharedDisplay: {
-                    isSharing: this.state.sharedDisplay?.isSharing || false,
+                    isInitialized: this.state.sharedDisplay?.isInitialized || false,
                     stream: null,
-                    audioTrack: null
+                    audioTrack: null,
                 },
                 projector: {
                     isActive: this.state.projector?.isActive || false,
@@ -776,14 +824,8 @@ const App = {
                     displayWindow: null,
                     presentationConnection: null,
                     heartbeatInterval: null,
-                    windowCheckInterval: null
+                    windowCheckInterval: null,
                 },
-
-                // 教學狀態
-                tour: this.state.tour ? {
-                    isActive: this.state.tour.isActive,
-                    currentStep: this.state.tour.currentStep
-                } : { isActive: false, currentStep: 0 }
             };
 
             // 安全地進行深拷貝
@@ -792,8 +834,8 @@ const App = {
             // 存入歷史紀錄
             this.state.history.push(stateSnapshot);
 
-            // [關鍵優化] 限制歷史紀錄長度 (降為 10 步)
-            if (this.state.history.length > 10) {
+            // 限制歷史紀錄長度（與 MAX_HISTORY_STATES 一致）
+            if (this.state.history.length > this.state.MAX_HISTORY_STATES) {
                 this.state.history.shift();
             }
         } catch (e) {
@@ -854,6 +896,20 @@ const App = {
             pip: this.state.pip, // 保留視窗參照
             sortableInstance: this.state.sortableInstance,
 
+            // 保留 Audio runtime 物件（Set/AudioContext 無法序列化）
+            audioContext: this.state.audioContext,
+            routedAudioElements: this.state.routedAudioElements,
+            googleTtsAudio: this.state.googleTtsAudio,
+            googleTtsAbortController: this.state.googleTtsAbortController,
+            isGoogleTtsPlaying: this.state.isGoogleTtsPlaying,
+            speechQueue: this.state.speechQueue,
+            isSpeaking: this.state.isSpeaking,
+            isRinging: this.state.isRinging,
+            isAudioUnlocked: this.state.isAudioUnlocked,
+
+            // 保留教學引導狀態（UI runtime，不應被 Undo 影響）
+            onboarding: this.state.onboarding,
+
             // 保留 VAD 連線，避免復原時斷線
             audioDetection: {
                 ...previousState.audioDetection, // 使用舊的設定值 (如閾值)
@@ -863,15 +919,35 @@ const App = {
                 isActive: this.state.audioDetection.isActive
             },
 
+            // 保留 VAD runtime 欄位（校正狀態、硬體參照、計時器）
+            // 這些是 session 運行值，不該被 Undo 回捲 — 否則復原後 rolling RMS 要重跑
+            _vadAnalyser: this.state._vadAnalyser,
+            _vadAmbientRMS: this.state._vadAmbientRMS,
+            _vadAmbientCalibrated: this.state._vadAmbientCalibrated,
+            _vadLastSpeechTime: this.state._vadLastSpeechTime,
+            _vadInitialCalibInterval: this.state._vadInitialCalibInterval,
+            _vadRollingCalibInterval: this.state._vadRollingCalibInterval,
+            _vadSpeechEventCount: this.state._vadSpeechEventCount,
+
             // 保留錄音連線與資料，避免復原時錄音被切斷或資料遺失
             recording: {
-                ...previousState.recording, // 使用舊的設定
+                ...previousState.recording,
+                // 硬體物件與 Blob — 無法序列化，必須從當前 state 保留
                 mediaRecorder: this.state.recording.mediaRecorder,
                 mediaStream: this.state.recording.mediaStream,
                 micAudioTrack: this.state.recording.micAudioTrack,
                 isRecording: this.state.recording.isRecording,
-                recordedChunks: this.state.recording.recordedChunks, // ★ 重要：保留目前的錄音數據
-                audioBlob: this.state.recording.audioBlob
+                isPaused: this.state.recording.isPaused,
+                isAvailable: this.state.recording.isAvailable,
+                isMicMuted: this.state.recording.isMicMuted,
+                isPlayerOpen: this.state.recording.isPlayerOpen,
+                recordedChunks: this.state.recording.recordedChunks,
+                intermediateBlobs: this.state.recording.intermediateBlobs,
+                audioBlob: this.state.recording.audioBlob,
+                recordings: this.state.recording.recordings,
+                recordingStartTime: this.state.recording.recordingStartTime,
+                pauseStartTime: this.state.recording.pauseStartTime,
+                pausedDuration: this.state.recording.pausedDuration,
             },
 
             // 保留螢幕分享
@@ -880,7 +956,10 @@ const App = {
                 stream: this.state.sharedDisplay.stream,
                 audioTrack: this.state.sharedDisplay.audioTrack,
                 isInitialized: this.state.sharedDisplay.isInitialized
-            }
+            },
+
+            // 保留逐字稿 runtime 狀態（Undo 不應讓逐字稿段落消失）
+            transcription: this.state.transcription,
         };
 
         // 4. 還原狀態 (舊狀態 + 保留的 Runtime 物件)
@@ -932,11 +1011,15 @@ const App = {
             console.warn("applyTheme called with invalid colors object.");
             return;
         }
+        // [FIX Bug V] 若 accentHover / accentLight 缺失，用 accent 派生色回補，避免 CSS 變數被設為 "undefined"
+        const accent = colors.accent;
+        const accentHover = (typeof colors.accentHover === 'string' && colors.accentHover) ? colors.accentHover : accent;
+        const accentLight = (typeof colors.accentLight === 'string' && colors.accentLight) ? colors.accentLight : accent;
         const root = document.documentElement;
-        root.style.setProperty('--color-accent', colors.accent);
-        root.style.setProperty('--color-accent-hover', colors.accentHover);
-        root.style.setProperty('--color-accent-light', colors.accentLight);
-        root.style.setProperty('--color-focus-shadow', this.hexToRgba(colors.accent, 0.25));
+        root.style.setProperty('--color-accent', accent);
+        root.style.setProperty('--color-accent-hover', accentHover);
+        root.style.setProperty('--color-accent-light', accentLight);
+        root.style.setProperty('--color-focus-shadow', this.hexToRgba(accent, 0.25));
 
         // Also update PiP if active
         if (this.state.pip.isActive) {
@@ -1059,7 +1142,11 @@ const App = {
         this.state.enableSpeech = localStorage.getItem('debateSpeech') !== 'false';
         const savedGraceDuration = localStorage.getItem('debateGraceDuration');
         if (savedGraceDuration) {
-            this.state.customGraceDuration = parseInt(savedGraceDuration, 10);
+            // [FIX Bug M] 驗證 parseInt 結果，NaN 時保留預設值
+            const parsed = parseInt(savedGraceDuration, 10);
+            if (Number.isFinite(parsed) && parsed >= 0) {
+                this.state.customGraceDuration = parsed;
+            }
         }
         const savedModes = localStorage.getItem('debateAudioSourceModes');
         if (savedModes) {
@@ -1279,6 +1366,15 @@ const App = {
 
                 // 優先級 1: 關閉彈出視窗
                 if (modal) {
+                    // [FIX Bug T] 若正等待 choice/judge 選擇，先 reject 擺脫懸掛的 await
+                    if (App.state.currentChoice && App.state.currentChoice.reject) {
+                        try { App.state.currentChoice.reject(new Error('User cancelled choice via Esc')); } catch (_) { }
+                        App.state.currentChoice = { stage: null, resolve: null, reject: null };
+                    }
+                    if (App.state.currentJudgeChoice && App.state.currentJudgeChoice.reject) {
+                        try { App.state.currentJudgeChoice.reject(new Error('User cancelled judge choice via Esc')); } catch (_) { }
+                        App.state.currentJudgeChoice = { stage: null, resolve: null, reject: null };
+                    }
                     modal.remove();
                     return; // 處理完就離開
                 }
@@ -1366,7 +1462,6 @@ const App = {
             App.saveState('togglePauseFreeDebate'); // <<-- 新增這一行
             App.togglePauseFreeDebate();
         },
-        resetFreeDebateStage() { App.resetFreeDebateStage(); },
         startRecording() { App.startRecording(); },
         stopRecording() { App.stopRecording(); },
         downloadAudio() { App.downloadAudio(); },
@@ -1433,6 +1528,7 @@ const App = {
                 const success = await App.initializeDisplayAudio();
                 if (!success) {
                     // 如果使用者取消或擷取失敗，則中止開始辯論的流程
+                    App.releaseSpeechLock();
                     return;
                 }
             }
@@ -1497,6 +1593,7 @@ const App = {
                 // 二次檢查：確保載入的流程不是空的 (例如使用者刪光了自訂流程的所有階段)
                 if (!format || format.length === 0) {
                     App.showNotification("此流程內容為空，無法開始比賽。", "error");
+                    App.releaseSpeechLock();
                     return;
                 }
                 App.state.currentFlow = JSON.parse(JSON.stringify(format));
@@ -1762,14 +1859,16 @@ const App = {
             }
 
             if (App.state.isAdvancingStage) return;
-            App.saveState('nextStage');
+            // [FIX Bug Y] 已在最後一階段時不儲存 Undo 快照，避免在 Undo 堆疊中堆積未變動的狀態
+            const isLastStage = App.state.currentStageIndex >= App.state.currentFlow.length - 1;
+            if (!isLastStage) App.saveState('nextStage');
             App.state.isAdvancingStage = true;
 
             App.clearAllTimers();
             // [全局語音控制] 不再停止語音辨識，讓它在整場比賽中持續運作
             // App.stopRecognition(); // REMOVED
 
-            if (App.state.currentStageIndex < App.state.currentFlow.length - 1) {
+            if (!isLastStage) {
                 App.state.currentStageIndex++;
                 App.playSound('stageAdvanceSound');
                 App.loadStage(App.state.currentStageIndex);
@@ -1843,8 +1942,8 @@ const App = {
         },
         previousStage() {
             if (App.state.isAdvancingStage) return;
-            App.saveState('previousStage');
             if (App.state.currentStageIndex <= 0) return;
+            App.saveState('previousStage');
 
             App.state.isAdvancingStage = true;
 
@@ -1887,6 +1986,15 @@ const App = {
             if (App.state.timer.isPaused) {
                 if (App.state.timer.type === 'grace') clearInterval(App.state.timer.graceInterval);
                 else clearInterval(App.state.timer.interval);
+                // [FIX Bug U] 清除 endWord / 自動換場 timeout，避免暫停期間仍自動推進
+                if (App.state.endWordTimeout) {
+                    clearTimeout(App.state.endWordTimeout);
+                    App.state.endWordTimeout = null;
+                }
+                if (App.state.autoAdvanceTimeout) {
+                    clearTimeout(App.state.autoAdvanceTimeout);
+                    App.state.autoAdvanceTimeout = null;
+                }
                 // [FIX] Removed App.stopRecognition() so emergency keywords can still be heard while paused
                 // [NEW] 同步暫停系統語音朗讀
                 App.pauseGoogleTTS();
@@ -2199,7 +2307,7 @@ const App = {
                 // Resolve the promise to continue the process
                 resolve({ selected_player: selectedPlayer, selected_action_type: selectedAction });
             }
-            App.state.currentChoice = { stage: null, resolve: null };
+            App.state.currentChoice = { stage: null, resolve: null, reject: null };
         },
         confirmJudgeChoice(e) {
             const judgeIndex = parseInt(e.target.closest('[data-judge-index]').dataset.judgeIndex, 10);
@@ -2258,7 +2366,7 @@ const App = {
                 // 講稿會在 loadStage 中統一朗讀
                 resolve({ selected_judge: selectedJudge, judge_index: judgeIndex, script: scriptToSpeak, displayScript: displayScript });
             }
-            App.state.currentJudgeChoice = { stage: null, resolve: null };
+            App.state.currentJudgeChoice = { stage: null, resolve: null, reject: null };
         },
         resetJudgeCommentOrder(e) {
             App.state.judgeCommentOrder = [];
@@ -2731,7 +2839,7 @@ const App = {
                     `;
 
             App.renderModal({
-                title: '🏆 選擇比賽賽制',
+                title: '選擇比賽賽制',
                 body: modalBody,
                 footer: ''
             });
@@ -4734,10 +4842,6 @@ const App = {
         this.renderFreeDebateControls();
     },
 
-    resetFreeDebate() {
-        this.loadStage(this.state.currentStageIndex); // 重新載入當前階段即可重設
-    },
-
     renderDebateStage() {
         const stage = this.state.currentFlow[this.state.currentStageIndex];
         const infoContainer = document.getElementById('debateInfoContainer');
@@ -5992,7 +6096,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.4.1 <br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5 BETA <br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -6054,11 +6158,144 @@ const App = {
     _piperTtsModule: null, // 保留相容性，但不再直接使用
     _piperTtsVoice: 'zh_CN-huayan-medium',
     _piperTtsLoading: false,
+    _piperTtsLoadingPromise: null,
     _piperTtsLoadFailed: false,
-    _piperTtsCache: new Map(), // text -> WAV Blob cache
-    _piperWorker: null,        // Web Worker 實體
-    _piperMsgId: 0,            // 訊息 ID 計數器
+    _piperTtsCache: new Map(),        // text -> WAV Blob cache
+    _piperAudioBufferCache: new Map(), // text -> AudioBuffer cache（已解碼，播放零等待）
+    _piperWorker: null,        // 首個 Worker（相容性參考，指向 _piperWorkers[0]）
+    _piperWorkers: [],         // 多 Worker 池（並行合成用）
+    _piperWorkerCount: 2,      // Worker 數量（雙 Worker 並行）
+    _piperWorkerIndex: 0,      // Round-robin 指標
+    _piperMsgId: 0,            // 全域訊息 ID 計數器（跨 Worker 唯一）
     _piperCallbacks: {},       // id -> { resolve, reject }
+    _piperDb: null,            // IndexedDB 實體（持久化 WAV 快取）
+    _piperDbOpening: null,     // 開啟中的 Promise（避免重複開啟）
+
+    // --- IndexedDB 持久化 WAV 快取（跨場次不消失） ---
+    // 主席稿固定的句子（「有請正方上台進行立論...」）合成一次後永久保存，
+    // 下次比賽直接讀取，合成時間 = 0。Key 含 voice 以支援切換模型。
+    async _openPiperDb() {
+        if (this._piperDb) return this._piperDb;
+        if (this._piperDbOpening) return this._piperDbOpening;
+        if (!('indexedDB' in window)) return null;
+
+        this._piperDbOpening = new Promise((resolve) => {
+            const req = indexedDB.open('piper-tts-cache', 1);
+            req.onupgradeneeded = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains('wavs')) {
+                    db.createObjectStore('wavs', { keyPath: 'key' });
+                }
+            };
+            req.onsuccess = () => {
+                this._piperDb = req.result;
+                // 開啟成功後背景執行一次性清理（不阻塞 open）
+                this._piperDbCleanup().catch(() => { });
+                resolve(this._piperDb);
+            };
+            req.onerror = () => {
+                console.warn('[Piper TTS] IndexedDB open failed:', req.error);
+                resolve(null);
+            };
+        });
+        return this._piperDbOpening;
+    },
+
+    // 啟動時清理過期或不同 voice 的殘留項目：
+    // 1. createdAt 超過 30 天 → 刪除
+    // 2. key prefix 不是當前 voice → 刪除（切換模型後舊資料不留）
+    // 每次 open DB 只跑一次，並且多次呼叫只實際執行一次（_piperDbCleaned 旗標）
+    _piperDbCleaned: false,
+    async _piperDbCleanup() {
+        if (this._piperDbCleaned) return;
+        this._piperDbCleaned = true;
+        try {
+            const db = this._piperDb;
+            if (!db) return;
+            const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 天
+            const cutoff = Date.now() - TTL_MS;
+            const currentPrefix = `${this._piperTtsVoice}:`;
+
+            const tx = db.transaction('wavs', 'readwrite');
+            const store = tx.objectStore('wavs');
+            const req = store.openCursor();
+            let deleted = 0;
+            await new Promise((resolve) => {
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) { resolve(); return; }
+                    const rec = cursor.value;
+                    const tooOld = typeof rec.createdAt === 'number' && rec.createdAt < cutoff;
+                    const wrongVoice = typeof rec.key === 'string' && !rec.key.startsWith(currentPrefix);
+                    if (tooOld || wrongVoice) {
+                        cursor.delete();
+                        deleted++;
+                    }
+                    cursor.continue();
+                };
+                req.onerror = () => resolve();
+                tx.onabort = () => resolve();
+            });
+            if (deleted > 0) {
+                console.log(`[Piper TTS] IDB cleanup: removed ${deleted} stale entries`);
+            }
+        } catch (e) {
+            console.warn('[Piper TTS] IDB cleanup failed:', e.message);
+        }
+    },
+
+    _piperDbKey(text) {
+        return `${this._piperTtsVoice}:${text}`;
+    },
+
+    async _piperDbGet(text) {
+        try {
+            const db = await this._openPiperDb();
+            if (!db) return null;
+            return await new Promise((resolve) => {
+                const tx = db.transaction('wavs', 'readonly');
+                const store = tx.objectStore('wavs');
+                const req = store.get(this._piperDbKey(text));
+                req.onsuccess = () => resolve(req.result ? req.result.wav : null);
+                req.onerror = () => resolve(null);
+            });
+        } catch (e) {
+            return null;
+        }
+    },
+
+    async _piperDbPut(text, wav) {
+        try {
+            const db = await this._openPiperDb();
+            if (!db) return;
+            const tx = db.transaction('wavs', 'readwrite');
+            tx.objectStore('wavs').put({
+                key: this._piperDbKey(text),
+                wav,
+                createdAt: Date.now()
+            });
+        } catch (e) {
+            console.warn('[Piper TTS] IDB put failed:', e.message);
+        }
+    },
+
+    // 統一的「取得/合成 WAV」路徑：L2 記憶體 → L1 IndexedDB → Worker 合成
+    // 供預合成路徑使用，合成結果自動寫回兩層快取
+    async _ensureWavCached(sentence) {
+        const memCached = this._piperTtsCache.get(sentence);
+        if (memCached) return memCached;
+
+        const dbWav = await this._piperDbGet(sentence);
+        if (dbWav) {
+            this._piperTtsCache.set(sentence, dbWav);
+            return dbWav;
+        }
+
+        const wav = await this._workerPredict(sentence);
+        this._piperTtsCache.set(sentence, wav);
+        this._piperDbPut(sentence, wav); // fire-and-forget
+        return wav;
+    },
 
     _splitSentences(text) {
         if (!text) return [];
@@ -6084,18 +6321,29 @@ const App = {
 
     async _loadPiperTTS() {
         if (this._piperWorker) return this._piperWorker;
-        if (this._piperTtsLoading || this._piperTtsLoadFailed) return null;
+        if (this._piperTtsLoadFailed) return null;
+        // [FIX] 併發呼叫時共享同一個 in-flight promise，避免第二個 caller 拿到 null 而 fallback
+        if (this._piperTtsLoadingPromise) return this._piperTtsLoadingPromise;
 
         this._piperTtsLoading = true;
+        this._piperTtsLoadingPromise = this._doLoadPiperTTS();
         try {
-            console.log('[Piper TTS] Starting Web Worker...');
-            const worker = new Worker('piper-worker.js', { type: 'module' });
+            return await this._piperTtsLoadingPromise;
+        } finally {
+            this._piperTtsLoadingPromise = null;
+        }
+    },
 
-            // 設定全域訊息處理器
-            worker.onmessage = (e) => {
+    async _doLoadPiperTTS() {
+        try {
+            const n = this._piperWorkerCount;
+            console.log(`[Piper TTS] Starting ${n} Web Workers in parallel...`);
+
+            // 共用 onmessage 處理器（透過全域 _piperCallbacks 分派）
+            const makeOnMessage = (workerIdx) => (e) => {
                 const { type, id, wav, error, loaded, total } = e.data;
                 if (type === 'progress') {
-                    if (total > 0) {
+                    if (total > 0 && workerIdx === 0) {
                         const pct = Math.round(loaded * 100 / total);
                         if (pct % 10 === 0) console.log(`[Piper TTS] Download: ${pct}%`);
                     }
@@ -6110,33 +6358,82 @@ const App = {
                 } else if (type === 'loaded') {
                     cb.resolve(true);
                 } else if (type === 'result') {
-                    // Worker 傳回 ArrayBuffer，轉回 Blob
                     cb.resolve(new Blob([wav], { type: 'audio/wav' }));
                 }
             };
 
-            worker.onerror = (err) => {
-                console.error('[Piper TTS] Worker error:', err);
-            };
+            // 並行建立 N 個 Worker 並等全部載入完成
+            // 每個 worker 有自己的 loadId；onerror 或 60s timeout 會 reject，
+            // 避免 piper-worker.js 載入失敗時 _loadPiperTTS 永久 hang。
+            // 使用 allSettled：若任一失敗，把已成功的 worker 一併 terminate，避免洩漏。
+            const LOAD_TIMEOUT_MS = 60000;
+            const loadPromises = Array.from({ length: n }, (_, idx) => {
+                const worker = new Worker('piper-worker.js', { type: 'module' });
+                const loadId = ++this._piperMsgId;
 
-            // 傳送 load 指令並等待完成
-            const loadId = ++this._piperMsgId;
-            await new Promise((resolve, reject) => {
-                this._piperCallbacks[loadId] = { resolve, reject };
-                worker.postMessage({ type: 'load', id: loadId, voiceId: this._piperTtsVoice });
+                return new Promise((resolve, reject) => {
+                    let settled = false;
+                    const done = (fn, val) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(timer);
+                        delete this._piperCallbacks[loadId];
+                        fn(val);
+                    };
+                    const timer = setTimeout(() => {
+                        try { worker.terminate(); } catch (e) { }
+                        done(reject, new Error(`Worker ${idx} load timeout after ${LOAD_TIMEOUT_MS}ms`));
+                    }, LOAD_TIMEOUT_MS);
+
+                    worker.onmessage = makeOnMessage(idx);
+                    worker.onerror = (err) => {
+                        console.error(`[Piper TTS] Worker ${idx} error:`, err.message || err);
+                        try { worker.terminate(); } catch (e) { }
+                        done(reject, new Error(`Worker ${idx} failed: ${err.message || 'unknown'}`));
+                    };
+
+                    this._piperCallbacks[loadId] = {
+                        resolve: () => done(resolve, worker),
+                        reject: (e) => done(reject, e)
+                    };
+                    worker.postMessage({ type: 'load', id: loadId, voiceId: this._piperTtsVoice });
+                });
             });
 
-            this._piperWorker = worker;
-            this._piperTtsModule = worker; // 相容性（非 null 表示已載入）
+            const results = await Promise.allSettled(loadPromises);
+            const workers = [];
+            const errors = [];
+            for (const r of results) {
+                if (r.status === 'fulfilled') workers.push(r.value);
+                else errors.push(r.reason);
+            }
+            if (errors.length > 0) {
+                // 任一失敗就全部放棄：terminate 已成功的 worker 避免洩漏
+                for (const w of workers) {
+                    try { w.terminate(); } catch (e) { }
+                }
+                throw errors[0];
+            }
+
+            this._piperWorkers = workers;
+            this._piperWorker = workers[0]; // 相容性參考
+            this._piperTtsModule = workers[0];
             this._piperTtsLoading = false;
-            console.log('[Piper TTS] Worker loaded and ready.');
-            return worker;
+            console.log(`[Piper TTS] ${workers.length} Workers loaded and ready.`);
+            return workers[0];
         } catch (e) {
             console.warn('[Piper TTS] Worker failed to load:', e);
             this._piperTtsLoading = false;
             this._piperTtsLoadFailed = true;
             return null;
         }
+    },
+
+    _pickWorker() {
+        if (!this._piperWorkers.length) return null;
+        const w = this._piperWorkers[this._piperWorkerIndex % this._piperWorkers.length];
+        this._piperWorkerIndex++;
+        return w;
     },
 
     /**
@@ -6161,11 +6458,20 @@ const App = {
      * 回傳 Promise<Blob>（WAV 格式）。
      */
     async _workerPredict(text) {
-        if (!this._piperWorker) throw new Error('Piper Worker not loaded');
+        const worker = this._pickWorker();
+        if (!worker) throw new Error('Piper Worker not loaded');
         const id = ++this._piperMsgId;
+        const PREDICT_TIMEOUT_MS = 30000;
         return new Promise((resolve, reject) => {
-            this._piperCallbacks[id] = { resolve, reject };
-            this._piperWorker.postMessage({ type: 'predict', id, text, voiceId: this._piperTtsVoice });
+            const timer = setTimeout(() => {
+                delete this._piperCallbacks[id];
+                reject(new Error(`Piper predict timeout after ${PREDICT_TIMEOUT_MS}ms`));
+            }, PREDICT_TIMEOUT_MS);
+            this._piperCallbacks[id] = {
+                resolve: (val) => { clearTimeout(timer); resolve(val); },
+                reject: (err) => { clearTimeout(timer); reject(err); },
+            };
+            worker.postMessage({ type: 'predict', id, text, voiceId: this._piperTtsVoice });
         });
     },
 
@@ -6203,7 +6509,40 @@ const App = {
                 return false;
             }
 
-            // 串流排程：每句合成完立刻排入 AudioContext 播放佇列
+            // [並行優化] 預先發出所有請求，讓多個 Worker 同時工作。
+            // 快取優先順序：L3 AudioBuffer → L2 記憶體 WAV → L1 IndexedDB WAV → 合成
+            // 注意：所有 promise 會立即啟動，但主迴圈只 await 到失敗/中止點為止；
+            // 後面未被 await 的 promise 若 reject 會變成 unhandledrejection，
+            // 因此 map 完後加一個 no-op catch 側支避免警告（主 await 仍能捕捉錯誤）。
+            const wavPromises = sentences.map((sentence, i) => {
+                if (this._piperAudioBufferCache.has(sentence)) {
+                    console.log(`[Piper TTS] AudioBuffer cache hit (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
+                    return null;
+                }
+                const memCached = this._piperTtsCache.get(sentence);
+                if (memCached) {
+                    console.log(`[Piper TTS] WAV mem cache hit (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
+                    return Promise.resolve(memCached);
+                }
+                // IDB 查詢（失敗則 fallback 合成）
+                return this._piperDbGet(sentence).then(dbWav => {
+                    if (dbWav) {
+                        console.log(`[Piper TTS] IDB cache hit (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
+                        this._piperTtsCache.set(sentence, dbWav);
+                        return dbWav;
+                    }
+                    console.log(`[Piper TTS] Dispatching synth (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
+                    return this._workerPredict(sentence).then(wav => {
+                        this._piperTtsCache.set(sentence, wav);
+                        this._piperDbPut(sentence, wav); // fire-and-forget
+                        return wav;
+                    });
+                });
+            });
+            // 側支 no-op catch：避免主迴圈中止後殘留的 promise 變成 unhandledrejection
+            wavPromises.forEach(p => { if (p) p.catch(() => { }); });
+
+            // 依序 await 每句（保持播放順序），但底層已經全部並行合成中
             let nextPlaybackTime = ctx.currentTime;
             let lastSource = null;
 
@@ -6215,14 +6554,20 @@ const App = {
                 }
 
                 const sentence = sentences[i];
-                let wav;
-                const cached = this._piperTtsCache.get(sentence);
-                if (cached) {
-                    console.log(`[Piper TTS] Cache hit (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
-                    wav = cached;
-                } else {
-                    console.log(`[Piper TTS] Synthesizing (${i + 1}/${sentences.length}):`, sentence.substring(0, 20) + '...');
-                    wav = await this._workerPredict(sentence);
+                let audioBuffer = this._piperAudioBufferCache.get(sentence);
+
+                if (!audioBuffer) {
+                    const wav = await wavPromises[i];
+
+                    if (controller.signal.aborted) {
+                        this.state.isGoogleTtsPlaying = false;
+                        this.state.googleTtsAbortController = null;
+                        return true;
+                    }
+
+                    // 解碼並存入 AudioBuffer 快取，下次播放零等待
+                    audioBuffer = await ctx.decodeAudioData(await wav.arrayBuffer());
+                    this._piperAudioBufferCache.set(sentence, audioBuffer);
                 }
 
                 if (controller.signal.aborted) {
@@ -6230,10 +6575,6 @@ const App = {
                     this.state.googleTtsAbortController = null;
                     return true;
                 }
-
-                // 解碼 WAV → AudioBuffer
-                const arrayBuffer = await wav.arrayBuffer();
-                const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
 
                 // 如果合成太慢導致排程時間已過，從現在開始播
                 if (nextPlaybackTime < ctx.currentTime) {
@@ -6370,11 +6711,8 @@ const App = {
                 console.log(`[Piper TTS] Prefetching ${sentences.length} sentences for stage +${offset}...`);
 
                 for (const sentence of sentences) {
-                    if (this._piperTtsCache.has(sentence)) continue;
-
                     try {
-                        const wav = await this._workerPredict(sentence);
-                        this._piperTtsCache.set(sentence, wav);
+                        await this._ensureWavCached(sentence);
                         console.log('[Piper TTS] Prefetched:', sentence.substring(0, 20) + '...');
                     } catch (e) {
                         console.warn('[Piper TTS] Prefetch failed for sentence:', e.message);
@@ -6414,10 +6752,8 @@ const App = {
 
                     const sentences = App._splitSentences(text);
                     for (const sentence of sentences) {
-                        if (App._piperTtsCache.has(sentence)) continue;
                         try {
-                            const wav = await App._workerPredict(sentence);
-                            App._piperTtsCache.set(sentence, wav);
+                            await App._ensureWavCached(sentence);
                             console.log('[Piper TTS] Pre-synthesized:', sentence.substring(0, 20) + '...');
                         } catch (e) {
                             console.warn('[Piper TTS] Pre-synthesis failed:', e.message);
@@ -6451,10 +6787,8 @@ const App = {
 
                 const sentences = this._splitSentences(text);
                 for (const sentence of sentences) {
-                    if (this._piperTtsCache.has(sentence)) continue;
                     try {
-                        const wav = await this._workerPredict(sentence);
-                        this._piperTtsCache.set(sentence, wav);
+                        await this._ensureWavCached(sentence);
                     } catch (e) {
                         return;
                     }
@@ -6487,8 +6821,12 @@ const App = {
                             console.log('[Projector] Display reconnected!');
                             this.showNotification('投影視窗已重新連接', 'success', 2000);
                         }
+                        // [FIX Bug R] 記錄最後心跳時間，用於偵測 display 關閉（重連情境下 displayWindow 為 null）
+                        this.state.projector.lastDisplayPong = Date.now();
                         // 發送當前狀態
                         this.sendProjectorUpdate();
+                    } else if (event.data && event.data.type === 'DISPLAY_HEARTBEAT') {
+                        this.state.projector.lastDisplayPong = Date.now();
                     }
                 };
 
@@ -6504,6 +6842,17 @@ const App = {
                             this.state.projector.channel.postMessage({ type: 'HEARTBEAT' });
                         } catch (e) {
                             console.warn('[Projector] Heartbeat failed:', e);
+                        }
+                        // [FIX Bug R] 若 10 秒內未收到 display 回應且無 displayWindow 引用，視為連接已斷
+                        if (!this.state.projector.displayWindow && this.state.projector.lastDisplayPong) {
+                            const silentMs = Date.now() - this.state.projector.lastDisplayPong;
+                            if (silentMs > 10000) {
+                                console.log('[Projector] Display silent > 10s, marking inactive');
+                                this.state.projector.isActive = false;
+                                this.state.projector.mode = null;
+                                this.state.projector.lastDisplayPong = null;
+                                this.showNotification('投影視窗已中斷連接', 'info', 2000);
+                            }
                         }
                     }
                 }, 2000);
@@ -6985,11 +7334,23 @@ const App = {
 
         // If a new, important message comes in, clear the old queue and cancel any current speech.
         this.cancelGoogleTTS();
+        // [FIX Bug BB] 顯式清除舊的 speechWatchdog，避免 synth.cancel 後舊 watchdog 殘留
+        if (this.state.speechWatchdog) {
+            clearInterval(this.state.speechWatchdog);
+            this.state.speechWatchdog = null;
+        }
         if (this.synth && this.synth.speaking) {
             this.synth.cancel(); // Stop the current utterance
         }
         if (this.state.isSpeaking || this.state.speechQueue.length > 0) {
-            this.state.speechQueue = []; // Clear the queue of any pending utterances
+            // [FIX Bug X] 清空佇列前先觸發待執行的 onEndCallback，避免流程接手邏輯被丟失
+            const dropped = this.state.speechQueue;
+            this.state.speechQueue = [];
+            for (const item of dropped) {
+                if (item && typeof item.onEndCallback === 'function') {
+                    try { item.onEndCallback(); } catch (e) { console.error("Error firing dropped speech callback:", e); }
+                }
+            }
             this.state.isSpeaking = false;
         }
 
@@ -7227,6 +7588,9 @@ const App = {
                         return;
                     }
 
+                    // [滾動校準] 記錄本次語音事件時間，讓滾動校準知道此時不是靜默
+                    this.state._vadLastSpeechTime = Date.now();
+
                     // [RMS 音量門檻] 檢查即時音量是否顯著高於環境噪音
                     if (this.state._vadAnalyser && this.state._vadAmbientCalibrated) {
                         const rms = this._getCurrentRMS();
@@ -7310,6 +7674,18 @@ const App = {
 
     destroyPersistentVAD() {
         const { audioDetection } = this.state;
+
+        // [FIX Bug Z] 清除 RMS 校準相關 interval，避免引用已銷毀的 AnalyserNode
+        if (this.state._vadInitialCalibInterval) {
+            clearInterval(this.state._vadInitialCalibInterval);
+            this.state._vadInitialCalibInterval = null;
+        }
+        if (this.state._vadRollingCalibInterval) {
+            clearInterval(this.state._vadRollingCalibInterval);
+            this.state._vadRollingCalibInterval = null;
+        }
+        this.state._vadAnalyser = null;
+        this.state._vadAmbientCalibrated = false;
 
         if (audioDetection.vad && typeof audioDetection.vad.destroy === 'function') {
             try {
@@ -7424,17 +7800,47 @@ const App = {
 
         this.state.audioDetection.isActive = true;
 
-        // [環境噪音校準] 測量 500ms 的環境音量作為基線
+        // [環境噪音校準] 測量 500ms 的環境音量作為基線，完成後啟動滾動更新
         if (this.state._vadAnalyser) {
             this.state._vadAmbientCalibrated = false;
             const samples = [];
-            const calibrate = setInterval(() => {
+            // 存到 state 讓 deactivateAudioDetection 能在 0-500ms 中止期間清除
+            this.state._vadInitialCalibInterval = setInterval(() => {
+                if (!this.state.audioDetection.isActive) {
+                    clearInterval(this.state._vadInitialCalibInterval);
+                    this.state._vadInitialCalibInterval = null;
+                    return;
+                }
                 samples.push(this._getCurrentRMS());
                 if (samples.length >= 10) { // 10 次 × 50ms ≈ 500ms
-                    clearInterval(calibrate);
+                    clearInterval(this.state._vadInitialCalibInterval);
+                    this.state._vadInitialCalibInterval = null;
                     this.state._vadAmbientRMS = samples.reduce((a, b) => a + b, 0) / samples.length;
                     this.state._vadAmbientCalibrated = true;
-                    console.log(`[VAD RMS] Ambient noise calibrated: RMS=${this.state._vadAmbientRMS.toFixed(5)}, threshold=${(this.state._vadAmbientRMS * 2.5 + 0.005).toFixed(5)}`);
+                    console.log(`[VAD RMS] Ambient noise calibrated: RMS=${this.state._vadAmbientRMS.toFixed(5)}, threshold=${(this.state._vadAmbientRMS * 3.0 + 0.008).toFixed(5)}`);
+
+                    // [滾動式環境噪音校準] 初次校準完成後，每 2 秒在靜默期間持續更新基線
+                    // 只在確認無語音時採樣，避免把發言音量誤算為環境噪音
+                    const rollingWindow = [];
+                    this.state._vadRollingCalibInterval = setInterval(() => {
+                        if (!this.state.audioDetection.isActive) return;
+                        // 距離上次語音事件超過 1 秒才視為靜默
+                        const msSinceLastSpeech = Date.now() - (this.state._vadLastSpeechTime || 0);
+                        if (msSinceLastSpeech < 1000) return;
+
+                        const rms = this._getCurrentRMS();
+                        // 排除明顯異常值（超過當前基線 5 倍可能是短暫雜音）
+                        if (rms < this.state._vadAmbientRMS * 5) {
+                            rollingWindow.push(rms);
+                            if (rollingWindow.length > 5) rollingWindow.shift();
+                        }
+                        // 至少 3 筆才更新，避免單一雜音拉偏基線
+                        if (rollingWindow.length >= 3) {
+                            const newBaseline = rollingWindow.reduce((a, b) => a + b, 0) / rollingWindow.length;
+                            this.state._vadAmbientRMS = newBaseline;
+                            console.log(`[VAD RMS] Rolling update: RMS=${newBaseline.toFixed(5)}, threshold=${(newBaseline * 3.0 + 0.008).toFixed(5)}`);
+                        }
+                    }, 2000);
                 }
             }, 50);
         }
@@ -7468,6 +7874,16 @@ const App = {
         if (this.state.vadPauseBufferTimeout) {
             clearTimeout(this.state.vadPauseBufferTimeout);
             this.state.vadPauseBufferTimeout = null;
+        }
+        // 清除初次環境噪音校準計時器（可能還在 0-500ms 採樣期間）
+        if (this.state._vadInitialCalibInterval) {
+            clearInterval(this.state._vadInitialCalibInterval);
+            this.state._vadInitialCalibInterval = null;
+        }
+        // 清除滾動式環境噪音校準計時器
+        if (this.state._vadRollingCalibInterval) {
+            clearInterval(this.state._vadRollingCalibInterval);
+            this.state._vadRollingCalibInterval = null;
         }
         this.state.vadSpeechStartTime = null;
         this.state._vadSpeechEventCount = 0;
@@ -7674,9 +8090,10 @@ const App = {
 
     showNotification(message, type = 'info', duration = 3000) {
         const container = document.getElementById('notification-container');
-        const a = { info: 'bg-blue-500', success: 'bg-green-500', error: 'bg-red-500' };
+        if (!container) return;
+        const a = { info: 'bg-blue-500', success: 'bg-green-500', warning: 'bg-yellow-500', error: 'bg-red-500' };
         const div = document.createElement('div');
-        div.className = `px-4 py-2 text-white rounded-lg shadow-lg ${a[type] || a.info} `;
+        div.className = `px-4 py-2 text-white rounded-lg shadow-lg ${a[type] || a.info}`;
         div.textContent = message;
         container.appendChild(div);
         setTimeout(() => {
@@ -7707,13 +8124,13 @@ const App = {
         // 動態新增正反方選手變數 (支援 1-6 位辯士)
         const numNames = ['一', '二', '三', '四', '五', '六'];
         for (let i = 0; i < 6; i++) {
-            replacements[`positive_player_${i + 1} `] = this.state.positiveTeamPlayers[i] || `正${numNames[i] || (i + 1)} `;
-            replacements[`negative_player_${i + 1} `] = this.state.negativeTeamPlayers[i] || `反${numNames[i] || (i + 1)} `;
+            replacements[`positive_player_${i + 1}`] = this.state.positiveTeamPlayers[i] || `正${numNames[i] || (i + 1)}`;
+            replacements[`negative_player_${i + 1}`] = this.state.negativeTeamPlayers[i] || `反${numNames[i] || (i + 1)}`;
         }
 
         // 動態新增裁判變數 (支援 1-5 位裁判)
         for (let i = 0; i < 5; i++) {
-            replacements[`judge_${i + 1} `] = this.state.judges[i] || `裁判${numNames[i] || (i + 1)} `;
+            replacements[`judge_${i + 1}`] = this.state.judges[i] || `裁判${numNames[i] || (i + 1)}`;
         }
 
         return script.replace(/\{\{(\w+)\}\}/g, (match, key) => replacements[key] || match);
@@ -7728,8 +8145,10 @@ const App = {
 
         // [FIX] 使用更嚴謹的正則表達式，確保只匹配開頭的隊伍名稱
         // (?:...) 是一個非捕獲組，^ 確保從字串開頭進行匹配
-        const posRegex = new RegExp(`^(?:${this.state.positiveTeamName}|正方)`);
-        const negRegex = new RegExp(`^(?:${this.state.negativeTeamName}|反方)`);
+        // 隊名為使用者輸入，需 escape 掉 regex 特殊字元以避免 SyntaxError
+        const escapeRegex = s => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const posRegex = new RegExp(`^(?:${escapeRegex(this.state.positiveTeamName)}|正方)`);
+        const negRegex = new RegExp(`^(?:${escapeRegex(this.state.negativeTeamName)}|反方)`);
 
         // 順序很重要：先測試正方，再測試反方
         if (posRegex.test(name)) return 'positive';
@@ -7861,7 +8280,7 @@ const App = {
             }
         }
         if (progressEl && this.state.timer.initialDuration > 0) {
-            progressEl.style.width = `${(time / this.state.timer.initialDuration) * 100}% `;
+            progressEl.style.width = `${(time / this.state.timer.initialDuration) * 100}%`;
         }
     },
 
@@ -7870,19 +8289,27 @@ const App = {
         // [FIX] 如果 TTS 處於暫停狀態（例如「系統暫停」後手動跳下一步），
         // 必須先 resume 再 cancel，否則 TTS 引擎會卡在暫停狀態，導致後續朗讀和自動跳轉失效
         this.cancelGoogleTTS();
+        // [FIX] 清空語音佇列並關閉 isSpeaking，否則 pending 的 playPiperTTS abort 會
+        // 走 onDone → onEndCallback 路徑，導致上一階段的「時間到，開始計時」callback
+        // 在使用者按下重置／上一階段後意外觸發
+        this.state.speechQueue = [];
+        this.state.isSpeaking = false;
         if (window.speechSynthesis && window.speechSynthesis.paused) {
             window.speechSynthesis.resume();
         }
         this.deactivateAudioDetection();
+        // [FIX] 清除自由辯論計時器，避免離開 free_debate 後 interval 繼續背景倒數
+        if (this.state.freeDebate && this.state.freeDebate.interval) {
+            clearInterval(this.state.freeDebate.interval);
+            this.state.freeDebate.interval = null;
+        }
         clearInterval(this.state.timer.interval);
         clearInterval(this.state.timer.graceInterval);
         if (this.state.endWordTimeout) clearTimeout(this.state.endWordTimeout);
-        if (this.state.vadContinuousTimeout) clearInterval(this.state.vadContinuousTimeout);
         if (this.state.vadSilenceTimeout) clearTimeout(this.state.vadSilenceTimeout);
         if (this.state.graceOnresultTimeout) clearTimeout(this.state.graceOnresultTimeout);
         if (this.state.vadFallbackTimeout) clearTimeout(this.state.vadFallbackTimeout);
         this.state.endWordTimeout = null;
-        this.state.vadContinuousTimeout = null;
         this.state.vadSilenceTimeout = null;
         this.state.vadFirstSpeechTime = null;
         this.state.vadFallbackTimeout = null;
@@ -7958,7 +8385,22 @@ const App = {
                 // [FIX] Removed App.stopRecognition() to allow continuous listening
                 const stage = App.state.currentFlow[App.state.currentStageIndex];
                 if (!App.state.mainSpeechTimerStartedByGrace) {
-                    App.speak("緩衝時間到，自動開始計時", () => App.startMainSpeechTimer(stage.duration));
+                    const action = stage.graceEndAction || 'auto_start';
+                    if (action === 'auto_skip') {
+                        // 自動跳過：直接進入下一階段
+                        App.speak("緩衝時間到，跳過此階段", () => {
+                            if (App.state.isAutoMode || action === 'auto_skip') {
+                                App.actions.nextStage();
+                            }
+                        });
+                    } else if (action === 'manual_start') {
+                        // 手動開始：僅提示，不自動計時，等使用者手動按開始
+                        App.speak("緩衝時間到，請手動開始計時");
+                        App.scheduleRenderDebateControls();
+                    } else {
+                        // auto_start（預設）：自動開始主計時
+                        App.speak("緩衝時間到，自動開始計時", () => App.startMainSpeechTimer(stage.duration));
+                    }
                 }
             } else {
                 App.clearAllTimers();
@@ -8056,7 +8498,10 @@ const App = {
         this.state.timer.timeLeft = duration;
         this.state.timer.initialDuration = duration;
         const stage = this.state.currentFlow[this.state.currentStageIndex];
-        document.getElementById('timerStatus').textContent = `${this.interpolateScript(stage.timerLabel)} 進行中...`;
+        const timerStatusEl = document.getElementById('timerStatus');
+        if (timerStatusEl) {
+            timerStatusEl.textContent = `${this.interpolateScript(stage.timerLabel)} 進行中...`;
+        }
         this.updateTimerDisplay(duration);
         this.state.timer.interval = setInterval(this.runTimerInterval.bind(this), 1000);
         this.scheduleRenderDebateControls();
@@ -8086,6 +8531,10 @@ const App = {
 
         // [MODIFIED] 優先處理 free_debate 這種特殊介面的階段類型
         if (stage.type === 'free_debate') {
+            // [FIX] 先清除舊的 interval handle，再覆寫物件，避免 handle 遺失導致 interval 洩漏
+            if (this.state.freeDebate && this.state.freeDebate.interval) {
+                clearInterval(this.state.freeDebate.interval);
+            }
             // 1. 初始化或重設自由辯論的狀態
             const duration = stage.duration || 240; // 如果賽制沒寫時間，預設為4分鐘
             this.state.freeDebate = {
@@ -8098,8 +8547,6 @@ const App = {
                 isPaused: false,
                 firstSpeakerSelected: false,
             };
-            // 清除可能殘留的計時器
-            clearInterval(this.state.freeDebate.interval);
 
             // 設置當前視圖為自由辯論
             this.state.currentView = 'free_debate';
@@ -8228,7 +8675,7 @@ const App = {
 
                 // 直接解析 Promise 並返回，不顯示選擇視窗
                 resolve({ selected_player: '辯士', selected_action_type: selectedAction });
-                this.state.currentChoice = { stage: null, resolve: null }; // 清空選擇狀態
+                this.state.currentChoice = { stage: null, resolve: null, reject: null }; // 清空選擇狀態
                 return;
             }
 
@@ -8326,7 +8773,7 @@ const App = {
                 : '';
 
             this.renderModal({
-                title: `🎓 ${hintText} `,
+                title: `🎓 ${hintText}`,
                 body: `
                             ${introText}
                             ${orderInfo}
@@ -8385,6 +8832,9 @@ const App = {
             }
             this.state.recording.recordedChunks = [];
             this.state.recording.intermediateBlobs = []; // [記憶體優化] 清空中間 Blobs
+            // [FIX Bug N] 重置暫停累計時間，避免上一場錄音的值污染本次時間戳計算
+            this.state.recording.pausedDuration = 0;
+            this.state.recording.pauseStartTime = null;
             // 時間戳功能：初始化
             this.state.recording.timestamps = [];
             this.state.recording.recordingStartTime = Date.now();
@@ -8398,7 +8848,22 @@ const App = {
                 });
             }
 
-            const options = { mimeType: 'audio/webm; codecs=opus' };
+            // [FIX Bug O] 依瀏覽器支援度選擇 mimeType，避免不支援 webm/opus 的平台丟 NotSupportedError
+            const candidateMimeTypes = [
+                'audio/webm; codecs=opus',
+                'audio/webm',
+                'audio/mp4; codecs=mp4a.40.2',
+                'audio/mp4',
+                'audio/ogg; codecs=opus',
+                'audio/ogg',
+            ];
+            let selectedMimeType = '';
+            if (typeof MediaRecorder.isTypeSupported === 'function') {
+                for (const mt of candidateMimeTypes) {
+                    if (MediaRecorder.isTypeSupported(mt)) { selectedMimeType = mt; break; }
+                }
+            }
+            const options = selectedMimeType ? { mimeType: selectedMimeType } : {};
             this.state.recording.mediaRecorder = new MediaRecorder(this.state.recording.mediaStream, options);
 
             this.state.recording.mediaRecorder.ondataavailable = (event) => {
@@ -8473,11 +8938,20 @@ const App = {
 
     stopRecording() {
         if (this.state.recording.mediaRecorder && this.state.recording.isRecording) {
+            // [FIX Bug P] 若 recorder 已處於 inactive 狀態（例如快速雙擊），避免再次 .stop() 丟 InvalidStateError
+            const mr = this.state.recording.mediaRecorder;
+            if (mr.state === 'inactive') {
+                return;
+            }
             // 如果正在暫停，先恢復再停止
             if (this.state.recording.isPaused) {
-                this.state.recording.mediaRecorder.resume();
+                try { mr.resume(); } catch (_) { }
             }
-            this.state.recording.mediaRecorder.stop();
+            try {
+                mr.stop();
+            } catch (e) {
+                console.warn('stopRecording: mediaRecorder.stop() failed:', e);
+            }
             this.state.recording.micAudioTrack = null;
             this.state.recording.isMicMuted = false;
             this.state.recording.isPaused = false;
@@ -8551,7 +9025,7 @@ const App = {
         // 直接控制音訊軌道的啟用/禁用
         recording.micAudioTrack.enabled = !recording.isMicMuted;
 
-        this.showNotification(`麥克風已 ${recording.isMicMuted ? '靜音' : '開啟'} `, "info");
+        this.showNotification(`麥克風已${recording.isMicMuted ? '靜音' : '開啟'}`, "info");
 
         // 重新渲染UI，更新按鈕的樣式
         if (this.state.currentFlow[this.state.currentStageIndex]?.type === 'free_debate') {
@@ -9093,11 +9567,21 @@ const App = {
                 </div>
             `;
 
+        // [FIX Bug W] 先釋放上次渲染建立的 Object URL，避免重複進入結束畫面造成記憶體洩漏
+        if (Array.isArray(this.state._endScreenAudioUrls)) {
+            for (const url of this.state._endScreenAudioUrls) {
+                try { URL.revokeObjectURL(url); } catch (_) { }
+            }
+        }
+        this.state._endScreenAudioUrls = [];
+
         // 設定所有錄音播放器的音訊來源
         recordings.forEach((rec, i) => {
             const audioPlayer = document.getElementById(`endScreenAudioPlayer_${i}`);
             if (audioPlayer && rec.audioBlob) {
-                audioPlayer.src = URL.createObjectURL(rec.audioBlob);
+                const url = URL.createObjectURL(rec.audioBlob);
+                audioPlayer.src = url;
+                this.state._endScreenAudioUrls.push(url);
             }
         });
     },
@@ -9282,33 +9766,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 300); // 稍微延遲確保 App 已完成初始化
 });
-const blockedIpPrefixes = ["163.14."];
-
-async function checkIpAndBlock() {
-    try {
-        // 1.  IP
-        const response = await fetch('https://api.ipify.org?format=json');
-        if (!response.ok) return; // 如果查詢失敗，則不執行任何動作
-
-        const data = await response.json();
-        const userIp = data.ip;
-
-        const isBlocked = blockedIpPrefixes.some(prefix => userIp.startsWith(prefix));
-
-        if (isBlocked) {
-            // 3. 如果是，就隱藏網頁內容並顯示禁止存取的訊息
-            console.warn(`Access denied for IP: ${userIp} `);
-            document.body.innerHTML = `
-            <div style="text-align: center; padding: 50px; font-family: sans-serif;">
-                        <h1>Access Denied</h1>
-                        <p>您所在的網路位置已被限制存取此服務。</p>
-                    </div>
-                `;
-        }
-    } catch (error) {
-        console.error("IP check failed:", error);
-    }
-}
-
-// 執行檢查
-checkIpAndBlock();
