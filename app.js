@@ -774,15 +774,8 @@ const App = {
                     interval: null,
                 } : null,
 
-                // 逐字稿（全部可序列化）
-                transcription: {
-                    active: this.state.transcription.active,
-                    paused: this.state.transcription.paused,
-                    paragraphs: this.state.transcription.paragraphs || [],
-                    currentParagraphId: this.state.transcription.currentParagraphId,
-                    interimContent: this.state.transcription.interimContent,
-                    MAX_PARAGRAPHS: this.state.transcription.MAX_PARAGRAPHS,
-                },
+                // 逐字稿不存進歷史快照：restoreState 會用 preservedRuntime 直接保留當前值，
+                // 存進來只是浪費記憶體（每次最多 50 段 × 10 份歷史）
 
                 // 不可序列化的物件 — 設為 null 或簡化值
                 wakeLock: null,
@@ -800,7 +793,8 @@ const App = {
                     isMicMuted: this.state.recording?.isMicMuted || false,
                     isPlayerOpen: this.state.recording?.isPlayerOpen || false,
                     pausedDuration: this.state.recording?.pausedDuration || 0,
-                    timestamps: JSON.parse(JSON.stringify(this.state.recording?.timestamps || [])),
+                    // structuredClone 會處理深拷貝，不需要再 JSON 來回轉一次
+                    timestamps: this.state.recording?.timestamps || [],
                     // 以下為 runtime 硬體物件，無法序列化，由 restoreState preservedRuntime 保留
                     mediaRecorder: null,
                     mediaStream: null,
@@ -1082,10 +1076,19 @@ const App = {
             this.pipCtx = this.pipCanvas.getContext('2d');
         }
         this.requestWakeLock();
-        // 當使用者切換分頁或最小化後再回來，鎖定會自動失效，需重新請求
+        // 當使用者切換分頁或最小化後再回來：1) 重新請求 wake lock；2) 強制觸發一次 timer tick
+        // 讓背景節流期間累積的時間立即在 UI 上校正（不必等下一個 setInterval 週期）
         document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible') {
                 await this.requestWakeLock();
+                // 主計時器
+                if (this.state.timer && (this.state.timer.interval || this.state.timer.graceInterval) && !this.state.timer.isPaused) {
+                    this.runTimerInterval();
+                }
+                // 自由辯論計時器
+                if (this.state.freeDebate && this.state.freeDebate.interval && !this.state.freeDebate.isPaused) {
+                    this.runFreeDebateInterval();
+                }
             }
         });
         //this.showPromotionModal();
@@ -1192,24 +1195,24 @@ const App = {
         });
     },
     handleGlobalClick(e) {
-        // 【新增】iOS 音訊解鎖機制
+        // 【iOS 音訊解鎖】：在 user gesture 內 play 一次以解鎖 <audio> 元素的 autoplay 限制。
+        // 注意：iOS 上 audio.volume 是唯讀的（永遠等於裝置音量），所以舊版用 volume=0 會洩漏一聲鈴。
+        // 改用 audio.muted（iOS 真正會生效），達到無聲解鎖。
         if (!App.state.isAudioUnlocked) {
             const sound = document.getElementById('ringSound');
             if (sound && sound.paused) {
-                sound.volume = 0; // 暫時靜音
+                sound.muted = true;
                 sound.play().then(() => {
-                    // 播放成功後立刻暫停並恢復音量
                     sound.pause();
                     sound.currentTime = 0;
-                    sound.volume = 1;
+                    sound.muted = false;
                     App.state.isAudioUnlocked = true;
                     console.log("Audio context unlocked for iOS.");
-                }).catch(e => {
-                    // 如果解鎖失敗 (例如瀏覽器更嚴格的限制)，下次點擊會再試一次
-                    console.warn("Audio unlock failed on this attempt.");
+                }).catch(() => {
+                    // 解鎖失敗（更嚴格的環境），下次點擊再試
+                    sound.muted = false;
                 });
             } else if (sound && !sound.paused) {
-                // 如果音訊不知為何已在播放，也標記為已解鎖
                 App.state.isAudioUnlocked = true;
             }
         }
@@ -1560,17 +1563,17 @@ const App = {
                 );
             }
 
-            // [ADD START] 行動裝置音訊權限預熱 (Audio Context Warm-up)
-            // 在使用者點擊「開始比賽」的瞬間，強制發出極短的無聲音訊並初始化 TTS
+            // [行動裝置音訊權限預熱] 點擊「開始比賽」時用 muted 靜音播一次，解鎖 audio 元素 + 初始化 TTS。
+            // iOS 上 volume=0 不生效（會洩鈴聲），必須用 muted。
             try {
                 const sound = document.getElementById('ringSound');
                 if (sound) {
-                    sound.volume = 0;
+                    sound.muted = true;
                     sound.play().then(() => {
                         sound.pause();
                         sound.currentTime = 0;
-                        sound.volume = 1;
-                    }).catch(() => { });
+                        sound.muted = false;
+                    }).catch(() => { sound.muted = false; });
                 }
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(' ');
@@ -1580,7 +1583,6 @@ const App = {
             } catch (e) {
                 console.warn("Audio warm-up failed:", e);
             }
-            // [ADD END]
 
             if (selectedFormatName === "辯革盃 (九辯位自由排序制)") {
                 // Reset counts for Bian-Ge-Bei
@@ -1797,7 +1799,7 @@ const App = {
                         title: '分享碼已複製',
                         body: `
                                 <p class="text-slate-600 dark:text-slate-300 mb-2">
-                                    您分享的流程: <strong class="text-[var(--color-accent)]">${flowName}</strong>
+                                    您分享的流程: <strong class="text-[var(--color-accent)]">${App.escapeHtml(flowName)}</strong>
                                 </p>
                                 <p class="text-slate-600 dark:text-slate-300 mb-4">
                                     我們已將「分享碼」複製到您的剪貼簿。請將這串文字碼貼給您的朋友。
@@ -1986,6 +1988,7 @@ const App = {
             if (App.state.timer.isPaused) {
                 if (App.state.timer.type === 'grace') clearInterval(App.state.timer.graceInterval);
                 else clearInterval(App.state.timer.interval);
+                App.state.timer._lastTick = null;
                 // [FIX Bug U] 清除 endWord / 自動換場 timeout，避免暫停期間仍自動推進
                 if (App.state.endWordTimeout) {
                     clearTimeout(App.state.endWordTimeout);
@@ -2292,8 +2295,8 @@ const App = {
                 if (stageContainer) {
                     stageContainer.innerHTML = `
                              <div class="glass-card p-6 rounded-2xl shadow-lg">
-                                 <h3 class="font-bold text-xl mb-2">${App.interpolateScript(stage.name)}</h3>
-                                 <p class="text-slate-600 dark:text-slate-300">${App.interpolateScript(stage.baseScript, { selected_player: selectedPlayer, selected_action_type: selectedAction })}</p>
+                                 <h3 class="font-bold text-xl mb-2">${App.escapeHtml(App.interpolateScript(stage.name))}</h3>
+                                 <p class="text-slate-600 dark:text-slate-300">${App.escapeHtml(App.interpolateScript(stage.baseScript, { selected_player: selectedPlayer, selected_action_type: selectedAction }))}</p>
                              </div>
                          `;
                 }
@@ -2475,6 +2478,11 @@ const App = {
             App.state.recording.isPlayerOpen = false;
             const playerPanel = document.getElementById('recordingPlayerPanel');
             if (playerPanel) playerPanel.remove();
+            // [洩漏修復] 釋放 Blob URL 引用，避免錄音 Blob 卡在記憶體
+            if (App._recordingPlayerObjectURL) {
+                URL.revokeObjectURL(App._recordingPlayerObjectURL);
+                App._recordingPlayerObjectURL = null;
+            }
         },
         seekToTimestamp(e) {
             const index = parseInt(e.target.closest('[data-timestamp-index]')?.dataset.timestampIndex, 10);
@@ -2733,7 +2741,7 @@ const App = {
             // 顯示確認彈窗
             App.renderModal({
                 title: '確認刪除',
-                body: `<p class="text-slate-600 dark:text-slate-300">您確定要永久刪除自訂流程 "${flowName}" 嗎？<br><strong class="text-red-500">此操作無法復原。</strong></p>`,
+                body: `<p class="text-slate-600 dark:text-slate-300">您確定要永久刪除自訂流程 "${App.escapeHtml(flowName)}" 嗎？<br><strong class="text-red-500">此操作無法復原。</strong></p>`,
                 footer: `
                         <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg transition-colors">取消</button>
                         <button data-action="confirmDeleteCustomFlow" class="px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors">確定刪除</button>
@@ -3054,7 +3062,7 @@ const App = {
                     }).filter(n => n);
 
                     let previewHTML = stageNames.map(name =>
-                        `<span class="format-preview-tag">${name}</span>`
+                        `<span class="format-preview-tag">${App.escapeHtml(name)}</span>`
                     ).join('<span class="format-preview-arrow">→</span>');
 
                     if (flow.length > MAX_PREVIEW_STAGES) {
@@ -3543,13 +3551,13 @@ const App = {
             if (groupItems.length > 0) {
                 hasResults = true;
                 html += `<div class="searchable-dropdown-group">`;
-                html += `<div class="searchable-dropdown-group-label">${groupName}</div>`;
+                html += `<div class="searchable-dropdown-group-label">${this.escapeHtml(groupName)}</div>`;
                 groupItems.forEach(item => {
                     const isSelected = item.value === currentValue ? 'selected' : '';
                     html += `
-                            <div class="searchable-dropdown-item ${isSelected}" data-value="${item.value}">
+                            <div class="searchable-dropdown-item ${isSelected}" data-value="${this.escapeHtml(item.value)}">
                                 <span class="searchable-dropdown-item-icon ${item.iconClass}">${item.icon}</span>
-                                <span class="dropdown-item-text">${item.text}</span>
+                                <span class="dropdown-item-text">${this.escapeHtml(item.text)}</span>
                             </div>
                         `;
                 });
@@ -3672,19 +3680,20 @@ const App = {
         }
 
         let formatOptions = '';
+        const esc = this.escapeHtml.bind(this);
         if (this.debateFormatGroups['分享的流程']) {
-            formatOptions += `<optgroup label="分享的流程">` + Object.keys(this.debateFormatGroups['分享的流程']).map(name => `<option value="${name}">${name}</option>`).join('') + `</optgroup>`;
+            formatOptions += `<optgroup label="分享的流程">` + Object.keys(this.debateFormatGroups['分享的流程']).map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('') + `</optgroup>`;
         }
         formatOptions += `<optgroup label="自訂流程"><option value="CUSTOM_EMPTY">＋ 新增空白流程</option>`;
         if (this.debateFormatGroups['自訂流程']) {
-            formatOptions += Object.keys(this.debateFormatGroups['自訂流程']).map(name => `<option value="${name}">${name}</option>`).join('');
+            formatOptions += Object.keys(this.debateFormatGroups['自訂流程']).map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
         }
         formatOptions += `</optgroup>`;
         for (const groupName in this.debateFormatGroups) {
             if (groupName === '分享的流程' || groupName === '自訂流程') continue;
             const formats = this.debateFormatGroups[groupName];
             if (Object.keys(formats).length > 0) {
-                formatOptions += `<optgroup label="${groupName}">` + Object.keys(formats).map(name => `<option value="${name}">${name}</option>`).join('') + `</optgroup>`;
+                formatOptions += `<optgroup label="${esc(groupName)}">` + Object.keys(formats).map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('') + `</optgroup>`;
             }
         }
 
@@ -4342,9 +4351,9 @@ const App = {
             }
 
             html += `
-                <div class="flow-stage ${stateClass}" title="${stage.name || '階段'}">
+                <div class="flow-stage ${stateClass}" title="${this.escapeHtml(stage.name || '階段')}">
                     <span>${icon}</span>
-                    <span>${shortName}</span>
+                    <span>${this.escapeHtml(shortName)}</span>
                     ${isCompleted ? '<svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
                 </div>
             `;
@@ -4488,8 +4497,8 @@ const App = {
                                 ⚖️
                             </div>
                             <div class="flex-grow">
-                                <h3 class="font-bold text-xl text-[var(--color-primary)] mb-1">${this.interpolateScript(freeDebate.stage.name)}</h3>
-                                <p class="text-slate-600 dark:text-slate-300 text-base leading-relaxed font-medium">${this.interpolateScript(freeDebate.stage.script)}</p>
+                                <h3 class="font-bold text-xl text-[var(--color-primary)] mb-1">${this.escapeHtml(this.interpolateScript(freeDebate.stage.name))}</h3>
+                                <p class="text-slate-600 dark:text-slate-300 text-base leading-relaxed font-medium">${this.escapeHtml(this.interpolateScript(freeDebate.stage.script))}</p>
                             </div>
                         </div>
                     </div>
@@ -4675,6 +4684,7 @@ const App = {
         clearInterval(freeDebate.interval);
         freeDebate.activeTeam = team;
         freeDebate.isPaused = false;
+        freeDebate._lastTick = null;
         const wasFirstSpeaker = !freeDebate.firstSpeakerSelected;
         if (!freeDebate.firstSpeakerSelected) freeDebate.firstSpeakerSelected = true;
 
@@ -4693,10 +4703,18 @@ const App = {
         const { freeDebate } = this.state;
         if (freeDebate.isPaused) return;
 
-        if (freeDebate.activeTeam === 'positive') {
-            freeDebate.positiveTimeLeft--;
-        } else if (freeDebate.activeTeam === 'negative') {
-            freeDebate.negativeTimeLeft--;
+        // 用 Date.now() 計算實際經過秒數，避免分頁背景時 setInterval 被節流造成計時飄移
+        // elapsed=0 時不扣秒、不更新 _lastTick（避免雙觸發多扣 1 秒）
+        const now = Date.now();
+        const lastTick = freeDebate._lastTick;
+        const elapsed = lastTick ? Math.round((now - lastTick) / 1000) : 1;
+        if (elapsed > 0) {
+            freeDebate._lastTick = now;
+            if (freeDebate.activeTeam === 'positive') {
+                freeDebate.positiveTimeLeft = Math.max(0, freeDebate.positiveTimeLeft - elapsed);
+            } else if (freeDebate.activeTeam === 'negative') {
+                freeDebate.negativeTimeLeft = Math.max(0, freeDebate.negativeTimeLeft - elapsed);
+            }
         }
 
         this.updateFreeDebateDisplay();
@@ -4713,9 +4731,13 @@ const App = {
 
         const timeLeft = freeDebate.activeTeam === 'positive' ? freeDebate.positiveTimeLeft : freeDebate.negativeTimeLeft;
         if (timeLeft <= 0) {
-            // --- 新增：觸發視覺閃爍 ---
+            // --- 觸發視覺閃爍（追蹤 timeout 避免堆疊） ---
             document.body.classList.add('visual-alarm');
-            setTimeout(() => document.body.classList.remove('visual-alarm'), 3000);
+            if (App._visualAlarmTimeout) clearTimeout(App._visualAlarmTimeout);
+            App._visualAlarmTimeout = setTimeout(() => {
+                document.body.classList.remove('visual-alarm');
+                App._visualAlarmTimeout = null;
+            }, 3000);
             // -------------------------
 
             this.playRingSound(3);
@@ -4764,6 +4786,14 @@ const App = {
         // [方案 A] 銷毀持久化 VAD 並釋放麥克風
         this.destroyPersistentVAD();
 
+        // [洩漏修復] 停止螢幕分享 stream 的所有 tracks（含 video，否則 video encoder 會繼續吃 CPU/GPU）
+        if (this.state.sharedDisplay.stream) {
+            try { this.state.sharedDisplay.stream.getTracks().forEach(t => t.stop()); } catch (e) { }
+            this.state.sharedDisplay.stream = null;
+            this.state.sharedDisplay.audioTrack = null;
+            this.state.sharedDisplay.isInitialized = false;
+        }
+
         // [多分頁衝突防護] 釋放語音偵測鎖
         this.releaseSpeechLock();
 
@@ -4775,12 +4805,26 @@ const App = {
         console.log('[Memory] Cleared debate memory cache');
     },
 
+    // [B] 從錄音 mime 派生 base type（去掉 codecs 參數）與下載副檔名
+    _getRecordingMimeType() {
+        return (this.state.recording && this.state.recording.mimeType) || 'audio/webm';
+    },
+    _getRecordingBaseType() {
+        return this._getRecordingMimeType().split(';')[0].trim();
+    },
+    _getRecordingExtension() {
+        const base = this._getRecordingBaseType();
+        if (base.includes('mp4')) return 'mp4';
+        if (base.includes('ogg')) return 'ogg';
+        return 'webm';
+    },
+
     // [記憶體優化] 合併錄音 chunks 到中間 Blob
     _consolidateRecordingChunks() {
         const { recordedChunks, intermediateBlobs } = this.state.recording;
         const chunkCount = recordedChunks.length; // 先記錄長度
         if (chunkCount > 0) {
-            const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+            const blob = new Blob(recordedChunks, { type: this._getRecordingBaseType() });
             intermediateBlobs.push(blob);
             this.state.recording.recordedChunks = [];
             console.log(`[Memory] Consolidated ${chunkCount} chunks into blob (total: ${intermediateBlobs.length} blobs)`);
@@ -4834,6 +4878,7 @@ const App = {
 
         if (freeDebate.isPaused) {
             clearInterval(freeDebate.interval);
+            freeDebate._lastTick = null;
         } else if (freeDebate.activeTeam) {
             freeDebate.interval = setInterval(() => this.runFreeDebateInterval(), 1000);
         }
@@ -5034,7 +5079,7 @@ const App = {
                 <div class="glass-panel hero-timer-card w-full flex-grow rounded-3xl ${timerStateClass}">
                     <!-- 階段標籤 -->
                     <div class="flex items-center justify-center gap-2 mb-4">
-                        <span id="timerStatus" class="info-pill shadow-sm">${this.interpolateScript(stage.timerLabel || stage.name)}</span>
+                        <span id="timerStatus" class="info-pill shadow-sm">${this.escapeHtml(this.interpolateScript(stage.timerLabel || stage.name))}</span>
                     </div>
                     
                     <!-- 超大計時器數字 -->
@@ -5132,8 +5177,8 @@ const App = {
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-wider">${stageTypeLabel[stage.type] || '階段'}</span>
                                 </div>
-                                <h3 class="font-bold text-lg text-[var(--text-main)] mb-2">${this.interpolateScript(stage.name)}</h3>
-                                <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">${this.interpolateScript(stage.script || stage.baseScript || '無講稿')}</p>
+                                <h3 class="font-bold text-lg text-[var(--text-main)] mb-2">${this.escapeHtml(this.interpolateScript(stage.name))}</h3>
+                                <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">${this.escapeHtml(this.interpolateScript(stage.script || stage.baseScript || '無講稿'))}</p>
                             </div>
                         </div>
                     `;
@@ -5376,59 +5421,84 @@ const App = {
         this.renderTranscriptionParagraphs();
     },
 
+    escapeHtml(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     renderTranscriptionParagraphs() {
         const container = document.getElementById('paragraphsContainer');
         const interimEl = document.getElementById('interimContent');
         if (!container) return;
 
-        // 如果沒有內容，顯示空狀態提示
-        if (this.state.transcription.paragraphs.length === 0) {
-            container.innerHTML = `
+        const paragraphs = this.state.transcription.paragraphs;
+        const paragraphsLen = paragraphs.length;
+
+        // [效能] 偵測使用者是否在底部附近，若不是則保留閱讀位置
+        const isNearBottom =
+            container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+
+        // [效能] 段落沒變時跳過重建 DOM，只更新 interim 文字
+        // 用「長度 + 最後段落 id」當指紋；達到 MAX_PARAGRAPHS 上限後 shift 雖然長度不變但 last id 會變
+        const lastId = paragraphsLen > 0 ? paragraphs[paragraphsLen - 1].id : null;
+        const fingerprint = paragraphsLen + '|' + lastId;
+        const shouldRebuild = this._lastTranscriptionFingerprint !== fingerprint;
+
+        if (shouldRebuild) {
+            if (paragraphsLen === 0) {
+                container.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full text-slate-400 text-sm animate-fade-in-up opacity-60">
                         <svg class="w-12 h-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                         <p>等待發言...</p>
                     </div>`;
-        } else {
-            // 產生氣泡列表
-            container.innerHTML = this.state.transcription.paragraphs.map(p => {
-                const isPos = p.team === 'positive';
-                const isNeg = p.team === 'negative';
-                // 設定不同陣營的頭像顏色
-                const avatarColor = isPos ? 'bg-green-500' : (isNeg ? 'bg-red-500' : 'bg-slate-500');
+            } else {
+                const esc = this.escapeHtml.bind(this);
+                container.innerHTML = paragraphs.map(p => {
+                    const isPos = p.team === 'positive';
+                    const isNeg = p.team === 'negative';
+                    const avatarColor = isPos ? 'bg-green-500' : (isNeg ? 'bg-red-500' : 'bg-slate-500');
+                    const speaker = esc(p.speaker || '');
+                    const speakerInitial = esc((p.speaker || '?').charAt(0));
+                    const content = esc(p.content || '');
 
-                return `
+                    return `
             <div class="flex gap-3 animate-fade-in-up group">
                             <div class="flex-shrink-0 w-8 h-8 rounded-full ${avatarColor} text-white flex items-center justify-center text-xs font-bold shadow-md mt-1 ring-2 ring-white dark:ring-slate-800">
-                                ${p.speaker.charAt(0)}
+                                ${speakerInitial}
                             </div>
                             <div class="flex-grow max-w-[85%]">
                                 <div class="flex items-baseline justify-between mb-1 ml-1">
-                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">${p.speaker}</span>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">${speaker}</span>
                                 </div>
                                 <div class="chat-bubble text-sm leading-relaxed shadow-sm group-hover:shadow-md transition-shadow bg-white dark:bg-slate-700/50 dark:text-slate-200">
-                                    ${p.content}
+                                    ${content}
                                 </div>
                             </div>
                         </div>
             `;
-            }).join('');
+                }).join('');
+            }
+            this._lastTranscriptionFingerprint = fingerprint;
         }
 
         // 更新底部即時文字
         if (interimEl) {
-            interimEl.textContent = this.state.transcription.interimContent || (this.state.transcription.active ? '聆聽中...' : '...');
+            interimEl.textContent =
+                this.state.transcription.interimContent ||
+                (this.state.transcription.active ? '聆聽中...' : '...');
         }
 
-
-        // 只有當使用者在底部附近時才自動滾動，避免閱讀時被打斷
-        requestAnimationFrame(() => {
-            container.scrollTop = container.scrollHeight;
-        });
-        if (interimEl) {
-            interimEl.textContent = this.state.transcription.interimContent;
+        // 只有原本就在底部時才自動跟著新內容捲動，避免使用者往上閱讀時被打斷
+        if (isNearBottom) {
+            requestAnimationFrame(() => {
+                container.scrollTop = container.scrollHeight;
+            });
         }
-
-        container.scrollTop = container.scrollHeight;
     },
 
     renderModal({ title, body, footer }) {
@@ -5550,9 +5620,9 @@ const App = {
                             流程名稱
                         </label>
                         <div class="relative">
-                            <input id="editor-flow-name" 
-                                class="editor-header-input w-full text-xl font-bold px-4 py-3 rounded-xl border-2 border-transparent bg-[var(--surface-2)] focus:border-[var(--color-primary)] focus:bg-[var(--surface-1)] transition-all" 
-                                value="${originalFormatName}" 
+                            <input id="editor-flow-name"
+                                class="editor-header-input w-full text-xl font-bold px-4 py-3 rounded-xl border-2 border-transparent bg-[var(--surface-2)] focus:border-[var(--color-primary)] focus:bg-[var(--surface-1)] transition-all"
+                                value="${this.escapeHtml(originalFormatName)}"
                                 placeholder="請輸入流程名稱...">
                             <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -5669,7 +5739,7 @@ const App = {
                             </div>
                             
                             <div class="card-info flex-grow min-w-0">
-                                <h4 class="truncate text-[15px]">${stage.name || '未命名階段'}</h4>
+                                <h4 class="truncate text-[15px]">${this.escapeHtml(stage.name || '未命名階段')}</h4>
                                 <div class="flex flex-wrap items-center gap-2 mt-1">
                                     <span class="mini-tag ${config.color}">${config.label}</span>
                                     <span class="text-xs text-slate-400 flex items-center gap-1">
@@ -5744,7 +5814,7 @@ const App = {
 
     renderStageEditorModal(stage = {}, index = NaN) {
         const isNew = isNaN(index);
-        const title = isNew ? '新增階段' : `編輯階段: ${stage.name} `;
+        const title = isNew ? '新增階段' : `編輯階段: ${this.escapeHtml(stage.name)} `;
 
         const current = { name: '', type: 'announcement', duration: '', script: '', timerLabel: '', graceDuration: 60, graceEndAction: 'auto_start', choosingTeam: 'positive', actionChoices: '', baseScript: '', baseTimerLabel: '', ...stage };
         const typeOptions = [
@@ -5762,7 +5832,7 @@ const App = {
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">階段名稱</label>
-                        <input name="name" type="text" required class="form-element w-full p-2 border rounded-md" value="${current.name}">
+                        <input name="name" type="text" required class="form-element w-full p-2 border rounded-md" value="${this.escapeHtml(current.name)}">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">階段類型</label>
@@ -5863,14 +5933,14 @@ const App = {
                 mainSettings += `<div ><label class="block text-sm font-medium mb-1">主要時間 (秒)</label><input name="duration" type="number" class="${inputClasses}" value="${current.duration || ''}"></div>`;
             }
             if (['manual_prep', 'speech_auto'].includes(type)) {
-                mainSettings += `<div ><label class="block text-sm font-medium mb-1">計時器標籤</label><input name="timerLabel" type="text" class="${inputClasses}" value="${current.timerLabel || ''}"></div>`;
+                mainSettings += `<div ><label class="block text-sm font-medium mb-1">計時器標籤</label><input name="timerLabel" type="text" class="${inputClasses}" value="${App.escapeHtml(current.timerLabel || '')}"></div>`;
             }
             if (!['choice_speech', 'judge_comment'].includes(type)) {
                 mainSettings += `
             <div >
             <label class="block text-sm font-medium mb-1">主持人講稿</label>
                                 ${renderVariableTags('script-textarea')}
-        <textarea name="script" id="script-textarea" rows="4" class="${inputClasses}" placeholder="輸入講稿，可點擊上方標籤插入變數...">${current.script || ''}</textarea>
+        <textarea name="script" id="script-textarea" rows="4" class="${inputClasses}" placeholder="輸入講稿，可點擊上方標籤插入變數...">${App.escapeHtml(current.script || '')}</textarea>
                             </div> `;
             }
 
@@ -5894,14 +5964,14 @@ const App = {
             // 3. 收集辯革盃發言設定
             if (type === 'choice_speech') {
                 choiceSettings += `<div ><label class="block text-sm font-medium mb-1">選擇方</label><select name="choosingTeam" class="${inputClasses}"><option value="positive" ${current.choosingTeam === 'positive' ? 'selected' : ''}>正方</option><option value="negative" ${current.choosingTeam === 'negative' ? 'selected' : ''}>反方</option></select></div> `;
-                choiceSettings += `<div ><label class="block text-sm font-medium mb-1">可選動作 (以逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : ''}"></div>`;
+                choiceSettings += `<div ><label class="block text-sm font-medium mb-1">可選動作 (以逗號分隔)</label><input name="actionChoices" type="text" class="${inputClasses}" value="${App.escapeHtml(Array.isArray(current.actionChoices) ? current.actionChoices.join(', ') : '')}"></div>`;
                 choiceSettings += `
             <div>
             <label class="block text-sm font-medium mb-1">基礎講稿樣板</label>
                                 ${renderVariableTags('baseScript-textarea')}
-        <textarea name="baseScript" id="baseScript-textarea" rows="3" class="${inputClasses}" placeholder="例：請 {{choosingTeam}} 辯士上台進行 {{selected_action_type}}">${current.baseScript || ''}</textarea>
+        <textarea name="baseScript" id="baseScript-textarea" rows="3" class="${inputClasses}" placeholder="例：請 {{choosingTeam}} 辯士上台進行 {{selected_action_type}}">${App.escapeHtml(current.baseScript || '')}</textarea>
                             </div> `;
-                choiceSettings += `<div ><label class="block text-sm font-medium mb-1">基礎計時器標籤樣板</label><input name="baseTimerLabel" type="text" class="${inputClasses}" placeholder="例：{{choosingTeam}} {{selected_action_type}}" value="${current.baseTimerLabel || ''}"></div>`;
+                choiceSettings += `<div ><label class="block text-sm font-medium mb-1">基礎計時器標籤樣板</label><input name="baseTimerLabel" type="text" class="${inputClasses}" placeholder="例：{{choosingTeam}} {{selected_action_type}}" value="${App.escapeHtml(current.baseTimerLabel || '')}"></div>`;
             }
 
             // 4. 組合區塊
@@ -6081,6 +6151,13 @@ const App = {
 
                     <div>
                         <div class="menu-group-title">系統</div>
+                        <a href="./index.html" class="menu-item w-full text-left group no-underline text-inherit">
+                            <div class="menu-toggle-wrapper">
+                                <div class="menu-icon menu-icon--gray group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" /></svg></div>
+                                <span class="font-semibold text-sm">關於辯時計</span>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </a>
                         <button data-action="showShortcutHelp" class="menu-item w-full text-left group">
                             <div class="menu-toggle-wrapper">
                                 <div class="menu-icon menu-icon--gray group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
@@ -6096,7 +6173,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5 <br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5.1<br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -7569,6 +7646,7 @@ const App = {
             analyser.fftSize = 512;
             rmsSource.connect(analyser);
             this.state._vadAnalyser = analyser;
+            this.state._vadRmsCtx = rmsCtx;     // [洩漏修復] 留 ref 給 destroyPersistentVAD close 用
             this.state._vadAmbientRMS = 0;      // 環境噪音基線
             this.state._vadAmbientCalibrated = false;
 
@@ -7686,6 +7764,11 @@ const App = {
         }
         this.state._vadAnalyser = null;
         this.state._vadAmbientCalibrated = false;
+        // [洩漏修復] 關閉 RMS AudioContext，避免每次切換麥克風/display 模式都累加一個（瀏覽器上限約 6 個）
+        if (this.state._vadRmsCtx) {
+            try { this.state._vadRmsCtx.close(); } catch (e) { console.warn('Failed to close RMS AudioContext:', e); }
+            this.state._vadRmsCtx = null;
+        }
 
         if (audioDetection.vad && typeof audioDetection.vad.destroy === 'function') {
             try {
@@ -8225,6 +8308,10 @@ const App = {
             // 監聽使用者是否從瀏覽器UI停止了分享
             this.state.sharedDisplay.audioTrack.onended = () => {
                 console.log("Display audio track ended by user.");
+                // [洩漏修復] 防禦性停掉同 stream 上的其他 tracks（getDisplayMedia 用 video:true 取得分頁音訊，video track 也要釋放）
+                if (this.state.sharedDisplay.stream) {
+                    try { this.state.sharedDisplay.stream.getTracks().forEach(t => t.stop()); } catch (e) { }
+                }
                 this.state.sharedDisplay.stream = null;
                 this.state.sharedDisplay.audioTrack = null;
                 this.state.sharedDisplay.isInitialized = false;
@@ -8322,6 +8409,8 @@ const App = {
         this.state.timer.graceInterval = null;
         this.state.timer.isPaused = false;
         this.state.timer.type = null;
+        this.state.timer._lastTick = null;
+        if (this.state.freeDebate) this.state.freeDebate._lastTick = null;
 
         // [效能優化] 清除 DOM 快取，以便下次重新獲取
         this._cachedTimerEl = null;
@@ -8339,8 +8428,15 @@ const App = {
     },
 
     runTimerInterval() {
-        // 1. 更新時間狀態
-        App.state.timer.timeLeft--;
+        // 1. 更新時間狀態（用 Date.now() 計算實際經過秒數，避免分頁背景時 setInterval 被節流造成計時飄移）
+        // 注意：elapsed=0 時不扣秒、不更新 _lastTick，避免 visibilitychange 強制 tick 與 setInterval pending tick 雙觸發時多扣 1 秒
+        const now = Date.now();
+        const lastTick = App.state.timer._lastTick;
+        const elapsed = lastTick ? Math.round((now - lastTick) / 1000) : 1;
+        if (elapsed > 0) {
+            App.state.timer._lastTick = now;
+            App.state.timer.timeLeft = Math.max(0, App.state.timer.timeLeft - elapsed);
+        }
 
         // 2. [關鍵優化] 只更新數字顯示，不重新渲染整個控制列
         App.updateTimerDisplay(App.state.timer.timeLeft);
@@ -8365,9 +8461,13 @@ const App = {
 
         // 4. 時間到處理
         if (timeLeft <= 0) {
-            // 觸發視覺閃爍
+            // 觸發視覺閃爍（追蹤 timeout 避免短時間連續觸發時 class 被提前移除或 setTimeout 堆疊）
             document.body.classList.add('visual-alarm');
-            setTimeout(() => document.body.classList.remove('visual-alarm'), 3000);
+            if (App._visualAlarmTimeout) clearTimeout(App._visualAlarmTimeout);
+            App._visualAlarmTimeout = setTimeout(() => {
+                document.body.classList.remove('visual-alarm');
+                App._visualAlarmTimeout = null;
+            }, 3000);
 
             const timerEl = document.getElementById('timerDisplay');
             // 只有主計時到才響三聲鈴
@@ -8865,6 +8965,8 @@ const App = {
             }
             const options = selectedMimeType ? { mimeType: selectedMimeType } : {};
             this.state.recording.mediaRecorder = new MediaRecorder(this.state.recording.mediaStream, options);
+            // [B] 儲存實際使用的 mime，後續 Blob/檔名派生用
+            this.state.recording.mimeType = selectedMimeType || this.state.recording.mediaRecorder.mimeType || 'audio/webm';
 
             this.state.recording.mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
@@ -8880,7 +8982,7 @@ const App = {
                 // [記憶體優化] 最終合併：先處理剩餘的 chunks，再合併所有 intermediateBlobs
                 this._consolidateRecordingChunks();
                 const { intermediateBlobs, timestamps, recordingStartTime } = this.state.recording;
-                const audioBlob = new Blob(intermediateBlobs, { type: 'audio/webm' });
+                const audioBlob = new Blob(intermediateBlobs, { type: this._getRecordingBaseType() });
 
                 // 儲存當前錄音到 recordings 陣列
                 this.state.recording.recordings.push({
@@ -9044,7 +9146,7 @@ const App = {
         document.body.appendChild(a);
         a.style = 'display: none';
         a.href = url;
-        const filename = `辯論錄音_${new Date().toISOString().slice(0, 10)}.webm`;
+        const filename = `辯論錄音_${new Date().toISOString().slice(0, 10)}.${this._getRecordingExtension()}`;
         a.download = filename;
         a.click();
         window.URL.revokeObjectURL(url);
@@ -9056,6 +9158,12 @@ const App = {
         // 移除已存在的播放器
         const existingPlayer = document.getElementById('recordingPlayerPanel');
         if (existingPlayer) existingPlayer.remove();
+
+        // [洩漏修復] 重新打開前先釋放上一個 Blob URL
+        if (App._recordingPlayerObjectURL) {
+            URL.revokeObjectURL(App._recordingPlayerObjectURL);
+            App._recordingPlayerObjectURL = null;
+        }
 
         if (!this.state.recording.audioBlob) return;
 
@@ -9072,7 +9180,7 @@ const App = {
             timestampListHTML = timestamps.map((ts, i) => `
                         <button data-action="seekToTimestamp" data-timestamp-index="${i}" class="timestamp-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all hover:bg-[var(--color-primary)] hover:text-white group">
                             <span class="timestamp-time font-mono text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-600 group-hover:bg-white/20">${formatTime(ts.time)}</span>
-                            <span class="text-sm font-medium truncate">${ts.stageName}</span>
+                            <span class="text-sm font-medium truncate">${this.escapeHtml(ts.stageName || '')}</span>
                         </button>
                     `).join('');
         } else {
@@ -9126,7 +9234,9 @@ const App = {
         // 設定音訊來源
         const audioPlayer = document.getElementById('recordingAudioPlayer');
         if (audioPlayer && this.state.recording.audioBlob) {
-            audioPlayer.src = URL.createObjectURL(this.state.recording.audioBlob);
+            // [洩漏修復] 把 URL 存到 App._recordingPlayerObjectURL，關閉時會被 revoke
+            App._recordingPlayerObjectURL = URL.createObjectURL(this.state.recording.audioBlob);
+            audioPlayer.src = App._recordingPlayerObjectURL;
         }
     },
 
@@ -9194,7 +9304,8 @@ const App = {
         document.body.appendChild(a);
         a.style = 'display: none';
         a.href = url;
-        const filename = `辯論錄音_段落${recIndex + 1}_${new Date().toISOString().slice(0, 10)}.webm`;
+        const ext = this._getRecordingExtension();
+        const filename = `辯論錄音_段落${recIndex + 1}_${new Date().toISOString().slice(0, 10)}.${ext}`;
         a.download = filename;
         a.click();
         window.URL.revokeObjectURL(url);
@@ -9211,14 +9322,14 @@ const App = {
         // 嘗試合併所有錄音
         try {
             const allBlobs = recordings.map(r => r.audioBlob);
-            const mergedBlob = new Blob(allBlobs, { type: 'audio/webm' });
+            const mergedBlob = new Blob(allBlobs, { type: this._getRecordingBaseType() });
 
             const url = URL.createObjectURL(mergedBlob);
             const a = document.createElement('a');
             document.body.appendChild(a);
             a.style = 'display: none';
             a.href = url;
-            const filename = `辯論錄音_完整_${new Date().toISOString().slice(0, 10)}.webm`;
+            const filename = `辯論錄音_完整_${new Date().toISOString().slice(0, 10)}.${this._getRecordingExtension()}`;
             a.download = filename;
             a.click();
             window.URL.revokeObjectURL(url);
@@ -9237,7 +9348,7 @@ const App = {
         if (!recordings[recIndex]) return;
 
         const rec = recordings[recIndex];
-        const filename = `辯論錄音_段落${recIndex + 1}_${new Date().toISOString().slice(0, 10)}.webm`;
+        const filename = `辯論錄音_段落${recIndex + 1}_${new Date().toISOString().slice(0, 10)}.${this._getRecordingExtension()}`;
 
         // 格式化時間為 mm:ss
         const formatTime = (seconds) => {
@@ -9275,7 +9386,7 @@ const App = {
         }
 
         // 檢查是否支援檔案分享
-        const file = new File([rec.audioBlob], filename, { type: 'audio/webm' });
+        const file = new File([rec.audioBlob], filename, { type: this._getRecordingBaseType() });
 
         if (navigator.canShare && !navigator.canShare({ files: [file] })) {
             // 如果不支援檔案分享，嘗試只分享文字（含時間標記）
