@@ -2805,7 +2805,7 @@ const App = {
                 const icon = groupIcons[groupName] || '📋';
                 formatsHtml += `
                             <div class="format-group" data-group="${groupName}">
-                                <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 sticky top-0">${icon} ${groupName}</div>
+                                <div class="text-xs font-semibold text-slate-700 dark:text-slate-200 px-3 py-2 bg-slate-100 dark:bg-slate-800 border-b border-[var(--border-color)] shadow-sm" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 10;">${icon} ${groupName}</div>
                                 ${formatKeys.map(formatName => `
                                     <button data-action="selectFormatFromModal" data-format="${formatName}" class="format-option w-full text-left px-4 py-3 hover:bg-[var(--color-primary)]/10 transition-colors flex items-center gap-3 border-b border-[var(--border-color)]/50">
                                         <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-accent)]/20 flex items-center justify-center text-sm">${icon}</span>
@@ -3796,7 +3796,6 @@ const App = {
                                                 <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 flex items-center justify-center text-lg">🏆</span>
                                                 <div class="text-left">
                                                     <div id="selectedFormatName" class="font-semibold text-[var(--text-main)] ${this.state.selectedFormat ? '' : 'text-slate-400'}">${this.state.selectedFormat || '點擊選擇賽制...'}</div>
-                                                    <div class="text-xs text-slate-500">點擊選擇或更換比賽賽制</div>
                                                 </div>
                                             </div>
                                             <svg class="w-5 h-5 text-slate-400 group-hover:text-[var(--color-primary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
