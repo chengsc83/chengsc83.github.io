@@ -85,8 +85,8 @@
   },
   "widgets": [
     {
-      "name": "小部件",
-      "description": "小部件",
+      "name": "辯時計狀態",
+      "description": "顯示目前比賽計時與賽程進度",
       "tag": "timer",
       "template_url": "widget.html",
       "ms_ac_template": "widget.json",
@@ -94,9 +94,19 @@
       "type": "application/json",
       "screenshots": [
         {
-          "src": "favicon.svg",
-          "sizes": "512x512",
-          "label": "小部件"
+          "src": "./og-image.png",
+          "sizes": "1200x630",
+          "label": "辯時計狀態預覽"
+        }
+      ],
+      "icons": [
+        {
+          "src": "./appstore-images/windows/Square44x44Logo.targetsize-48.png",
+          "sizes": "48x48"
+        },
+        {
+          "src": "./appstore-images/android/launchericon-192x192.png",
+          "sizes": "192x192"
         }
       ]
     }
