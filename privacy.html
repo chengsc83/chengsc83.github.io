@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隱私權政策 - 辯時計</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="canonical" href="https://chengsc83.github.io/privacy.html">
+    <meta name="description" content="辯時計隱私權政策：完全本地運行，不蒐集、不上傳、不追蹤任何使用者資料。">
+    <meta name="robots" content="index, follow">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        h2 {
+            scroll-margin-top: 6rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="border-b border-white/10 bg-slate-950/70 backdrop-blur sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="./index.html" class="flex items-center gap-2 text-lg font-semibold">
+                <img src="favicon.svg" alt="辯時計" class="w-7 h-7">
+                <span>辯時計</span>
+            </a>
+            <a href="./app.html" class="text-sm text-indigo-300 hover:text-indigo-200">開啟應用程式 →</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-3">
+            <span class="text-gradient">隱私權政策</span>
+        </h1>
+        <p class="text-slate-400 mb-2">最後更新：2026 年 5 月</p>
+        <p class="text-slate-300 text-lg leading-relaxed mb-10">
+            辯時計（以下稱「本應用程式」）是一套<strong class="text-white">完全在使用者裝置本地運行</strong>的辯論計時系統。我們不蒐集、不傳輸、不儲存任何個人資料於伺服器端。
+        </p>
+
+        <section class="card rounded-2xl p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-white">1. 我們不蒐集任何個人資料</h2>
+            <ul class="space-y-2 text-slate-300 leading-relaxed list-disc pl-6">
+                <li>本應用程式<strong class="text-white">沒有後端伺服器</strong>，沒有使用者註冊機制，也沒有登入系統。</li>
+                <li>不使用任何第三方分析工具（Google Analytics、Facebook Pixel、Hotjar 等皆未導入）。</li>
+                <li>不使用 Cookie 或追蹤像素進行行為分析。</li>
+                <li>不會將您的辯論內容、計時紀錄、語音資料傳送到網際網路上的任何伺服器。</li>
+            </ul>
+        </section>
+
+        <section class="card rounded-2xl p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-white">2. 本機儲存（Local Storage）</h2>
+            <p class="text-slate-300 leading-relaxed mb-3">
+                為了提供良好的使用體驗，本應用程式會使用瀏覽器內建的 <code class="bg-slate-800 px-2 py-0.5 rounded text-sm">localStorage</code> 儲存以下資訊於<strong class="text-white">您自己的裝置上</strong>：
+            </p>
+            <ul class="space-y-2 text-slate-300 leading-relaxed list-disc pl-6">
+                <li>使用者的偏好設定（介面主題、提示音量、預設賽制等）。</li>
+                <li>已建立的比賽資料、計時紀錄與筆記。</li>
+                <li>自訂的辯論賽制配置。</li>
+            </ul>
+            <p class="text-slate-300 leading-relaxed mt-3">
+                上述資料<strong class="text-white">僅儲存在您的瀏覽器本機</strong>，不會被傳送到任何伺服器。您可隨時透過瀏覽器設定（清除瀏覽資料 / 網站資料）將其完全移除。
+            </p>
+        </section>
+
+        <section class="card rounded-2xl p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-white">3. 麥克風權限</h2>
+            <p class="text-slate-300 leading-relaxed mb-3">
+                本應用程式的「智慧語音偵測」與「語音即時轉錄」功能需要存取麥克風。關於麥克風使用的承諾：
+            </p>
+            <ul class="space-y-2 text-slate-300 leading-relaxed list-disc pl-6">
+                <li>所有語音處理<strong class="text-white">完全在您的瀏覽器內進行</strong>，使用 WebAssembly 在本地執行。</li>
+                <li>音訊資料<strong class="text-white">不會被錄製、儲存或上傳</strong>到任何伺服器。</li>
+                <li>麥克風僅在您主動啟用相關功能時才會被請求；您可隨時於瀏覽器設定撤銷權限。</li>
+                <li>若您未啟用語音功能，本應用程式完全不會請求麥克風權限。</li>
+            </ul>
+        </section>
+
+        <section class="card rounded-2xl p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-white">4. 第三方資源（CDN）</h2>
+            <p class="text-slate-300 leading-relaxed mb-3">
+                本應用程式以開源資源建構，首次載入時會從下列公開 CDN 取得函式庫與字型檔案：
+            </p>
+            <ul class="space-y-2 text-slate-300 leading-relaxed list-disc pl-6">
+                <li><strong class="text-white">jsDelivr</strong>（cdn.jsdelivr.net）— 載入 ONNX Runtime、語音偵測模型、Piper TTS 語音合成模組。</li>
+                <li><strong class="text-white">Google Fonts</strong>（fonts.googleapis.com / fonts.gstatic.com）— 載入 Inter 與 Noto Sans TC 字型。</li>
+                <li><strong class="text-white">cdnjs</strong>（cdnjs.cloudflare.com）— 載入 Sortable.js 拖曳排序函式庫。</li>
+                <li><strong class="text-white">Tailwind CSS CDN</strong>（cdn.tailwindcss.com）— 載入樣式框架。</li>
+                <li><strong class="text-white">unpkg</strong>（unpkg.com）— 載入動畫函式庫 AOS。</li>
+            </ul>
+            <p class="text-slate-300 leading-relaxed mt-3">
+                這些 CDN 服務商基於提供服務的需要，可能會記錄您的 IP 位址與瀏覽器資訊。本應用程式本身不向這些服務傳送任何使用者識別資訊或辯論內容。各 CDN 服務商之隱私權政策由其自行公告，請逕行參閱。
+            </p>
+        </section>
+
+        <section class="card rounded-2xl p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-white">5. 兒童隱私</h2>
+            <p class="text-slate-300 leading-relaxed">
+                本應用程式不蒐集任何使用者資料，因此亦不會特別蒐集 13 歲以下兒童之個人資訊。
+            </p>
+        </section>
+
+        <section class="card rounded-2xl p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-white">6. 政策更新</h2>
+            <p class="text-slate-300 leading-relaxed">
+                若本政策有任何修訂，將於本頁面更新並標註修訂日期。重大變更將於應用程式中以顯著方式公告。
+            </p>
+        </section>
+
+        <section class="card rounded-2xl p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-white">7. 聯絡方式</h2>
+            <p class="text-slate-300 leading-relaxed mb-2">
+                若您對本隱私權政策有任何疑問，歡迎透過以下方式聯絡：
+            </p>
+            <ul class="space-y-1 text-slate-300 leading-relaxed list-disc pl-6">
+                <li>開發者：鄭世駿 James Cheng</li>
+                <li>專案首頁：<a href="https://chengsc83.github.io/" class="text-indigo-300 hover:text-indigo-200 underline">https://chengsc83.github.io/</a></li>
+            </ul>
+        </section>
+
+        <p class="text-center text-slate-500 text-sm mt-12">
+            © 2026 辯時計 · 開源、本地、無追蹤
+        </p>
+    </main>
+</body>
+
+</html>
