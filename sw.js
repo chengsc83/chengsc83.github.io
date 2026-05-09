@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debate-clock-v2.5.1';
+const CACHE_NAME = 'debate-clock-v2.5.2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -20,7 +20,7 @@ const ASSETS_TO_CACHE = [
 
 // 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing v2.5.1...');
+  console.log('SW: Installing v2.5.2...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
