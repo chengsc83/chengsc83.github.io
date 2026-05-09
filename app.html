@@ -259,7 +259,8 @@
             </div>
         </div>
 
-        <audio id="ringSound" preload="auto" src="ring.m4a"></audio>
+        <!-- muted 屬性從 HTML 起就生效，確保 iOS 第一次 play 真的無聲（JS 後續解鎖會 unmute） -->
+        <audio id="ringSound" preload="auto" src="ring.m4a" muted></audio>
         <!-- 以下音效為可選，如果檔案不存在會靜默失敗 -->
         <audio id="stageAdvanceSound" preload="auto"></audio>
         <audio id="speechDetectedSound" preload="auto"></audio>
