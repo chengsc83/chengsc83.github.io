@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>辯時計 - 專業辯論計時系統</title>
+    <title>辯時計 - 新世代辯論主計系統</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
     <!-- Basic SEO Meta Tags -->
@@ -98,6 +98,27 @@
             /* 退出全螢幕按鈕也要避開狀態列 */
             #exitFullscreenBtn {
                 top: calc(env(safe-area-inset-top) + 0.5rem);
+            }
+        }
+
+        /* 小螢幕（手機 < 480px）：避免 sticky-action-bar 上 5 個按鈕（含中文 label）被擠成「字一個一行」。
+           隱藏次要按鈕的文字 label，只保留圖示；主 CTA「下一步/開始比賽」維持完整。 */
+        @media (max-width: 480px) {
+            .sticky-action-bar {
+                padding: 0.5rem 0.75rem !important;
+            }
+            .sticky-action-bar .btn-icon-label {
+                padding: 0.4rem 0.55rem;
+            }
+            .sticky-action-bar .btn-icon-label > span {
+                display: none;
+            }
+            .sticky-action-bar [data-action="prevSetupStep"] > span {
+                display: none;
+            }
+            .sticky-action-bar .btn-start-match {
+                padding: 0.55rem 1rem !important;
+                font-size: 0.95rem !important;
             }
         }
     </style>
