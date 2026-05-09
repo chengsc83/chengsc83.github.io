@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debate-clock-v2.5';
+const CACHE_NAME = 'debate-clock-v2.4.7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -20,7 +20,7 @@ const ASSETS_TO_CACHE = [
 
 // 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing v2.5...');
+  console.log('SW: Installing v2.4.7...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
@@ -35,11 +35,17 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 攔截網路請求 (優先使用快取，若無則請求網路)
+// 攔截網路請求 (優先使用快取，若無則請求網路；離線導航回退到 app.html)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).catch(() => {
+        if (event.request.mode === 'navigate') {
+          return caches.match('./app.html');
+        }
+        return Response.error();
+      });
     })
   );
 });
