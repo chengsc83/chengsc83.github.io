@@ -3774,7 +3774,7 @@ const App = {
                                 </span>
                                 <div>
                                     <h3 class="text-lg font-bold text-[var(--text-main)]">Step 1：辯題與賽制</h3>
-                                    <p class="text-xs text-slate-500">設定本場比賽的核心議題與進行方式</p>
+                                    <p class="text-xs text-slate-500">設定本場比賽的辯題與賽制</p>
                                 </div>
                             </div>
                             
