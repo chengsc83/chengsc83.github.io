@@ -24,11 +24,9 @@
   ],
   "actions": [
     {
-      "type": "Action.Submit",
+      "type": "Action.Execute",
       "title": "開啟辯時計",
-      "data": {
-        "action": "openApp"
-      }
+      "verb": "openApp"
     }
   ]
 }
