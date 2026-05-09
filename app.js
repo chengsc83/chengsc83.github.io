@@ -1195,10 +1195,10 @@ const App = {
         });
     },
     handleGlobalClick(e) {
-        // 【iOS 音訊解鎖】用 Web Audio API 播一個 1-sample 靜音 buffer，無聲且可靠地解鎖 AudioContext。
-        // 不再播放 ringSound — 因為 iOS 在 <audio> 元素第一次 play 之前會忽略 muted 屬性，
-        // 導致鈴聲完整播出（「載入 app.html 時很大聲響鈴」）。
-        // <audio> 元素的解鎖透過下方的 routeAudioElement (createMediaElementSource) 一次完成。
+        // 【iOS 音訊解鎖】兩段式：
+        // 1. Web Audio silent buffer → 解鎖 AudioContext（給 Piper TTS 等純 Web Audio 使用）
+        // 2. <audio>.play() in user gesture → 解鎖 HTMLMediaElement（給 playRingSound 等使用）
+        // ringSound 在 HTML 上有 muted 屬性，所以這次 play 不會洩漏聲音；解鎖後 unmute 供後續正常使用。
         if (!App.state.audioContext) {
             const ctx = App.ensureAudioContext();
             if (ctx) {
@@ -1208,8 +1208,7 @@ const App = {
                     source.buffer = silentBuffer;
                     source.connect(ctx.destination);
                     source.start(0);
-                    App.state.isAudioUnlocked = true;
-                    console.log("Audio unlocked via silent Web Audio buffer (no ring leak on iOS).");
+                    console.log("Audio unlocked via silent Web Audio buffer.");
                 } catch (err) {
                     console.warn("Silent buffer unlock failed:", err);
                 }
@@ -1218,6 +1217,21 @@ const App = {
             ['ringSound', 'stageAdvanceSound', 'speechDetectedSound', 'drawSound'].forEach(id => {
                 App.routeAudioElement(id);
             });
+            // [關鍵] iOS 13/14 需要 <audio> 元素本身在 user gesture 內 play 過一次才能 autoplay。
+            // ringSound 在 HTML 已設 muted，所以這次播放完全無聲。
+            const ring = document.getElementById('ringSound');
+            if (ring) {
+                ring.play().then(() => {
+                    ring.pause();
+                    ring.currentTime = 0;
+                    ring.muted = false; // 解鎖完成，恢復未靜音狀態供後續響鈴
+                    App.state.isAudioUnlocked = true;
+                    console.log("Audio element unlocked (HTML-muted play).");
+                }).catch(() => {
+                    // play 被拒絕（極少情境），強制 unmute 避免後續永遠靜音
+                    ring.muted = false;
+                });
+            }
             // 預載入 Piper TTS 庫和語音模型（背景執行，不阻擋 UI）
             App._loadPiperTTS().then(() => {
                 console.log('[Piper TTS] Pre-load complete.');
@@ -1559,8 +1573,9 @@ const App = {
                 );
             }
 
-            // [行動裝置音訊權限預熱] 點擊「開始比賽」時透過 Web Audio API 播 1-sample 靜音 buffer，
-            // 確保 AudioContext 處於 running 狀態。iOS 上不再播放 ringSound（避免 muted 失效時洩鈴聲）。
+            // [行動裝置音訊權限預熱] 點擊「開始比賽」時雙路解鎖：
+            // (1) Web Audio silent buffer → AudioContext running
+            // (2) ringSound.play() (HTML muted, 無聲) → 解鎖 <audio> 元素，後續響鈴才能在非 user gesture 內 play
             try {
                 const ctx = App.ensureAudioContext();
                 if (ctx) {
@@ -1569,6 +1584,16 @@ const App = {
                     src.buffer = silentBuffer;
                     src.connect(ctx.destination);
                     src.start(0);
+                }
+                const ring = document.getElementById('ringSound');
+                if (ring && !App.state.isAudioUnlocked) {
+                    ring.muted = true; // 防禦性設定（HTML 應該已 muted，但若先前已 unmute 也可保險）
+                    ring.play().then(() => {
+                        ring.pause();
+                        ring.currentTime = 0;
+                        ring.muted = false;
+                        App.state.isAudioUnlocked = true;
+                    }).catch(() => { ring.muted = false; });
                 }
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(' ');
