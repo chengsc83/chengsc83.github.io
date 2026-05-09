@@ -1195,30 +1195,26 @@ const App = {
         });
     },
     handleGlobalClick(e) {
-        // 【iOS 音訊解鎖】：在 user gesture 內 play 一次以解鎖 <audio> 元素的 autoplay 限制。
-        // 注意：iOS 上 audio.volume 是唯讀的（永遠等於裝置音量），所以舊版用 volume=0 會洩漏一聲鈴。
-        // 改用 audio.muted（iOS 真正會生效），達到無聲解鎖。
-        if (!App.state.isAudioUnlocked) {
-            const sound = document.getElementById('ringSound');
-            if (sound && sound.paused) {
-                sound.muted = true;
-                sound.play().then(() => {
-                    sound.pause();
-                    sound.currentTime = 0;
-                    sound.muted = false;
-                    App.state.isAudioUnlocked = true;
-                    console.log("Audio context unlocked for iOS.");
-                }).catch(() => {
-                    // 解鎖失敗（更嚴格的環境），下次點擊再試
-                    sound.muted = false;
-                });
-            } else if (sound && !sound.paused) {
-                App.state.isAudioUnlocked = true;
-            }
-        }
-        // [Meet 音訊修復] 首次互動時建立 AudioContext 並路由所有音效元素
+        // 【iOS 音訊解鎖】用 Web Audio API 播一個 1-sample 靜音 buffer，無聲且可靠地解鎖 AudioContext。
+        // 不再播放 ringSound — 因為 iOS 在 <audio> 元素第一次 play 之前會忽略 muted 屬性，
+        // 導致鈴聲完整播出（「載入 app.html 時很大聲響鈴」）。
+        // <audio> 元素的解鎖透過下方的 routeAudioElement (createMediaElementSource) 一次完成。
         if (!App.state.audioContext) {
-            App.ensureAudioContext();
+            const ctx = App.ensureAudioContext();
+            if (ctx) {
+                try {
+                    const silentBuffer = ctx.createBuffer(1, 1, 22050);
+                    const source = ctx.createBufferSource();
+                    source.buffer = silentBuffer;
+                    source.connect(ctx.destination);
+                    source.start(0);
+                    App.state.isAudioUnlocked = true;
+                    console.log("Audio unlocked via silent Web Audio buffer (no ring leak on iOS).");
+                } catch (err) {
+                    console.warn("Silent buffer unlock failed:", err);
+                }
+            }
+            // 路由所有音效元素到 AudioContext，讓 Meet 分享可擷取
             ['ringSound', 'stageAdvanceSound', 'speechDetectedSound', 'drawSound'].forEach(id => {
                 App.routeAudioElement(id);
             });
@@ -1563,17 +1559,16 @@ const App = {
                 );
             }
 
-            // [行動裝置音訊權限預熱] 點擊「開始比賽」時用 muted 靜音播一次，解鎖 audio 元素 + 初始化 TTS。
-            // iOS 上 volume=0 不生效（會洩鈴聲），必須用 muted。
+            // [行動裝置音訊權限預熱] 點擊「開始比賽」時透過 Web Audio API 播 1-sample 靜音 buffer，
+            // 確保 AudioContext 處於 running 狀態。iOS 上不再播放 ringSound（避免 muted 失效時洩鈴聲）。
             try {
-                const sound = document.getElementById('ringSound');
-                if (sound) {
-                    sound.muted = true;
-                    sound.play().then(() => {
-                        sound.pause();
-                        sound.currentTime = 0;
-                        sound.muted = false;
-                    }).catch(() => { sound.muted = false; });
+                const ctx = App.ensureAudioContext();
+                if (ctx) {
+                    const silentBuffer = ctx.createBuffer(1, 1, 22050);
+                    const src = ctx.createBufferSource();
+                    src.buffer = silentBuffer;
+                    src.connect(ctx.destination);
+                    src.start(0);
                 }
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(' ');
