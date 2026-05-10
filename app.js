@@ -177,7 +177,7 @@ const App = {
                     description: '在這裡輸入本場比賽的辯論題目，例如「我國應廢除死刑」。這是必填欄位。',
                 },
                 {
-                    target: '#formatDropdownContainer',
+                    target: '[data-action="showFormatSelectorModal"]',
                     title: '選擇比賽賽制',
                     description: '點擊選單選擇預設的比賽流程。支援新式奧瑞岡、新加坡制等多種常見賽制，也可以建立自訂流程。',
                 },
@@ -255,7 +255,7 @@ const App = {
             icon: '⏱️',
             steps: [
                 {
-                    target: '.timer-display',
+                    target: '.hero-timer-card',
                     title: '計時器顯示',
                     description: '這裡顯示目前階段的剩餘時間。時間快到時會變色提醒，結束時會響鈴。',
                 },
@@ -273,7 +273,7 @@ const App = {
             icon: '📋',
             steps: [
                 {
-                    target: '.flow-tracker-strip',
+                    target: '#debateFlowTracker',
                     title: '流程追蹤列',
                     description: '這裡顯示比賽流程。可左右滑動查看所有階段，點擊任一階段可快速跳轉。',
                 },
@@ -1213,25 +1213,27 @@ const App = {
                     console.warn("Silent buffer unlock failed:", err);
                 }
             }
-            // 路由所有音效元素到 AudioContext，讓 Meet 分享可擷取
-            ['ringSound', 'stageAdvanceSound', 'speechDetectedSound', 'drawSound'].forEach(id => {
-                App.routeAudioElement(id);
-            });
-            // [關鍵] iOS 13/14 需要 <audio> 元素本身在 user gesture 內 play 過一次才能 autoplay。
-            // ringSound 在 HTML 已設 muted，所以這次播放完全無聲。
+            // [<audio> Fallback 解鎖] 必須在 routeAudioElement 之前執行：
+            // 一旦 createMediaElementSource 接管 audio 元素，部分 iOS 實作會繞過 HTML muted 屬性。
+            // 在路由之前先 play 一次（HTML 已 muted），確保 100% 無聲解鎖。
             const ring = document.getElementById('ringSound');
             if (ring) {
                 ring.play().then(() => {
                     ring.pause();
                     ring.currentTime = 0;
-                    ring.muted = false; // 解鎖完成，恢復未靜音狀態供後續響鈴
+                    ring.muted = false;
                     App.state.isAudioUnlocked = true;
-                    console.log("Audio element unlocked (HTML-muted play).");
                 }).catch(() => {
-                    // play 被拒絕（極少情境），強制 unmute 避免後續永遠靜音
                     ring.muted = false;
                 });
             }
+            // 路由所有音效元素到 AudioContext，讓 Meet 分享可擷取（fallback 路徑用）
+            ['ringSound', 'stageAdvanceSound', 'speechDetectedSound', 'drawSound'].forEach(id => {
+                App.routeAudioElement(id);
+            });
+            // [Web Audio 主路徑] 背景載入 ring.m4a 並 decode 成 AudioBuffer。
+            // 載完後 playRingSound 會走 createBufferSource 路徑（iOS 上最可靠）。
+            App._loadRingBuffer().catch(() => { });
             // 預載入 Piper TTS 庫和語音模型（背景執行，不阻擋 UI）
             App._loadPiperTTS().then(() => {
                 console.log('[Piper TTS] Pre-load complete.');
@@ -1573,9 +1575,10 @@ const App = {
                 );
             }
 
-            // [行動裝置音訊權限預熱] 點擊「開始比賽」時雙路解鎖：
+            // [行動裝置音訊權限預熱] 點擊「開始比賽」時三路保險：
             // (1) Web Audio silent buffer → AudioContext running
-            // (2) ringSound.play() (HTML muted, 無聲) → 解鎖 <audio> 元素，後續響鈴才能在非 user gesture 內 play
+            // (2) 觸發 ring.m4a 載入並 decode 成 AudioBuffer（主響鈴路徑）
+            // (3) ringSound.play() (HTML muted, 無聲) → 解鎖 <audio> 元素，當作 fallback 路徑
             try {
                 const ctx = App.ensureAudioContext();
                 if (ctx) {
@@ -1585,9 +1588,10 @@ const App = {
                     src.connect(ctx.destination);
                     src.start(0);
                 }
+                App._loadRingBuffer().catch(() => { });
                 const ring = document.getElementById('ringSound');
                 if (ring && !App.state.isAudioUnlocked) {
-                    ring.muted = true; // 防禦性設定（HTML 應該已 muted，但若先前已 unmute 也可保險）
+                    ring.muted = true;
                     ring.play().then(() => {
                         ring.pause();
                         ring.currentTime = 0;
@@ -2829,40 +2833,49 @@ const App = {
 
                 const icon = groupIcons[groupName] || '📋';
                 formatsHtml += `
-                            <div class="format-group" data-group="${groupName}">
-                                <div class="text-xs font-semibold text-slate-700 dark:text-slate-200 px-3 py-2 bg-slate-100 dark:bg-slate-800 border-b border-[var(--border-color)] shadow-sm" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 10;">${icon} ${groupName}</div>
-                                ${formatKeys.map(formatName => `
-                                    <button data-action="selectFormatFromModal" data-format="${formatName}" class="format-option w-full text-left px-4 py-3 hover:bg-[var(--color-primary)]/10 transition-colors flex items-center gap-3 border-b border-[var(--border-color)]/50">
-                                        <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-accent)]/20 flex items-center justify-center text-sm">${icon}</span>
-                                        <span class="font-medium text-[var(--text-main)]">${formatName}</span>
-                                    </button>
-                                `).join('')}
+                            <div class="format-group mt-2" data-group="${groupName}">
+                                <!-- 分類標題：上半圓角 + 微妙陰影 -->
+                                <div class="text-xs font-semibold text-slate-700 dark:text-slate-200 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-t-xl shadow-sm" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 10;">${icon} ${groupName}</div>
+                                <!-- 卡片堆疊容器 -->
+                                <div class="px-3 py-2 space-y-1.5 bg-slate-50/50 dark:bg-slate-900/30 rounded-b-xl">
+                                    ${formatKeys.map(formatName => `
+                                        <button data-action="selectFormatFromModal" data-format="${formatName}" class="format-option w-full text-left px-3 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-[var(--color-primary)]/10 dark:hover:bg-[var(--color-primary)]/20 active:scale-[0.98] transition-all flex items-center gap-3 border border-slate-200/60 dark:border-slate-700/40">
+                                            <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-accent)]/20 flex items-center justify-center text-sm shrink-0">${icon}</span>
+                                            <span class="font-medium text-[var(--text-main)]">${formatName}</span>
+                                        </button>
+                                    `).join('')}
+                                </div>
                             </div>
                         `;
             }
 
+            // 結構說明：
+            // - modal body 自身的 padding 在下方 setTimeout 裡會被改成 0
+            // - 上半部 (tags + search) 用 px-6 pt-6 pb-3 自帶內距
+            // - 下半部 (modalFormatList) 不要 padding-top，sticky `top: 0` 直接貼到 modal body 最上緣
+            //   → 使用者捲動時 tags+search 會捲出視野，sticky header 緊接著貼到 title bar 下方無空隙
             const modalBody = `
-                        <div class="space-y-4">
+                        <div class="px-6 pt-6 pb-3 space-y-4">
                             <!-- 分類標籤 -->
                             <div id="modalFormatTags" class="flex flex-wrap gap-2">
                                 ${tagsHtml}
                             </div>
-                            
+
                             <!-- 搜尋框 -->
                             <div class="relative">
-                                <input type="text" id="modalFormatSearch" 
-                                    class="modern-input pl-10 pr-4 w-full text-sm" 
+                                <input type="text" id="modalFormatSearch"
+                                    class="modern-input pl-10 pr-4 w-full text-sm"
                                     placeholder="搜尋賽制..."
                                     autocomplete="off">
                                 <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                 </div>
                             </div>
-                            
-                            <!-- 賽制列表 -->
-                            <div id="modalFormatList" class="rounded-xl border border-[var(--border-color)]">
-                                ${formatsHtml}
-                            </div>
+                        </div>
+
+                        <!-- 賽制列表：完全不要 padding-top，sticky header 貼到 modal body 最上緣 -->
+                        <div id="modalFormatList">
+                            ${formatsHtml}
                         </div>
                     `;
 
@@ -2872,8 +2885,16 @@ const App = {
                 footer: ''
             });
 
-            // 綁定搜尋和篩選事件
+            // 綁定搜尋和篩選事件 + 調整 modal body padding 讓 sticky header 真的貼頂
             setTimeout(() => {
+                // [關鍵] 把 modal body 自身的 padding 完全清為 0：
+                // - 上半部 wrapper 用 px-6 pt-6 pb-3 自己提供內距
+                // - 下半部 modalFormatList 直接貼到 scroll body 的左右上邊緣
+                // 這樣 sticky header 的 top:0 真的等於 title bar 下緣，沒有空隙
+                const scrollBody = document.querySelector('.modal-container .max-h-\\[70vh\\]');
+                if (scrollBody) {
+                    scrollBody.style.padding = '0';
+                }
                 const searchInput = document.getElementById('modalFormatSearch');
                 if (searchInput) {
                     searchInput.addEventListener('input', (e) => {
@@ -3820,7 +3841,7 @@ const App = {
                                             <div class="flex items-center gap-3">
                                                 <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 flex items-center justify-center text-lg">🏆</span>
                                                 <div class="text-left">
-                                                    <div id="selectedFormatName" class="font-semibold text-[var(--text-main)] ${this.state.selectedFormat ? '' : 'text-slate-400'}">${this.state.selectedFormat || '點擊選擇賽制...'}</div>
+                                                    <div id="selectedFormatName" class="font-semibold text-[var(--text-main)] ${this.state.selectedFormat ? '' : 'text-slate-400'}">${this.state.selectedFormat || '點擊選擇賽制'}</div>
                                                 </div>
                                             </div>
                                             <svg class="w-5 h-5 text-slate-400 group-hover:text-[var(--color-primary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
@@ -8008,14 +8029,86 @@ const App = {
         }
     },
 
+    // [Web Audio 鈴聲] 解碼後的 AudioBuffer，跟 Piper TTS 走同一條 ctx 管線。
+    // iOS 上比 <audio>.play() 可靠：AudioContext 一次 unlock 後，
+    // createBufferSource().start() 在任何時機（含 setInterval callback）都能播。
+    _ringBuffer: null,
+    _ringLoading: null,
+
+    async _loadRingBuffer() {
+        if (this._ringBuffer) return this._ringBuffer;
+        if (this._ringLoading) return this._ringLoading;
+        const ctx = this.state.audioContext;
+        if (!ctx) return null; // ctx 還沒解鎖，下次再試
+
+        this._ringLoading = (async () => {
+            try {
+                const response = await fetch('./ring.m4a');
+                if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = await ctx.decodeAudioData(arrayBuffer);
+                this._ringBuffer = buffer;
+                console.log(`[Ring] AudioBuffer loaded (${buffer.duration.toFixed(2)}s)`);
+                return buffer;
+            } catch (e) {
+                // 解碼失敗（罕見情境，例如 Firefox Linux 缺 AAC codec），
+                // playRingSound 會自動退回 <audio> 元素 fallback 路徑
+                console.warn('[Ring] AudioBuffer load failed, will fallback to <audio>:', e.message);
+                return null;
+            } finally {
+                this._ringLoading = null;
+            }
+        })();
+        return this._ringLoading;
+    },
+
+    /**
+     * 嘗試走 Web Audio 路徑播放鈴聲。
+     * 回傳 true 代表已成功排程（不一定已發出聲音，但已交給瀏覽器處理），
+     * 回傳 false 代表此路徑不可用（呼叫端應 fallback）。
+     */
+    _tryRingViaWebAudio(times) {
+        const ctx = this.state.audioContext;
+        if (!ctx || !this._ringBuffer) return false;
+
+        // 若分頁從背景回來，ctx 可能 suspend，先 resume（非 user gesture 內 iOS 可能延遲）
+        if (ctx.state === 'suspended') {
+            ctx.resume().catch(() => { });
+        }
+
+        App.state.isRinging = true;
+        const dur = this._ringBuffer.duration;
+        const gap = 0.4; // 每聲之間 400ms 間隔
+        let lastSource = null;
+
+        for (let i = 0; i < times; i++) {
+            const source = ctx.createBufferSource();
+            source.buffer = this._ringBuffer;
+            source.connect(ctx.destination);
+            source.start(ctx.currentTime + i * (dur + gap));
+            lastSource = source;
+        }
+
+        if (lastSource) {
+            lastSource.onended = () => { App.state.isRinging = false; };
+        } else {
+            App.state.isRinging = false;
+        }
+        return true;
+    },
+
     playRingSound(times = 1) {
         // 如果正在響鈴，則忽略新的請求，避免打斷
         if (App.state.isRinging) return;
 
+        // 主路徑：Web Audio AudioBuffer（iOS 最可靠）
+        if (this._tryRingViaWebAudio(times)) return;
+
+        // Fallback：buffer 還沒載好或解碼失敗時，退回 <audio> 元素
         const sound = document.getElementById('ringSound');
         if (!sound) return;
 
-        App.state.isRinging = true; // 設定旗標，表示開始響鈴
+        App.state.isRinging = true;
         let count = 0;
 
         const play = () => {
@@ -8025,10 +8118,8 @@ const App = {
                 count++;
 
                 if (count < times) {
-                    // 如果還需要繼續響鈴，則設定下一次播放
                     setTimeout(play, 400);
                 } else {
-                    // 這是最後一次響鈴，在短暫延遲後重置旗標，允許下一次播放
                     setTimeout(() => {
                         App.state.isRinging = false;
                     }, 400);
@@ -8036,7 +8127,7 @@ const App = {
             }
         };
 
-        play(); // 開始播放序列
+        play();
     },
     finalizeRebuttalOrder(team) {
         // 防止重複觸發
