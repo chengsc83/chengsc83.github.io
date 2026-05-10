@@ -2874,7 +2874,8 @@ const App = {
                         </div>
 
                         <!-- 賽制列表：完全不要 padding-top，sticky header 貼到 modal body 最上緣 -->
-                        <div id="modalFormatList">
+                        <!-- px-3 留出右側給 iOS 滾動條（避免 sticky 分類標題擋住拖動條），左側對稱保持視覺平衡 -->
+                        <div id="modalFormatList" class="px-3 pb-3">
                             ${formatsHtml}
                         </div>
                     `;
