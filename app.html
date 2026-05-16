@@ -216,6 +216,9 @@
 
         <div id="notification-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
 
+        <!-- 螢幕閱讀器公告區：計時器里程碑、階段變更等資訊以 polite 模式播報，避免每秒打擾使用者 -->
+        <div id="timerAnnouncer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
         <!-- 教學引導 (Onboarding Tour) - 增強版 -->
         <div id="onboarding-overlay" class="onboarding-overlay">
             <div class="backdrop"></div>
