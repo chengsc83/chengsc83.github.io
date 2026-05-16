@@ -94,9 +94,10 @@
 
             --text-main: #f1f5f9;
             /* Slate-100 */
-            --text-sub: #94a3b8;
-            /* Slate-400 */
-            --text-placeholder: #475569;
+            --text-sub: #cbd5e1;
+            /* Slate-300 — bumped from slate-400 to meet WCAG AA on translucent surfaces */
+            --text-placeholder: #94a3b8;
+            /* Slate-400 — bumped from slate-600 so placeholders remain legible */
 
             --border-color: rgba(255, 255, 255, 0.1);
 
@@ -108,7 +109,7 @@
             /* Dock & Controls */
             --dock-bg: rgba(15, 23, 42, 0.85);
             --dock-border: rgba(255, 255, 255, 0.15);
-            --dock-text: #94a3b8;
+            --dock-text: #cbd5e1;
             --dock-btn-hover: rgba(255, 255, 255, 0.1);
 
             /* 錄音面板 */
@@ -116,6 +117,39 @@
             --rec-btn-text: #e2e8f0;
             --rec-btn-border: rgba(255, 255, 255, 0.1);
             --rec-group-bg: rgba(51, 65, 85, 0.5);
+        }
+
+        /* --- A11y 工具類別 --- */
+        /* 視覺隱藏但保留給螢幕閱讀器，用於 aria-live 公告區與輔助標籤 */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        /* 鍵盤焦點：使用 focus-visible，避免滑鼠點擊時也顯示外框，但鍵盤使用者一定看得到 */
+        :focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* 賽制選擇 modal 中，方向鍵選取狀態 */
+        .format-option.kbd-focused,
+        .format-option:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        html.dark .format-option.kbd-focused,
+        html.dark .format-option:focus-visible {
+            background-color: rgba(129, 140, 248, 0.18);
         }
 
         /* --- 2. 全局基礎設定 --- */
