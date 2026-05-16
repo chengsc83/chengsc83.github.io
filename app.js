@@ -2903,6 +2903,53 @@ const App = {
                     });
                     searchInput.focus();
                 }
+
+                // [a11y] 鍵盤導航：上下鍵在賽制選項間移動、Home/End 跳到首/末、Enter 觸發選擇
+                const modalContainer = document.querySelector('.modal-container');
+                if (modalContainer) {
+                    const getVisibleOptions = () => Array.from(
+                        modalContainer.querySelectorAll('#modalFormatList .format-option')
+                    ).filter(opt => opt.style.display !== 'none');
+
+                    modalContainer.addEventListener('keydown', (e) => {
+                        if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+                        const options = getVisibleOptions();
+                        if (options.length === 0) return;
+
+                        const active = document.activeElement;
+                        const isOnOption = active && active.classList.contains('format-option');
+                        const isOnSearch = active === searchInput;
+
+                        // 搜尋框按 ↓：跳到第一個選項
+                        if (isOnSearch && e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            options[0].focus();
+                            return;
+                        }
+
+                        if (!isOnOption) return;
+                        const currentIdx = options.indexOf(active);
+                        let nextIdx = currentIdx;
+
+                        if (e.key === 'ArrowDown') nextIdx = (currentIdx + 1) % options.length;
+                        else if (e.key === 'ArrowUp') {
+                            // 第一個選項按 ↑：回到搜尋框
+                            if (currentIdx === 0 && searchInput) {
+                                e.preventDefault();
+                                searchInput.focus();
+                                return;
+                            }
+                            nextIdx = (currentIdx - 1 + options.length) % options.length;
+                        }
+                        else if (e.key === 'Home') nextIdx = 0;
+                        else if (e.key === 'End') nextIdx = options.length - 1;
+
+                        e.preventDefault();
+                        options[nextIdx].focus();
+                        // scroll into view，避免聚焦到視窗外
+                        options[nextIdx].scrollIntoView({ block: 'nearest' });
+                    });
+                }
             }, 100);
         },
 
@@ -5123,8 +5170,8 @@ const App = {
                         <span id="timerStatus" class="info-pill shadow-sm">${this.escapeHtml(this.interpolateScript(stage.timerLabel || stage.name))}</span>
                     </div>
                     
-                    <!-- 超大計時器數字 -->
-                    <div id="timerDisplay" class="timer-digits text-[var(--text-main)]">${this.formatTime(timeLeft)}</div>
+                    <!-- 超大計時器數字（aria-live="off" 避免每秒打擾螢幕閱讀器；改由 #timerAnnouncer 在里程碑時點 polite 公告） -->
+                    <div id="timerDisplay" class="timer-digits text-[var(--text-main)]" role="timer" aria-live="off" aria-atomic="true" aria-label="比賽計時器">${this.formatTime(timeLeft)}</div>
                     
                     <!-- 進度條 -->
                     <div class="progress-bg rounded-full overflow-hidden">
@@ -5555,16 +5602,24 @@ const App = {
             sidebar.classList.add('hidden');
         }
 
+        // [a11y] 記住目前焦點，待 modal 關閉時還給原元素
+        const previouslyFocused = document.activeElement;
+
         const modal = document.createElement('div');
         modal.className = 'modal-container fixed inset-0 z-[110] flex items-center justify-center p-4';
+        // [a11y] dialog 語意，讓螢幕閱讀器知道這是個 modal
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        const titleId = `modal-title-${Date.now()}`;
+        modal.setAttribute('aria-labelledby', titleId);
 
         modal.innerHTML = `
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" data-action="closeModal"></div>
-                <div class="relative glass-panel rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all scale-100 animate-scale-in border border-white/10">
+                <div class="relative glass-panel rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all scale-100 animate-scale-in border border-white/10" tabindex="-1">
                     <div class="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--surface-2)]">
-                        <h3 class="font-bold text-xl text-[var(--text-main)]">${title}</h3>
-                        <button data-action="closeModal" class="text-slate-400 hover:text-[var(--text-main)] transition-colors">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        <h3 id="${titleId}" class="font-bold text-xl text-[var(--text-main)]">${title}</h3>
+                        <button data-action="closeModal" aria-label="關閉視窗" class="text-slate-400 hover:text-[var(--text-main)] transition-colors">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
                     <div class="p-6 max-h-[70vh] overflow-y-auto text-[var(--text-main)]">${body}</div>
@@ -5572,6 +5627,54 @@ const App = {
                 </div>`;
 
         document.body.appendChild(modal);
+
+        // [a11y] Focus trap：Tab 不會跑出 modal 之外
+        const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const getFocusable = () => Array.from(modal.querySelectorAll(FOCUSABLE_SELECTOR))
+            .filter(el => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement);
+
+        modal.addEventListener('keydown', (e) => {
+            if (e.key !== 'Tab') return;
+            const focusable = getFocusable();
+            if (focusable.length === 0) {
+                e.preventDefault();
+                modal.querySelector('[tabindex="-1"]')?.focus();
+                return;
+            }
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const active = document.activeElement;
+            if (e.shiftKey && (active === first || !modal.contains(active))) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && (active === last || !modal.contains(active))) {
+                e.preventDefault();
+                first.focus();
+            }
+        });
+
+        // [a11y] 將初始焦點移到 modal 內部第一個可聚焦元素（跳過關閉按鈕，焦點落到實際內容上比較友善）
+        requestAnimationFrame(() => {
+            const focusable = getFocusable();
+            const target = focusable.find(el => el.getAttribute('data-action') !== 'closeModal')
+                || focusable[0]
+                || modal.querySelector('[tabindex="-1"]');
+            try { target?.focus({ preventScroll: true }); } catch (_) { }
+        });
+
+        // [a11y] modal 從 DOM 被移除時，將焦點還給原本的觸發元素
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(modal)) {
+                observer.disconnect();
+                if (!document.querySelector('.modal-container')
+                    && previouslyFocused
+                    && document.body.contains(previouslyFocused)
+                    && typeof previouslyFocused.focus === 'function') {
+                    try { previouslyFocused.focus({ preventScroll: true }); } catch (_) { }
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: false });
     },
     showPromotionModal() {
         const modalBody = `
@@ -6601,29 +6704,51 @@ const App = {
     async playPiperTTS(text) {
         if (!text) return false;
 
-        const tts = await this._loadPiperTTS();
-        if (!tts) return false;
-
-        const ctx = this.ensureAudioContext();
-        if (!ctx) return false;
-
-        // 建立 AbortController
+        // [iOS Fix] AbortController 必須在所有 await 之前建立並登記，
+        // 否則 _loadPiperTTS / ensureAudioContext 期間若 speak() 重入呼叫 cancelGoogleTTS，
+        // 因 googleTtsAbortController 尚未指向本次的 controller，cancel 無法生效，
+        // 導致本次合成繼續到底，最後在「下一個階段已開始」時排程播放，
+        // 造成「設定結果 由X方優先結辯」在其他環節被誤播。
         const controller = new AbortController();
         this.state.googleTtsAbortController = controller;
         this.state.isGoogleTtsPlaying = true;
         this.state._piperSources = []; // 追蹤所有播放中的 source
 
-        try {
-            if (controller.signal.aborted) {
+        // 統一的「結束本次播放」狀態清理：只在 controller 仍是「本次」時才清空共享狀態，
+        // 避免 source.onended（stop 後非同步觸發）覆蓋下一輪 playPiperTTS 的狀態。
+        const cleanupIfOwnerStill = () => {
+            if (this.state.googleTtsAbortController === controller) {
+                this.state._piperSources = [];
                 this.state.isGoogleTtsPlaying = false;
                 this.state.googleTtsAbortController = null;
+            }
+        };
+
+        const tts = await this._loadPiperTTS();
+        if (!tts) {
+            cleanupIfOwnerStill();
+            return false;
+        }
+        if (controller.signal.aborted) {
+            cleanupIfOwnerStill();
+            return true;
+        }
+
+        const ctx = this.ensureAudioContext();
+        if (!ctx) {
+            cleanupIfOwnerStill();
+            return false;
+        }
+
+        try {
+            if (controller.signal.aborted) {
+                cleanupIfOwnerStill();
                 return true;
             }
 
             const sentences = this._splitSentences(text);
             if (sentences.length === 0) {
-                this.state.isGoogleTtsPlaying = false;
-                this.state.googleTtsAbortController = null;
+                cleanupIfOwnerStill();
                 return false;
             }
 
@@ -6666,8 +6791,7 @@ const App = {
 
             for (let i = 0; i < sentences.length; i++) {
                 if (controller.signal.aborted) {
-                    this.state.isGoogleTtsPlaying = false;
-                    this.state.googleTtsAbortController = null;
+                    cleanupIfOwnerStill();
                     return true;
                 }
 
@@ -6678,8 +6802,7 @@ const App = {
                     const wav = await wavPromises[i];
 
                     if (controller.signal.aborted) {
-                        this.state.isGoogleTtsPlaying = false;
-                        this.state.googleTtsAbortController = null;
+                        cleanupIfOwnerStill();
                         return true;
                     }
 
@@ -6689,8 +6812,7 @@ const App = {
                 }
 
                 if (controller.signal.aborted) {
-                    this.state.isGoogleTtsPlaying = false;
-                    this.state.googleTtsAbortController = null;
+                    cleanupIfOwnerStill();
                     return true;
                 }
 
@@ -6712,37 +6834,41 @@ const App = {
             }
 
             if (!lastSource) {
-                this.state.isGoogleTtsPlaying = false;
-                this.state.googleTtsAbortController = null;
+                cleanupIfOwnerStill();
                 return false;
             }
 
+            // [iOS Fix] 鎖定「本次」的 sources 在 closure 裡，避免 onAbort / onended 動到下一次 playback 的 state
+            const ownedSources = this.state._piperSources;
+
             // 等待最後一個 source 播放完畢
             return new Promise((resolve) => {
+                let settled = false;
+                const finish = () => {
+                    if (settled) return;
+                    settled = true;
+                    cleanupIfOwnerStill();
+                    resolve(true);
+                };
+
                 const onAbort = () => {
-                    // 停止所有排程中的 source
-                    for (const s of (this.state._piperSources || [])) {
+                    // 停止本次的所有 sources（不要動到後續 playback 已 push 的 source）
+                    for (const s of ownedSources) {
                         try { s.stop(); } catch (e) { }
                     }
-                    this.state._piperSources = [];
-                    this.state.isGoogleTtsPlaying = false;
-                    this.state.googleTtsAbortController = null;
-                    resolve(true);
+                    finish();
                 };
                 controller.signal.addEventListener('abort', onAbort, { once: true });
 
+                // 自然播完：lastSource.onended 也只清「本次」狀態。
+                // 注意：在 onAbort 已經跑過後，stop() 仍會排程 onended 觸發，因此 settled 旗標阻擋重複清理。
                 lastSource.onended = () => {
                     controller.signal.removeEventListener('abort', onAbort);
-                    this.state._piperSources = [];
-                    this.state.isGoogleTtsPlaying = false;
-                    this.state.googleTtsAbortController = null;
-                    resolve(true);
+                    finish();
                 };
             });
         } catch (err) {
-            this.state.isGoogleTtsPlaying = false;
-            this.state.googleTtsAbortController = null;
-            this.state._piperSources = [];
+            cleanupIfOwnerStill();
             console.warn('[Piper TTS] Synthesis failed:', err.message);
             return false;
         }
@@ -7450,6 +7576,12 @@ const App = {
             return;
         }
 
+        // [iOS Fix] 提升 speech epoch：每次新的 speak() 自增，舊的 utterance / Piper play
+        // 若漏接 onend（iOS Safari speechSynthesis.cancel 偶爾不會觸發 onend；或 AudioBufferSource
+        // 的 onended 在 stop() 後非同步觸發）都會在 epoch 比對失敗時 no-op，
+        // 不會錯誤地把上一階段的「設定結果：由X方優先結辯」當作此次播完跑掉 callback。
+        this.state.speechEpoch = (this.state.speechEpoch || 0) + 1;
+
         // If a new, important message comes in, clear the old queue and cancel any current speech.
         this.cancelGoogleTTS();
         // [FIX Bug BB] 顯式清除舊的 speechWatchdog，避免 synth.cancel 後舊 watchdog 殘留
@@ -7457,8 +7589,10 @@ const App = {
             clearInterval(this.state.speechWatchdog);
             this.state.speechWatchdog = null;
         }
-        if (this.synth && this.synth.speaking) {
-            this.synth.cancel(); // Stop the current utterance
+        // [iOS Fix] 不再依賴 synth.speaking — iPhone Safari 該屬性在有 queued utterance 時
+        // 回傳 false，但實際引擎仍會把舊 utterance 播完。一律呼叫 cancel() 才能可靠清空 queue。
+        if (this.synth) {
+            try { this.synth.cancel(); } catch (_) { }
         }
         if (this.state.isSpeaking || this.state.speechQueue.length > 0) {
             // [FIX Bug X] 清空佇列前先觸發待執行的 onEndCallback，避免流程接手邏輯被丟失
@@ -7503,6 +7637,9 @@ const App = {
         // [VAD 抑制] 系統朗讀時抑制 VAD，避免 TTS 音訊被偵測為辯手發言
         this.state.vadSuppressed = true;
         const { text, onEndCallback } = this.state.speechQueue.shift();
+        // [iOS Fix] 捕捉此次發話的 epoch；onDone 必須比對 epoch，
+        // 避免因 iOS speechSynthesis cancel bug 而播完舊 utterance 後又意外觸發舊 callback
+        const myEpoch = this.state.speechEpoch || 0;
 
         // --- 通用的完成回調 ---
         const onDone = (event) => {
@@ -7511,6 +7648,11 @@ const App = {
                 this.state.speechWatchdog = null;
             }
             this.state.currentOnDoneCallback = null;
+            // [iOS Fix] epoch 不一致表示這次 onDone 來自被取代的舊 utterance（iOS Safari 漏觸發 cancel
+            // 時常發生），舊 callback 不該觸發、也不該重新驅動 queue
+            if ((this.state.speechEpoch || 0) !== myEpoch) {
+                return;
+            }
             // Make sure we are not already processing the next item
             if (this.state.isSpeaking) {
                 this.state.isSpeaking = false;
@@ -8449,7 +8591,29 @@ const App = {
     // [效能優化] 快取計時器 DOM 元素引用
     _cachedTimerEl: null,
     _cachedProgressEl: null,
+    _cachedAnnouncerEl: null,
     _lastTimerClass: null,
+    _lastAnnouncedTime: null,
+
+    // [a11y] 將訊息送到 #timerAnnouncer 給螢幕閱讀器
+    // 為了避免重複播報相同訊息，會跟上一次比對
+    _lastAnnouncerText: null,
+    announce(message) {
+        if (!message) return;
+        if (!this._cachedAnnouncerEl) {
+            this._cachedAnnouncerEl = document.getElementById('timerAnnouncer');
+        }
+        if (!this._cachedAnnouncerEl) return;
+        if (message === this._lastAnnouncerText) {
+            // 強制讓螢幕閱讀器再次注意：先清空再寫入
+            this._cachedAnnouncerEl.textContent = '';
+            // 使用 microtask 確保 DOM 變更被識別
+            queueMicrotask(() => { this._cachedAnnouncerEl.textContent = message; });
+        } else {
+            this._cachedAnnouncerEl.textContent = message;
+        }
+        this._lastAnnouncerText = message;
+    },
 
     updateTimerDisplay(time) {
         // 使用快取的 DOM 引用，避免每秒重新查詢
@@ -8480,10 +8644,43 @@ const App = {
         if (progressEl && this.state.timer.initialDuration > 0) {
             progressEl.style.width = `${(time / this.state.timer.initialDuration) * 100}%`;
         }
+
+        // [a11y] 螢幕閱讀器里程碑公告：
+        // - 每分鐘整點（time > 60）
+        // - 最後 60、30、20、10 秒
+        // - 最後 5 秒每秒
+        // - 0 秒時間到
+        // 跟 _lastAnnouncedTime 比對，避免同一秒重複觸發
+        if (this._lastAnnouncedTime !== time) {
+            this._lastAnnouncedTime = time;
+            const initial = this.state.timer.initialDuration || 0;
+            let message = null;
+
+            if (time === 0) {
+                message = '時間到';
+            } else if (time <= 5) {
+                message = `剩餘 ${time} 秒`;
+            } else if (time === 10 && initial > 30) {
+                message = '剩餘 10 秒';
+            } else if (time === 20 && initial > 60) {
+                message = '剩餘 20 秒';
+            } else if (time === 30 && initial > 60) {
+                message = '剩餘 30 秒';
+            } else if (time === 60 && initial > 90) {
+                message = '剩餘 1 分鐘';
+            } else if (time > 60 && time % 60 === 0) {
+                message = `剩餘 ${time / 60} 分鐘`;
+            }
+
+            if (message) this.announce(message);
+        }
     },
 
     // --- TIMER LOGIC ---
     clearAllTimers() {
+        // [a11y] 重置螢幕閱讀器公告追蹤，新階段的相同秒數可以再次播報
+        this._lastAnnouncedTime = null;
+        this._lastAnnouncerText = null;
         // [FIX] 如果 TTS 處於暫停狀態（例如「系統暫停」後手動跳下一步），
         // 必須先 resume 再 cancel，否則 TTS 引擎會卡在暫停狀態，導致後續朗讀和自動跳轉失效
         this.cancelGoogleTTS();
