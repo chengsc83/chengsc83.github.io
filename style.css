@@ -5,7 +5,7 @@
             --font-body: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
 
-            /* ☀️ 淺色模式 (Light Mode) - 預設值 */
+            /* ☀️ 淺色模式 */
             --color-primary: #6366f1;
             /* Indigo-500 */
             --color-primary-dark: #4f46e5;
@@ -921,13 +921,11 @@
         }
 
         /* 輸入框 placeholder 優化 */
+        /* 深淺色 placeholder 顏色統一由 --text-placeholder token 管理（深色模式已調至 slate-400），
+           不再用寫死的 slate-600 覆蓋，否則對比度會不足。 */
         .modern-input::placeholder {
             color: var(--text-placeholder);
             opacity: 1;
-        }
-
-        html.dark .modern-input::placeholder {
-            color: #64748b !important;
         }
 
         /* --- 可搜尋下拉選單 (Searchable Dropdown) --- */
