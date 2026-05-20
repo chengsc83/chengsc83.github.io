@@ -2839,8 +2839,8 @@ const App = {
                                 <!-- 卡片堆疊容器 -->
                                 <div class="px-3 py-2 space-y-1.5 bg-slate-50/50 dark:bg-slate-900/30 rounded-b-xl">
                                     ${formatKeys.map(formatName => `
-                                        <button data-action="selectFormatFromModal" data-format="${formatName}" class="format-option w-full text-left px-3 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-[var(--color-primary)]/10 dark:hover:bg-[var(--color-primary)]/20 active:scale-[0.98] transition-all flex items-center gap-3 border border-slate-200/60 dark:border-slate-700/40">
-                                            <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-accent)]/20 flex items-center justify-center text-sm shrink-0">${icon}</span>
+                                        <button data-action="selectFormatFromModal" data-format="${formatName}" class="format-option w-full text-left px-3 py-3 rounded-xl flex items-center gap-3">
+                                            <span class="format-option-icon w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-accent)]/20 flex items-center justify-center text-sm shrink-0">${icon}</span>
                                             <span class="font-medium text-[var(--text-main)]">${formatName}</span>
                                         </button>
                                     `).join('')}
@@ -4367,7 +4367,9 @@ const App = {
                 </div>
 
                 <!-- 逐字稿面板 - 始終顯示 -->
-                <div class="lg:col-span-4 h-[400px] lg:h-[500px]">
+                <!-- 桌面：用 lg:h-auto 讓 grid 預設的 align-items:stretch 把面板拉到與左欄等高
+                     （底部對齊左欄最後一張卡片 / 主席宣告）；行動裝置維持固定 400px 避免無限長高 -->
+                <div class="lg:col-span-4 h-[400px] lg:h-auto">
                     <div id="transcriptionPanel" class="glass-panel transcription-card overflow-hidden h-full"></div>
                 </div>
             </div>
@@ -4598,7 +4600,9 @@ const App = {
                 </div>
 
                 <!-- 逐字稿面板 - 始終顯示 -->
-                <div class="lg:col-span-4 h-[400px] lg:h-[500px]">
+                <!-- 桌面：用 lg:h-auto 讓 grid 預設的 align-items:stretch 把面板拉到與左欄等高
+                     （底部對齊左欄最後一張卡片 / 主席宣告）；行動裝置維持固定 400px 避免無限長高 -->
+                <div class="lg:col-span-4 h-[400px] lg:h-auto">
                     <div id="transcriptionPanel" class="glass-panel transcription-card overflow-hidden h-full"></div>
                 </div>
             </div>
@@ -5633,7 +5637,7 @@ const App = {
                 <div class="relative glass-panel rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all scale-100 animate-scale-in border border-white/10" tabindex="-1">
                     <div class="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--surface-2)]">
                         <h3 id="${titleId}" class="font-bold text-xl text-[var(--text-main)]">${title}</h3>
-                        <button data-action="closeModal" aria-label="關閉視窗" class="text-slate-400 hover:text-[var(--text-main)] transition-colors">
+                        <button data-action="closeModal" aria-label="關閉視窗" class="modal-close-btn text-slate-400 hover:text-[var(--text-main)]">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
