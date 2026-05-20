@@ -25,6 +25,10 @@
             /* Slate-800 */
             --text-sub: #64748b;
             /* Slate-500 */
+            --text-muted: #64748b;
+            /* Slate-500 — 次級文字（圖示鈕 / VS 標 / stage meta 等）。
+               淺色模式為了在白底 / surface 上維持 WCAG AA（slate-400 在白底僅 ~2.8:1 會不及格），
+               取與 --text-sub 同階；深色模式於 html.dark 另調暗一階。 */
             --text-placeholder: #94a3b8;
             /* Slate-400 */
 
@@ -34,6 +38,22 @@
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
             --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.2);
+
+            /* Motion tokens — hover/狀態統一用 --ease-standard；--ease-bounce 只給「出現」動畫 */
+            --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --dur-fast: 0.15s;
+            --dur-base: 0.2s;
+            --dur-slow: 0.25s;
+
+            /* 全圓膠囊（標籤 / 狀態 pill）統一圓角，取代原本混用的 9999px / 99px */
+            --radius-pill: 9999px;
+
+            /* 玻璃模糊強度：base 給一般面（header / dock 主列 / 編輯器 bar / tooltip），
+               strong 給 hero 浮動面（卡片 glass-panel / dock 彈出 / sidebar / action-bar）。
+               取代原本散落的 12/16/24/25/30/35px。 */
+            --glass-blur: 20px;
+            --glass-blur-strong: 30px;
 
             --color-success: #10b981;
             --color-warning: #f59e0b;
@@ -64,6 +84,7 @@
             --surface-3: #e2e8f0;
             --text-main: #1e293b;
             --text-sub: #64748b;
+            --text-muted: #64748b;
             --text-placeholder: #94a3b8;
             --border-color: #e2e8f0;
             --dock-bg: rgba(255, 255, 255, 0.9);
@@ -96,6 +117,9 @@
             /* Slate-100 */
             --text-sub: #cbd5e1;
             /* Slate-300 — bumped from slate-400 to meet WCAG AA on translucent surfaces */
+            --text-muted: #94a3b8;
+            /* Slate-400 — 次級文字，比深色 --text-sub(slate-300) 暗一階做出層級，
+               在深色 surface 上仍達 ~5.3:1 AA */
             --text-placeholder: #94a3b8;
             /* Slate-400 — bumped from slate-600 so placeholders remain legible */
 
@@ -140,7 +164,47 @@
             border-radius: 4px;
         }
 
-        /* 賽制選擇 modal 中，方向鍵選取狀態 */
+        /* 賽制選擇 modal 的每個賽制選項：套用與側邊控制中心 (.menu-item) 一致的
+           毛玻璃 + hover 滑移動畫。
+           [效能] 不在每個選項上掛 backdrop-filter（選項可能 30~60 個會嚴重卡頓），
+           改用半透明底浮在 modal 的玻璃背板 (.glass-panel) 上，達成相同的毛玻璃感——
+           這正是側邊欄 .menu-item 的做法。 */
+        .format-option {
+            background-color: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: background-color var(--dur-slow) var(--ease-standard),
+                border-color var(--dur-slow) var(--ease-standard),
+                transform var(--dur-slow) var(--ease-standard),
+                box-shadow var(--dur-slow) var(--ease-standard);
+        }
+
+        html.dark .format-option {
+            background-color: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        /* hover：滑移 + 主色邊框 + 陰影（與 .menu-item:hover 同手感） */
+        .format-option:hover {
+            transform: translateX(4px);
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-md);
+            background-color: rgba(255, 255, 255, 0.85);
+        }
+
+        html.dark .format-option:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 圖示放大，對應 .menu-item:hover .menu-icon */
+        .format-option-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .format-option:hover .format-option-icon {
+            transform: scale(1.1);
+        }
+
+        /* 鍵盤焦點 / 方向鍵選取狀態：放在 hover 之後，確保聚焦時的外框與底色不被 hover 蓋掉 */
         .format-option.kbd-focused,
         .format-option:focus-visible {
             outline: 2px solid var(--color-primary);
@@ -240,9 +304,42 @@
         header {
             background-color: var(--bg-header) !important;
             border-bottom: 1px solid var(--border-color) !important;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
             transition: all 0.3s ease;
+        }
+
+        /* 規範類別 B：header 圖示按鈕（教學 / 主題 / 漢堡）統一 hover 放大，
+           原本只有 hover:bg、缺 scale；ID 選擇器確保覆蓋 Tailwind 的 transition-colors */
+        #helpBtn,
+        #themeToggleBtn,
+        #hamburgerBtn {
+            transition: background-color var(--dur-base) var(--ease-standard),
+                transform var(--dur-base) var(--ease-standard);
+        }
+
+        #helpBtn:hover,
+        #themeToggleBtn:hover,
+        #hamburgerBtn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 規範類別 B：modal 關閉鈕（✕）原本只變字色，補上 scale + 底色 tint，與其他圖示按鈕一致 */
+        .modal-close-btn {
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            transition: background-color var(--dur-base) var(--ease-standard),
+                color var(--dur-base) var(--ease-standard),
+                transform var(--dur-base) var(--ease-standard);
+        }
+
+        .modal-close-btn:hover {
+            transform: scale(1.05);
+            background-color: var(--surface-2);
+        }
+
+        html.dark .modal-close-btn:hover {
+            background-color: rgba(255, 255, 255, 0.08);
         }
 
         /* --- 3. 通用元件 (Components) --- */
@@ -251,8 +348,10 @@
             border: 1px solid var(--border-color);
             border-radius: 1.5rem;
             box-shadow: var(--shadow-md);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            /* saturate(180%) 與 dock / sidebar / action-bar 的玻璃對齊，
+               讓卡片/modal 玻璃同樣鮮豔通透，不再偏灰平 */
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
             transition: transform 0.2s, box-shadow 0.2s;
             transform: translateZ(0);
         }
@@ -291,23 +390,33 @@
             color: #94a3b8 !important;
         }
 
-        /* Format tag 分類標籤樣式 */
+        /* Format tag 分類標籤樣式（篩選 pill）— 規範類別 D */
         .format-tag {
             padding: 0.375rem 0.75rem;
-            border-radius: 9999px;
+            border-radius: var(--radius-pill);
             font-size: 0.75rem;
             font-weight: 500;
             background-color: var(--surface-2);
-            color: var(--text-secondary);
+            color: var(--text-sub);
+            /* 修正：原本用未定義的 --text-secondary，fallback 成繼承色 */
             border: 1px solid var(--border-color);
-            transition: all 0.2s;
+            transition: background-color var(--dur-base) var(--ease-standard),
+                border-color var(--dur-base) var(--ease-standard),
+                color var(--dur-base) var(--ease-standard),
+                transform var(--dur-base) var(--ease-standard);
             cursor: pointer;
+            user-select: none;
         }
 
         .format-tag:hover {
             background-color: var(--surface-1);
             border-color: var(--color-primary);
             color: var(--color-primary);
+            transform: translateY(-1px);
+        }
+
+        .format-tag:active {
+            transform: translateY(0);
         }
 
         .format-tag.active {
@@ -355,7 +464,7 @@
         #sidebar-panel {
             position: absolute;
             background-color: var(--surface-1);
-            backdrop-filter: blur(24px);
+            backdrop-filter: blur(var(--glass-blur-strong));
             box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
@@ -423,7 +532,7 @@
             background: var(--surface-2);
             border-radius: 0.75rem;
             border: 1px solid transparent;
-            transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+            transition: background var(--dur-slow) var(--ease-standard), border-color var(--dur-slow) var(--ease-standard), transform var(--dur-slow) var(--ease-standard), box-shadow var(--dur-slow) var(--ease-standard);
             cursor: pointer;
         }
 
@@ -629,7 +738,8 @@
         }
 
         .timeline-card:hover {
-            transform: translateY(-3px) translateX(2px);
+            /* 規範類別 C：卡片統一抬升 -2px（原為 -3px + translateX(2px)） */
+            transform: translateY(-2px);
             box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.3), var(--shadow-md);
             border-color: var(--color-primary);
             z-index: 10;
@@ -725,7 +835,7 @@
 
         .icon-btn.delete:hover {
             background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
+            color: var(--color-danger);
             border-color: rgba(239, 68, 68, 0.3);
         }
 
@@ -784,8 +894,8 @@
             width: calc(100% - 2rem);
             max-width: 48rem;
             background: var(--dock-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
             border: 1px solid var(--dock-border);
             border-radius: 1.25rem;
             padding: 0.875rem 1.25rem;
@@ -861,20 +971,8 @@
             font-size: 0.7rem;
         }
 
-        /* 賽制標籤篩選按鈕 */
-        .format-tag {
-            border: none;
-            outline: none;
-            user-select: none;
-        }
-
-        .format-tag:hover {
-            transform: translateY(-1px);
-        }
-
-        .format-tag:active {
-            transform: translateY(0);
-        }
+        /* （.format-tag 的篩選按鈕樣式已整併到上方單一定義；
+            原本這裡的 border:none / outline:none 會蓋掉邊框與鍵盤焦點框，已移除） */
 
         /* Toggle 開關平滑過渡 */
         .toggle-switch {
@@ -1284,7 +1382,7 @@
         }
 
         .state-warning .progress-fill {
-            background: linear-gradient(90deg, var(--color-warning), #f59e0b);
+            background: linear-gradient(90deg, var(--color-warning), var(--color-warning));
         }
 
         .state-danger .timer-digits {
@@ -1330,7 +1428,7 @@
             display: inline-flex;
             align-items: center;
             padding: 0.35rem 1rem;
-            border-radius: 99px;
+            border-radius: var(--radius-pill);
             font-size: 0.8rem;
             font-weight: 700;
             letter-spacing: 0.03em;
@@ -1362,7 +1460,7 @@
             background: linear-gradient(135deg, var(--color-primary), #a855f7);
             color: white;
             border-color: transparent;
-            transform: scale(1.1);
+            transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
@@ -1394,7 +1492,7 @@
             background: linear-gradient(135deg, var(--color-primary), #a855f7);
             color: white;
             border-color: transparent;
-            transform: scale(1.1);
+            transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
@@ -1430,8 +1528,8 @@
             background: var(--dock-bg) !important;
             border: 1px solid var(--dock-border) !important;
             color: var(--dock-text) !important;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
             box-shadow:
                 0 8px 32px rgba(0, 0, 0, 0.12),
                 0 2px 8px rgba(0, 0, 0, 0.08),
@@ -1461,6 +1559,11 @@
             opacity: 0;
             transform: translateY(10px) scale(0.98);
             pointer-events: none;
+            /* [a11y Fix] 關閉時 visibility:hidden 才能把內部 8 顆按鈕移出 Tab 順序與螢幕閱讀器，
+               opacity:0 / pointer-events:none 都擋不住鍵盤聚焦。visibility 為離散可過渡屬性，
+               配合下方 transition: all 會撐到淡出結束才隱藏，動畫不受影響。
+               用 visibility（非 display:none）以保留 getBoundingClientRect，教學 tour 仍能定位此元素。 */
+            visibility: hidden;
             transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -1468,6 +1571,7 @@
             opacity: 1;
             transform: translateY(0) scale(1);
             pointer-events: auto;
+            visibility: visible;
         }
 
         /* 選單項目包裝 */
@@ -1481,8 +1585,9 @@
         .menu-item-wrap .menu-label {
             font-size: 0.65rem;
             font-weight: 500;
-            color: var(--text-muted);
-            opacity: 0.8;
+            /* [a11y] dock 彈出層標籤字僅 ~10px，疊在毛玻璃上；用較亮的 --text-sub
+               而非最暗的 --text-muted，且移除 opacity:0.8（小字疊半透明會掉到 AA 以下）。 */
+            color: var(--text-sub);
         }
 
         /* Dock 按鈕基礎樣式 */
@@ -1558,7 +1663,7 @@
             right: 0.35rem;
             width: 0.5rem;
             height: 0.5rem;
-            background: linear-gradient(135deg, #22c55e, #10b981);
+            background: linear-gradient(135deg, #22c55e, var(--color-success));
             border-radius: 50%;
             box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
             animation: indicatorPulse 2s ease-in-out infinite;
@@ -1654,7 +1759,7 @@
         }
 
         .btn-record-toggle:has(svg.w-3) {
-            background-color: #ef4444 !important;
+            background-color: var(--color-danger) !important;
             color: white !important;
             border-color: #dc2626 !important;
         }
@@ -1804,7 +1909,7 @@
 
         /* 危急狀態 - 紅色閃爍 */
         body.presentation-mode .state-danger #timerDisplay {
-            color: #ef4444 !important;
+            color: var(--color-danger) !important;
             text-shadow:
                 0 0 80px rgba(239, 68, 68, 0.6),
                 0 0 160px rgba(239, 68, 68, 0.4);
@@ -2356,9 +2461,9 @@
         /* 增加內陰影與邊框高光，提升立體感 */
         .glass-panel {
             background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(30px) saturate(180%);
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
             /* 提高飽和度讓背景透出來更漂亮 */
-            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow:
                 0 4px 30px rgba(0, 0, 0, 0.1),
@@ -2472,15 +2577,16 @@
             /* 水平置中 */
 
             /* 尺寸與形狀 */
-            width: calc(100% -2rem);
+            /* （移除無效的 width: calc(100% -2rem)，缺空格會被瀏覽器丟棄；
+               寬度由後方「終極修復」的 width: 95% !important 統一控制） */
             max-width: 56rem;
             /* 約 900px，與上方卡片等寬 */
             height: auto;
 
             /* 外觀：使用變數確保深淺模式正確 */
             background-color: var(--dock-bg) !important;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            /* （移除死值 blur(16px)：被後方「晶透玻璃升級」的 blur(var(--glass-blur-strong)) !important 覆蓋，
+               玻璃模糊統一由該規則控制） */
             border: 1px solid var(--dock-border) !important;
             border-radius: 1.25rem;
             padding: 0.75rem 1.25rem;
@@ -2525,6 +2631,31 @@
 
         .btn-start-match:active {
             transform: scale(0.95);
+        }
+
+        /* 次要按鈕（modal 取消 / 關閉 / 繼續編輯…）— 與主要鈕成對的中性鈕。
+           原本 .btn-secondary 從未定義，導致這些鈕變成無底無框的裸文字鈕；
+           這裡補上中性底 + 邊框 + hover（套 motion token），深淺色皆達對比。
+           padding / border-radius 由 markup 的 px-4 py-2 rounded-lg 提供。 */
+        .btn-secondary {
+            background-color: var(--surface-2);
+            color: var(--text-sub);
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--dur-base) var(--ease-standard),
+                border-color var(--dur-base) var(--ease-standard),
+                color var(--dur-base) var(--ease-standard);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--surface-1);
+            border-color: var(--color-primary);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.97);
         }
 
         /* 3. 左側功能按鈕 (編輯/匯入/分享) */
@@ -2637,9 +2768,9 @@
         /* 增加內陰影與邊框高光，提升立體感 */
         .glass-panel {
             background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(30px) saturate(180%);
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
             /* 提高飽和度讓背景透出來更漂亮 */
-            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow:
                 0 4px 30px rgba(0, 0, 0, 0.1),
@@ -2791,8 +2922,8 @@
             /* 更通透的背景，讓背景光球透出來 */
             background-color: rgba(15, 23, 42, 0.5) !important;
             /* 高強度模糊 + 飽和度提升 (Apple 風格關鍵) */
-            backdrop-filter: blur(25px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) !important;
 
             /* 精緻的邊框光澤 */
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -2846,9 +2977,9 @@
         .dock-popup-menu {
             /* 極致通透感 */
             background-color: rgba(15, 23, 42, 0.6) !important;
-            backdrop-filter: blur(30px) saturate(200%) !important;
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(200%) !important;
             /* 提高飽和度 */
-            -webkit-backdrop-filter: blur(30px) saturate(200%) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(200%) !important;
 
             /* 玻璃邊框 */
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -2916,11 +3047,11 @@
         .team-setup-card.team-negative {
             animation: slideInRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
             animation-delay: 0.2s;
-            border-left: 3px solid #ef4444 !important;
+            border-left: 3px solid var(--color-danger) !important;
         }
 
         .team-setup-card.team-negative h3 {
-            color: #ef4444 !important;
+            color: var(--color-danger) !important;
         }
 
         @keyframes slideInLeft {
@@ -3214,8 +3345,8 @@
             background-color: rgba(15, 23, 42, 0.65) !important;
 
             /* 核心魔法：高模糊 + 高飽和度 (讓透出的顏色更鮮豔，不會髒髒的) */
-            backdrop-filter: blur(35px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(35px) saturate(180%) !important;
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) !important;
 
             /* 左側邊緣高光，增加立體感 */
             border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -3499,8 +3630,8 @@
             border-radius: 1.25rem;
             padding: 1.5rem;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
             opacity: 0;
             transform: translateY(10px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3521,7 +3652,7 @@
             color: var(--color-primary);
             background: rgba(99, 102, 241, 0.1);
             padding: 0.25rem 0.75rem;
-            border-radius: 99px;
+            border-radius: var(--radius-pill);
             margin-bottom: 0.75rem;
         }
 
@@ -3840,7 +3971,12 @@
         }
 
         /* 5. 安全區域支援（iPhone 瀏海/底部橫條） */
-        .sticky-action-bar,
+        /* 注意：control-dock-wrapper 是透明容器（無背景/邊框），多出的底部內距看不見，維持原樣。 */
+        /* [iPad Fix] 原本 .sticky-action-bar 也在這條，會被加上 padding-bottom: calc(0.75rem + safe-area)，
+           但它有毛玻璃背景 + 圓角、且已用 bottom 偏移浮在底部安全區之上（行動裝置 / standalone 已把
+           env(safe-area-inset-bottom) 加進 bottom 位移），多疊的底部內距會讓上下不對稱、面板底部露出
+           一截空白（iPad viewport-fit=cover 瀏覽器模式最明顯）。故移除，讓它回到對稱的基礎內距
+           （桌面 0.75rem、行動裝置 0.5rem）。 */
         .control-dock-wrapper {
             padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
         }
