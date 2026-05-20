@@ -3400,6 +3400,11 @@ const App = {
         });
 
         // 點擊外部時關閉下拉選單
+        // [Memory Fix] 每次 renderSetupView() 都會重新呼叫 initFormatSearch()，
+        // 若 document.click listener 不清掉就會累積。用 AbortController 在重綁前 abort 舊的，
+        // 確保 document 上永遠只有一份此功能的 listener。
+        this._formatSearchAbortController?.abort();
+        this._formatSearchAbortController = new AbortController();
         document.addEventListener('click', (e) => {
             const container = document.getElementById('formatDropdownContainer');
             const portal = document.getElementById('formatDropdownListPortal');
@@ -3413,7 +3418,7 @@ const App = {
             if (portal && portal.contains(e.target)) return;
 
             this.hideFormatDropdown();
-        });
+        }, { signal: this._formatSearchAbortController.signal });
 
         // 鍵盤導航
         searchInput.addEventListener('keydown', (e) => {
@@ -4752,13 +4757,18 @@ const App = {
                     }
                 }
             });
+            // [Memory Fix] renderFreeDebateControls 可能在自由辯論期間被多次呼叫（暫停、切換、計時器更新），
+            // 即使原本有 { once: true } 也只有「被觸發後」才會清；若 menu 一直沒開、使用者沒點，
+            // 累積數十份 listener 沒被觸發前都掛著。改用 AbortController 在重綁前 abort 上一份。
+            this._freeDebateControlsAbortController?.abort();
+            this._freeDebateControlsAbortController = new AbortController();
             document.addEventListener('click', (e) => {
                 if (!menu.contains(e.target) && !toggleBtn.contains(e.target) && menu.classList.contains('open')) {
                     menu.classList.remove('open');
                     toggleBtn.innerHTML = icons.menu;
                     if (hasActiveHiddenFeatures) toggleBtn.classList.add('has-indicator');
                 }
-            }, { once: true });
+            }, { once: true, signal: this._freeDebateControlsAbortController.signal });
         }
     },
 
@@ -5435,13 +5445,18 @@ const App = {
                     }
                 }
             });
+            // [Memory Fix] renderDebateControls 由 scheduleRenderDebateControls 從 20+ 處呼叫
+            // （計時器 tick、暫停、階段切換等），即使原本有 { once: true }，
+            // 使用者一段時間沒點任何東西就會累積數十份 listener。改用 AbortController 在重綁前 abort 上一份。
+            this._debateControlsAbortController?.abort();
+            this._debateControlsAbortController = new AbortController();
             document.addEventListener('click', (e) => {
                 if (!menu.contains(e.target) && !toggleBtn.contains(e.target) && menu.classList.contains('open')) {
                     menu.classList.remove('open');
                     toggleBtn.innerHTML = icons.menu;
                     if (hasActiveHiddenFeatures) toggleBtn.classList.add('has-indicator');
                 }
-            }, { once: true });
+            }, { once: true, signal: this._debateControlsAbortController.signal });
         }
     },
 
@@ -6317,7 +6332,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5.2<br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5.3<br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -7402,7 +7417,7 @@ const App = {
                 // [自動換場] Handle End Word detection followed by silence during main timer
                 if (this.state.isAutoMode && this.state.timer.type === 'main' && !this.state.timer.isPaused) {
                     const combinedTranscript = finalTranscript + interimTranscript;
-                    if (/(謝謝大家|謝謝|結束|到此為止|發言完畢|我的申論到此結束|我的答辯到此結束|寫寫大家|謝謝大甲|謝謝打架|歇歇大家|卸卸大家|寫寫|歇歇|卸卸|些些|結樹|結數|解說|接收|劫數|傑叔|到此位置|到次為止|倒刺為止|道詞為止|到此為紙|發炎完畢|發現完畢|法院完畢|罰言完畢|發言玩斃|我的神論到此結束|我的深論到此結束|我的身論到此結束|我等申論到此結束|我的生存到此結束|我的大便到此結束|我的打扮到此結束|我的大辯到此結束|我得答辯到此結束)/.test(combinedTranscript)) {
+                    if (/(謝謝大家|謝謝各位|結束|到此為止|發言完畢|我的申論到此結束|我的答辯到此結束|寫寫大家|謝謝大甲|謝謝打架|歇歇大家|卸卸大家|寫寫|歇歇|卸卸|些些|結樹|結數|解說|接收|劫數|傑叔|到此位置|到次為止|倒刺為止|道詞為止|到此為紙|發炎完畢|發現完畢|法院完畢|罰言完畢|發言玩斃|我的神論到此結束|我的深論到此結束|我的身論到此結束|我等申論到此結束|我的生存到此結束|我的大便到此結束|我的打扮到此結束|我的大辯到此結束|我得答辯到此結束)/.test(combinedTranscript)) {
                         if (!this.state.endWordTimeout && combinedTranscript.length > 0) {
                             console.log("End word detected, waiting for silence...");
                             this.state.endWordTimeout = setTimeout(() => {
