@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debate-clock-v2.5.16';
+const CACHE_NAME = 'debate-clock-v2.6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -13,14 +13,12 @@ const ASSETS_TO_CACHE = [
   './app.js',
   './piper-worker.js',
   './style.css',
-  './style.min.css',
-  // 賽制資料
   './debateFormatGroups.json'
 ];
 
 // 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing v2.5.16...');
+  console.log('SW: Installing v2.6...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
@@ -35,13 +33,50 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 攔截網路請求 (優先使用快取，若無則請求網路；離線導航回退到 app.html)
+// 判斷是否為「自家程式碼資源」：同源的導航、html / js / css / json
+// 這類資源採 network-first，確保線上時永遠拿到最新版本（改 code 一上線就生效）
+function isOwnCodeAsset(request, url) {
+  if (url.origin !== self.location.origin) return false;
+  if (request.mode === 'navigate') return true;
+  return /\.(html|js|css|json)$/i.test(url.pathname);
+}
+
+// 攔截網路請求
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+
+  if (isOwnCodeAsset(request, url)) {
+    // network-first：線上抓最新並順手更新快取；離線才回退到快取，導航再退到 app.html
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // 僅快取成功且非導航（避免把帶 ?flow= 查詢字串的頁面塞進快取）的回應
+          if (response && response.ok && request.mode !== 'navigate') {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => {
+            if (cached) return cached;
+            if (request.mode === 'navigate') return caches.match('./app.html');
+            return Response.error();
+          })
+        )
+    );
+    return;
+  }
+
+  // 其餘資源（圖片、音檔、字型、CDN 函式庫…）維持 cache-first：優先快取，無則請求網路
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(request).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).catch(() => {
-        if (event.request.mode === 'navigate') {
+      return fetch(request).catch(() => {
+        if (request.mode === 'navigate') {
           return caches.match('./app.html');
         }
         return Response.error();
