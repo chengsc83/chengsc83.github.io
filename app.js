@@ -135,11 +135,10 @@ const App = {
         projector: {
             channel: null,               // BroadcastChannel 實體
             displayWindow: null,         // 外部顯示視窗參照 (window.open)
-            presentationConnection: null, // Presentation API 連接
             isActive: false,             // 投影模式是否啟用
             heartbeatInterval: null,     // 心跳計時器
             windowCheckInterval: null,   // 視窗關閉檢查計時器
-            mode: null,                  // 'presentation-api' 或 'window'
+            mode: null,                  // 'window'
         },
     },
 
@@ -196,7 +195,7 @@ const App = {
                 {
                     target: '.sticky-action-bar',
                     title: '底部操作列',
-                    description: '這裡可以編輯流程、匯入/分享設定。點擊「下一步」進入隊伍資訊設定。',
+                    description: '這裡可以編輯流程、分享設定。點擊「下一步」進入隊伍資訊設定。',
                     position: 'top',
                 },
             ]
@@ -431,9 +430,9 @@ const App = {
         // 根據模式儲存已完成狀態
         const mode = this.state.onboarding.mode;
         if (mode === 'setup') {
-            localStorage.setItem('debateTourCompleted', 'true');
+            this.safeSave('debateTourCompleted', 'true', '教學完成狀態');
         } else if (mode === 'debate') {
-            localStorage.setItem('debateControlTourCompleted', 'true');
+            this.safeSave('debateControlTourCompleted', 'true', '教學完成狀態');
         }
     },
 
@@ -816,7 +815,6 @@ const App = {
                     mode: this.state.projector?.mode || null,
                     channel: null,
                     displayWindow: null,
-                    presentationConnection: null,
                     heartbeatInterval: null,
                     windowCheckInterval: null,
                 },
@@ -1039,7 +1037,7 @@ const App = {
      * @param {object} colors 
      */
     saveCustomTheme(colors) {
-        localStorage.setItem('debateTimerCustomTheme', JSON.stringify(colors));
+        return this.safeSave('debateTimerCustomTheme', JSON.stringify(colors), '自訂主題');
     },
 
     /**
@@ -1069,6 +1067,7 @@ const App = {
         } catch (e) {
             console.error('Failed to load debateFormatGroups.json:', e);
         }
+        this.loadCustomFlowsFromStorage();
         document.getElementById('app').style.display = 'flex';
         this.mainContent = document.getElementById('main-content');
         this.pipCanvas = document.getElementById('pipCanvas'); // New
@@ -1159,6 +1158,35 @@ const App = {
                 console.error("Failed to parse saved audio modes.");
             }
         }
+    },
+
+    safeSave(key, value, label = '設定') {
+        try {
+            localStorage.setItem(key, value);
+            return true;
+        } catch (e) {
+            console.warn(`Failed to save ${key} to localStorage:`, e);
+            this.showNotification(`${label}無法永久儲存，瀏覽器儲存空間可能已滿。`, 'error', 5000);
+            return false;
+        }
+    },
+
+    loadCustomFlowsFromStorage() {
+        if (!this.debateFormatGroups['自訂流程']) {
+            this.debateFormatGroups['自訂流程'] = {};
+        }
+        if (this._customFlowsLoaded) return;
+
+        try {
+            const savedCustomFlows = localStorage.getItem('customDebateFlows');
+            if (savedCustomFlows) {
+                Object.assign(this.debateFormatGroups['自訂流程'], JSON.parse(savedCustomFlows));
+            }
+        } catch (e) {
+            console.warn('Failed to load custom flows from localStorage:', e);
+        }
+
+        this._customFlowsLoaded = true;
     },
 
     // --- EVENT HANDLING ---
@@ -1405,7 +1433,7 @@ const App = {
                     this.actions.toggleFullscreen(); // 呼叫上面的函式來處理退出邏輯
                     return;
                 }
-                break;;
+                break;
         }
     },
 
@@ -1700,30 +1728,6 @@ const App = {
             App.render();
             App.showNotification(`已移除裁判，目前 ${App.state.judges.length} 位`, 'info');
         },
-        toggleFormatDropdown(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            App.toggleFormatDropdown();
-        },
-        filterFormatByTag(e) {
-            const tag = e.target.closest('[data-tag]').dataset.tag;
-            App.state.formatFilterTag = tag === '全部' ? null : tag;
-
-            // 更新標籤按鈕樣式
-            const tagsContainer = document.getElementById('formatTagsContainer');
-            if (tagsContainer) {
-                tagsContainer.innerHTML = App.renderFormatTags();
-            }
-
-            // 執行篩選並更新下拉選單
-            App.filterFormats('', App.state.formatFilterTag);
-
-            // 如果下拉選單是開啟的，重新渲染選項
-            const dropdownList = document.getElementById('formatDropdownList');
-            if (dropdownList && !dropdownList.classList.contains('hidden')) {
-                App.renderFormatDropdownItems('');
-            }
-        },
         confirmNineSquare() {
             const posGrid = {}, negGrid = {};
             let isValid = true;
@@ -1812,32 +1816,37 @@ const App = {
             }
 
             try {
-                const flowString = JSON.stringify(flowToShare);
+                const sharePayload = {
+                    name: flowName,
+                    flow: flowToShare
+                };
+                const flowString = JSON.stringify(sharePayload);
                 const compressed = pako.deflate(flowString);
                 const binaryString = String.fromCharCode.apply(null, new Uint8Array(compressed));
                 const encodedData = btoa(binaryString);
+                const shareUrl = `${window.location.origin}${window.location.pathname}?flow=${encodeURIComponent(encodedData)}`;
+                App._lastShareUrl = shareUrl; // 供「點擊放大 QR」使用
 
-                // --- [修改] 統一使用剪貼簿 ---
-                navigator.clipboard.writeText(encodedData).then(() => {
-                    App.renderModal({
-                        title: '分享碼已複製',
-                        body: `
-                                <p class="text-slate-600 dark:text-slate-300 mb-2">
+                App.copyTextToClipboard(shareUrl)
+                    .then(() => App.showNotification("已複製分享連結，將連結分享給朋友吧！", "success"))
+                    .catch(() => App.showNotification("自動複製連結失敗，請改用掃描 QR Code。", "warning"));
+
+                App.renderModal({
+                    title: '分享流程',
+                    body: `
+                            <div class="flex flex-col items-center gap-4 text-center">
+                                <p class="text-slate-600 dark:text-slate-300">
                                     您分享的流程: <strong class="text-[var(--color-accent)]">${App.escapeHtml(flowName)}</strong>
                                 </p>
-                                <p class="text-slate-600 dark:text-slate-300 mb-4">
-                                    我們已將「分享碼」複製到您的剪貼簿。請將這串文字碼貼給您的朋友。
-                                </p>
-                                <p class="text-sm text-slate-500">
-                                    對方需要在「辯時計」的設定頁面點擊「匯入流程」按鈕，並貼上此分享碼。
-                                </p>
-                            `,
-                        footer: `<button data-action="closeModal" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">我瞭解了</button>`
-                    });
-                }).catch(err => {
-                    App.showNotification("複製分享碼失敗", "error");
+                                <div id="flowShareQr" data-action="enlargeShareQr" role="button" tabindex="0" aria-label="點擊放大 QR Code" title="點擊放大" class="w-[360px] h-[360px] max-w-full rounded-xl bg-white p-4 border border-slate-200 flex items-center justify-center text-xs text-slate-500 text-center cursor-zoom-in hover:border-[var(--color-primary)] transition-colors">
+                                    QR Code 產生中...
+                                </div>
+                                <p class="text-sm text-slate-600 dark:text-slate-300">已複製分享連結，將連結分享給朋友吧！</p>
+                                <p class="text-xs text-slate-500">點擊 QR Code 可放大，或讓對方掃描直接開啟並匯入流程。</p>
+                            </div>
+                        `
                 });
-                // --- [結束修改] ---
+                setTimeout(() => App.renderFlowShareQr(shareUrl), 0);
 
             } catch (e) {
                 console.error("Error generating share code:", e);
@@ -1845,16 +1854,59 @@ const App = {
             }
         },
 
-        copyShareUrl() {
-            const input = document.getElementById('shareUrlInput');
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(input.value)
-                    .then(() => App.showNotification("連結已複製！", "success"))
-                    .catch(err => App.showNotification("複製失敗", "error"));
-            } else {
-                input.select();
-                document.execCommand('copy');
-                App.showNotification("連結已複製！", "success");
+        enlargeShareQr() {
+            const shareUrl = App._lastShareUrl;
+            if (!shareUrl) return;
+
+            document.getElementById('qrLightbox')?.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'qrLightbox';
+            overlay.className = 'fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.setAttribute('aria-label', '放大的 QR Code');
+            overlay.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 shadow-2xl flex flex-col items-center">
+                    <div id="qrLightboxCode" class="flex items-center justify-center"></div>
+                    <p class="mt-3 text-center text-xs text-slate-500">點擊任意處關閉</p>
+                </div>`;
+
+            const close = () => {
+                overlay.remove();
+                document.removeEventListener('keydown', onKey, true);
+            };
+            const onKey = (ev) => {
+                if (ev.key === 'Escape') {
+                    ev.preventDefault();
+                    ev.stopPropagation(); // 避免同一個 Esc 連帶關閉底層的分享視窗
+                    close();
+                }
+            };
+            overlay.addEventListener('click', close);
+            // 用 capture 階段攔截，確保先於 window 上的全域快捷鍵處理器
+            document.addEventListener('keydown', onKey, true);
+            document.body.appendChild(overlay);
+
+            const codeEl = document.getElementById('qrLightboxCode');
+            // 取視窗較短邊，留邊距，夾在 240～560px 之間
+            const dim = Math.max(240, Math.min(560, Math.min(window.innerWidth, window.innerHeight) - 160));
+            if (typeof QRCode === 'undefined') {
+                codeEl.textContent = 'QR Code 函式庫載入失敗';
+                return;
+            }
+            try {
+                new QRCode(codeEl, {
+                    text: shareUrl,
+                    width: dim,
+                    height: dim,
+                    colorDark: '#0f172a',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (e) {
+                console.warn('Failed to generate enlarged QR Code:', e);
+                codeEl.textContent = '分享資料過長，無法產生 QR Code。';
             }
         },
         undo() { App.restoreState(); },
@@ -2127,12 +2179,7 @@ const App = {
             App.debateFormatGroups['自訂流程'][newFlowName] = JSON.parse(JSON.stringify(App.state.currentFlow));
 
             // --- [新增] 永久儲存自訂流程 ---
-            try {
-                localStorage.setItem('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']));
-            } catch (e) {
-                console.error("Failed to save custom flows to localStorage:", e);
-                App.showNotification("儲存自訂流程失敗", "error");
-            }
+            const savedToStorage = App.safeSave('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']), '自訂流程');
             // --- [結束] ---
 
             // 更新選擇的賽制為新儲存的流程
@@ -2149,7 +2196,11 @@ const App = {
                     const event = new Event('change', { bubbles: true });
                     formatSelect.dispatchEvent(event);
                 }
-                App.showNotification(`流程 "${newFlowName}" 已儲存`, "success");
+                if (savedToStorage) {
+                    App.showNotification(`流程 "${newFlowName}" 已儲存`, "success");
+                } else {
+                    App.showNotification(`流程 "${newFlowName}" 已暫存於本次工作階段`, "warning", 5000);
+                }
             }, 0);
         },
 
@@ -2551,11 +2602,11 @@ const App = {
             if (isDark) {
                 html.classList.remove('dark');
                 html.classList.add('light');
-                localStorage.setItem('debateTimerTheme', 'light');
+                App.safeSave('debateTimerTheme', 'light', '主題');
             } else {
                 html.classList.add('dark');
                 html.classList.remove('light');
-                localStorage.setItem('debateTimerTheme', 'dark');
+                App.safeSave('debateTimerTheme', 'dark', '主題');
             }
 
             // 更新頂部 Header 的圖示
@@ -2740,8 +2791,23 @@ const App = {
         startTour() {
             App.startTour();
         },
+        // 標題列/側欄入口：純瀏覽贊助資訊，關閉視窗只關閉
         showPremiumModal() {
-            App.showNotification("開發中，敬請期待。 歡迎洽談開發團隊", "info", 5000);
+            App._pendingDebateStart = false;
+            App._showSponsorModal();
+        },
+        // 開始比賽前的勸募：關閉視窗（X / 背景）即直接開始比賽
+        promptStartDebate() {
+            App._pendingDebateStart = true;
+            App._showSponsorModal();
+        },
+        // 贊助視窗關閉處理：依 _pendingDebateStart 決定是否接著開始比賽
+        dismissSponsor(e) {
+            const shouldStart = App._pendingDebateStart;
+            App._pendingDebateStart = false;
+            const modal = e.target.closest('.modal-container');
+            if (modal) modal.remove();
+            if (shouldStart) App.actions.startDebate(e);
         },
         closeModal(e) {
             const modal = e.target.closest('.modal-container');
@@ -2785,12 +2851,11 @@ const App = {
                 delete App.debateFormatGroups['自訂流程'][flowName];
 
                 // 2. 將更新後的物件存回 localStorage
-                try {
-                    localStorage.setItem('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']));
+                const savedToStorage = App.safeSave('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']), '自訂流程');
+                if (savedToStorage) {
                     App.showNotification(`流程 "${flowName}" 已成功刪除。`, "success");
-                } catch (err) {
-                    console.error("Failed to update localStorage after deletion:", err);
-                    App.showNotification("刪除時發生錯誤", "error");
+                } else {
+                    App.showNotification("已從目前畫面移除，但無法更新永久儲存。", "warning", 5000);
                 }
 
                 // 3. 清空選擇狀態並重新渲染
@@ -3003,65 +3068,16 @@ const App = {
             App.showNotification(`已選擇賽制：${formatName}`, 'success');
         },
 
-        showImportModal() {
-            // 先保存設定頁面的表單值
-            App.saveSetupFormValues();
-
-            App.renderModal({
-                title: '匯入流程',
-                body: `
-                        <p class="text-slate-600 dark:text-slate-300 mb-4">請在下方貼上您收到的「流程分享碼」。</p>
-                        <textarea id="import-flow-textarea" class="form-element w-full h-32 font-mono text-xs" placeholder="在此貼上分享碼..."></textarea>
-                    `,
-                footer: `
-                        <button data-action="closeModal" class="btn-secondary px-4 py-2 rounded-lg">取消</button>
-                        <button data-action="importFromText" class="px-4 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">匯入</button>
-                    `
-            });
-        },
-
-        importFromText(e) {
-            const textarea = document.getElementById('import-flow-textarea');
-            if (!textarea) return;
-
-            const encodedData = textarea.value.trim();
-            if (!encodedData) {
-                App.showNotification("沒有內容", "info");
-                return;
-            }
-
-            const flowName = App.decodeFlow(encodedData);
-
-            if (flowName) {
-                // 更新 state 中的選擇
-                App.state.selectedFormat = flowName;
-                App.showNotification(`已成功匯入 "${flowName}"`, "success");
-                App.actions.closeModal(e); // 關閉匯入彈窗
-                App.render(); // 重新渲染設定頁面
-
-                // 延遲一點點，確保 DOM 更新完畢
-                setTimeout(() => {
-                    const formatSelect = document.getElementById('formatSelect');
-                    if (formatSelect) {
-                        formatSelect.value = flowName; // 自動選中剛匯入的流程
-                        // 手動觸發 change 事件，來更新按鈕狀態
-                        formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                }, 0);
-            } else {
-                App.showNotification("匯入失敗：分享碼無效或已損毀。", "error");
-            }
-        },
         toggleAutoMode() {
             App.state.isAutoMode = !App.state.isAutoMode; // 直接反轉狀態
-            localStorage.setItem('debateAutoMode', App.state.isAutoMode);
+            App.safeSave('debateAutoMode', App.state.isAutoMode, '自動模式設定');
             App.scheduleRenderDebateControls(); // 重新渲染以更新按鈕顏色
             App.showNotification(App.state.isAutoMode ? "已開啟自動模式" : "已關閉自動模式", "info");
         },
 
         toggleSpeech() {
             App.state.enableSpeech = !App.state.enableSpeech; // 直接反轉狀態
-            localStorage.setItem('debateSpeech', App.state.enableSpeech);
+            App.safeSave('debateSpeech', App.state.enableSpeech, '語音朗讀設定');
 
             if (!App.state.enableSpeech && App.synth && App.synth.speaking) {
                 App.synth.cancel();
@@ -3077,7 +3093,7 @@ const App = {
             const mode = e.target.value;
             if (team && (mode === 'microphone' || mode === 'display')) {
                 App.state.audioSourceModes[team] = mode;
-                localStorage.setItem('debateAudioSourceModes', JSON.stringify(App.state.audioSourceModes));
+                App.safeSave('debateAudioSourceModes', JSON.stringify(App.state.audioSourceModes), '音訊來源設定');
                 const teamName = team === 'positive' ? '正方' : '反方';
                 const modeName = mode === 'microphone' ? '實體麥克風' : '線上音訊';
                 App.showNotification(`${teamName} 偵測來源已設為: ${modeName}`, 'success');
@@ -3085,7 +3101,7 @@ const App = {
         },
         toggleAutoMode(e) {
             App.state.isAutoMode = e.target.checked;
-            localStorage.setItem('debateAutoMode', App.state.isAutoMode);
+            App.safeSave('debateAutoMode', App.state.isAutoMode, '自動模式設定');
             // Also update the control panel if it's visible
             if (App.state.currentView === 'debate') {
                 const controlToggle = document.querySelector('#debateControlsContainer [data-change-action="toggleAutoMode"]');
@@ -3094,13 +3110,13 @@ const App = {
         },
         toggleSpeechDetection(e) {
             App.state.enableSpeechDetection = e.target.checked;
-            localStorage.setItem('debateSpeechDetection', App.state.enableSpeechDetection);
+            App.safeSave('debateSpeechDetection', App.state.enableSpeechDetection, '語音偵測設定');
         },
         setGraceDuration(e) {
             const duration = parseInt(e.target.value, 10);
             if (!isNaN(duration) && duration >= 0) {
                 App.state.customGraceDuration = duration;
-                localStorage.setItem('debateGraceDuration', duration);
+                App.safeSave('debateGraceDuration', duration, '準備時間設定');
                 App.showNotification(`準備時間已設定為 ${duration} 秒`, 'success');
             }
         },
@@ -3167,7 +3183,7 @@ const App = {
         },
         toggleSpeech(e) {
             App.state.enableSpeech = e.target.checked;
-            localStorage.setItem('debateSpeech', App.state.enableSpeech);
+            App.safeSave('debateSpeech', App.state.enableSpeech, '語音朗讀設定');
             if (!App.state.enableSpeech && App.synth && App.synth.speaking) {
                 // 如果使用者是「關閉」朗讀，且當前正在朗讀中
                 console.log("Speech canceled by user toggle.");
@@ -3265,95 +3281,6 @@ const App = {
         '分享的流程': 'bg-amber-500'
     },
 
-    renderFormatTags() {
-        const groups = Object.keys(this.debateFormatGroups).filter(g => {
-            const formats = this.debateFormatGroups[g];
-            return formats && Object.keys(formats).length > 0;
-        });
-
-        const activeTag = this.state.formatFilterTag || '全部';
-
-        let tagsHtml = `<button data-action="filterFormatByTag" data-tag="全部" 
-                class="format-tag px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer
-                ${activeTag === '全部' ? 'bg-slate-500 text-white shadow-md scale-105' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'}">
-                全部
-            </button>`;
-
-        groups.forEach(group => {
-            const colorClass = this.formatTagColors[group] || 'bg-indigo-500';
-            const isActive = activeTag === group;
-            tagsHtml += `<button data-action="filterFormatByTag" data-tag="${group}" 
-                    class="format-tag px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer
-                    ${isActive ? colorClass + ' text-white shadow-md scale-105' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'}">
-                    ${group}
-                </button>`;
-        });
-
-        return tagsHtml;
-    },
-
-    filterFormats(searchText, tagFilter) {
-        const formatSelect = document.getElementById('formatSelect');
-        const filterInfo = document.getElementById('formatFilterInfo');
-        const searchInput = document.getElementById('formatSearchInput');
-        if (!formatSelect) return;
-
-        const search = (searchText || '').toLowerCase().trim();
-        const tag = tagFilter || '全部';
-        let visibleCount = 0;
-        let totalCount = 0;
-        let firstVisibleOption = null;
-
-        // 遍歷所有 optgroup 和 option
-        Array.from(formatSelect.querySelectorAll('optgroup')).forEach(optgroup => {
-            const groupLabel = optgroup.label;
-            const matchesTag = tag === '全部' || this.formatMatchesTag(groupLabel, tag);
-            let groupHasVisible = false;
-
-            Array.from(optgroup.querySelectorAll('option')).forEach(option => {
-                totalCount++;
-                const optionText = option.textContent.toLowerCase();
-                const matchesSearch = !search || optionText.includes(search);
-                const shouldShow = matchesTag && matchesSearch;
-
-                option.style.display = shouldShow ? '' : 'none';
-                option.disabled = !shouldShow;
-
-                if (shouldShow) {
-                    visibleCount++;
-                    groupHasVisible = true;
-                    if (!firstVisibleOption && option.value !== 'CUSTOM_EMPTY') {
-                        firstVisibleOption = option;
-                    }
-                }
-            });
-
-            // 隱藏空的 optgroup
-            optgroup.style.display = groupHasVisible ? '' : 'none';
-        });
-
-        // 顯示篩選資訊
-        if (filterInfo) {
-            if (search || tag !== '全部') {
-                filterInfo.style.display = 'block';
-                filterInfo.textContent = `顯示 ${visibleCount} / ${totalCount} 個賽制`;
-            } else {
-                filterInfo.style.display = 'none';
-            }
-        }
-
-        // 如果當前選中的選項被隱藏了，自動選擇第一個可見選項
-        const currentOption = formatSelect.options[formatSelect.selectedIndex];
-        if (currentOption && currentOption.style.display === 'none' && firstVisibleOption) {
-            formatSelect.value = firstVisibleOption.value;
-            formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-
-        // 同步更新下拉選單
-        this.renderFormatDropdownItems(search);
-        this.updateFormatSearchDisplay();
-    },
-
     filterModalFormats(searchTerm) {
         const formatList = document.getElementById('modalFormatList');
         if (!formatList) return;
@@ -3372,346 +3299,6 @@ const App = {
             const hasVisible = Array.from(group.querySelectorAll('.format-option')).some(opt => opt.style.display !== 'none');
             group.style.display = hasVisible ? 'block' : 'none';
         });
-    },
-
-    initFormatSearch() {
-        const searchInput = document.getElementById('formatSearchInput');
-        const formatSelect = document.getElementById('formatSelect');
-
-        if (!searchInput || !formatSelect) return;
-
-        // 初始化顯示當前選中的值
-        this.updateFormatSearchDisplay();
-
-        // 點擊輸入框時顯示下拉選單 (但不會重複觸發)
-        searchInput.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!this.isFormatDropdownOpen()) {
-                this.showFormatDropdown();
-            }
-        });
-
-        // 輸入搜尋時過濾選項
-        searchInput.addEventListener('input', (e) => {
-            if (!this.isFormatDropdownOpen()) {
-                this.showFormatDropdown();
-            }
-            this.renderFormatDropdownItems(e.target.value);
-        });
-
-        // 點擊外部時關閉下拉選單
-        // [Memory Fix] 每次 renderSetupView() 都會重新呼叫 initFormatSearch()，
-        // 若 document.click listener 不清掉就會累積。用 AbortController 在重綁前 abort 舊的，
-        // 確保 document 上永遠只有一份此功能的 listener。
-        this._formatSearchAbortController?.abort();
-        this._formatSearchAbortController = new AbortController();
-        document.addEventListener('click', (e) => {
-            const container = document.getElementById('formatDropdownContainer');
-            const portal = document.getElementById('formatDropdownListPortal');
-            const arrow = document.getElementById('formatDropdownArrow');
-
-            // 如果點擊的是箭頭，讓 action 處理
-            if (arrow && arrow.contains(e.target)) return;
-
-            // 如果點擊在容器或 portal 內部，不關閉
-            if (container && container.contains(e.target)) return;
-            if (portal && portal.contains(e.target)) return;
-
-            this.hideFormatDropdown();
-        }, { signal: this._formatSearchAbortController.signal });
-
-        // 鍵盤導航
-        searchInput.addEventListener('keydown', (e) => {
-            const dropdownList = document.getElementById('formatDropdownListPortal');
-            if (e.key === 'Escape') {
-                this.hideFormatDropdown();
-                searchInput.blur();
-            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                this.navigateFormatDropdown(e.key === 'ArrowDown' ? 1 : -1);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                const highlighted = dropdownList?.querySelector('.searchable-dropdown-item.highlighted');
-                if (highlighted) {
-                    highlighted.click();
-                }
-            }
-        });
-    },
-
-    // 檢查下拉選單是否開啟
-    isFormatDropdownOpen() {
-        const dropdownList = document.getElementById('formatDropdownListPortal');
-        return dropdownList && dropdownList.style.display === 'block';
-    },
-
-    // 切換下拉選單
-    toggleFormatDropdown() {
-        if (this.isFormatDropdownOpen()) {
-            this.hideFormatDropdown();
-        } else {
-            this.showFormatDropdown();
-        }
-    },
-
-    showFormatDropdown() {
-        const dropdownArrow = document.getElementById('formatDropdownArrow');
-        const searchInput = document.getElementById('formatSearchInput');
-        const container = document.getElementById('formatDropdownContainer');
-
-        if (!dropdownArrow || !container || !searchInput) return;
-
-        // 移除舊的下拉選單（如果存在）
-        let dropdownList = document.getElementById('formatDropdownListPortal');
-        if (!dropdownList) {
-            // 創建下拉選單到 body - 使用 fixed 定位避免被父容器裁切
-            dropdownList = document.createElement('div');
-            dropdownList.id = 'formatDropdownListPortal';
-            // [行動裝置修復] 不在 class 中設定固定 max-h，改由 CSS 響應式控制
-            dropdownList.className = 'searchable-dropdown-list glass-dropdown py-2 rounded-xl overflow-y-auto';
-            // z-index 55: 高於 sticky-action-bar(50)，低於 header(60)
-            // [行動裝置修復] 動態計算最大高度
-            const isMobileDevice = window.innerWidth < 768;
-            const maxHeight = isMobileDevice ? 'min(50vh, calc(100vh - 200px))' : '18rem';
-            dropdownList.style.cssText = `position: fixed; z-index: 55; display: none; max-height: ${maxHeight};`;
-            document.body.appendChild(dropdownList);
-        }
-
-        // 計算位置 - 緊貼搜尋框底部
-        const updatePosition = () => {
-            const rect = searchInput.getBoundingClientRect();
-            const isMobileDevice = window.innerWidth < 768;
-
-            // [行動裝置修復] 確保選單不會超出螢幕底部
-            const viewportHeight = window.innerHeight;
-            const spaceBelow = viewportHeight - rect.bottom;
-            const minBottomPadding = isMobileDevice ? 120 : 80; // 為底部按鈕列留空間
-
-            // 計算可用高度
-            const availableHeight = spaceBelow - minBottomPadding;
-            const maxAllowedHeight = isMobileDevice ? Math.min(availableHeight, viewportHeight * 0.5) : Math.min(availableHeight, 288);
-
-            dropdownList.style.top = rect.bottom + 'px';
-            dropdownList.style.left = rect.left + 'px';
-            dropdownList.style.width = rect.width + 'px';
-            dropdownList.style.maxHeight = Math.max(maxAllowedHeight, 150) + 'px'; // 最小高度 150px
-        };
-
-        updatePosition();
-        dropdownList.style.display = 'block';
-
-        // 滾動時關閉選單（但排除選單本身的滾動）- 所有裝置統一行為
-        const closeOnScroll = (e) => {
-            // 如果是在選單內部滾動，不關閉
-            if (dropdownList.contains(e.target)) return;
-            this.hideFormatDropdown();
-        };
-
-        // 所有裝置：滾動時關閉選單
-        dropdownList._scrollHandler = closeOnScroll;
-        window.addEventListener('scroll', closeOnScroll, { passive: true, capture: true });
-        // 監聽 touchmove 事件，確保觸控滑動時能正確關閉選單
-        dropdownList._touchMoveHandler = closeOnScroll;
-        document.addEventListener('touchmove', closeOnScroll, { passive: true });
-
-        // 視窗大小變化時更新位置
-        const throttledUpdate = () => {
-            if (dropdownList._rafPending) return;
-            dropdownList._rafPending = true;
-            requestAnimationFrame(() => {
-                updatePosition();
-                dropdownList._rafPending = false;
-            });
-        };
-        dropdownList._resizeHandler = throttledUpdate;
-        window.addEventListener('resize', throttledUpdate, { passive: true });
-
-        dropdownArrow.classList.add('open');
-        searchInput.value = '';
-        searchInput.placeholder = '輸入關鍵字搜尋...';
-        this.renderFormatDropdownItems('');
-    },
-
-    hideFormatDropdown() {
-        const dropdownList = document.getElementById('formatDropdownListPortal');
-        const dropdownArrow = document.getElementById('formatDropdownArrow');
-
-        if (dropdownList) {
-            dropdownList.style.display = 'none';
-            // [效能優化] 移除事件監聽器
-            if (dropdownList._scrollHandler) {
-                window.removeEventListener('scroll', dropdownList._scrollHandler, { passive: true, capture: true });
-                dropdownList._scrollHandler = null;
-            }
-            if (dropdownList._resizeHandler) {
-                window.removeEventListener('resize', dropdownList._resizeHandler, { passive: true });
-                dropdownList._resizeHandler = null;
-            }
-            // [iOS 修復] 移除 touchmove 事件監聽器
-            if (dropdownList._touchMoveHandler) {
-                document.removeEventListener('touchmove', dropdownList._touchMoveHandler, { passive: true });
-                dropdownList._touchMoveHandler = null;
-            }
-        }
-        if (dropdownArrow) {
-            dropdownArrow.classList.remove('open');
-        }
-        this.updateFormatSearchDisplay();
-    },
-
-    updateFormatSearchDisplay() {
-        const searchInput = document.getElementById('formatSearchInput');
-        const formatSelect = document.getElementById('formatSelect');
-
-        if (searchInput && formatSelect) {
-            const selectedText = formatSelect.options[formatSelect.selectedIndex]?.text || '';
-            // 將選中的值直接顯示在 value 中，而不是 placeholder
-            searchInput.value = selectedText;
-            searchInput.placeholder = '點擊選擇或搜尋賽制...';
-        }
-    },
-
-    renderFormatDropdownItems(searchTerm = '') {
-        const dropdownList = document.getElementById('formatDropdownListPortal');
-        const formatSelect = document.getElementById('formatSelect');
-
-        if (!dropdownList || !formatSelect) return;
-
-        const searchLower = searchTerm.toLowerCase().trim();
-        const currentValue = formatSelect.value;
-        const tagFilter = this.state.formatFilterTag;
-
-        // 定義圖示類型
-        const getIconClass = (groupName, formatName) => {
-            if (groupName === '自訂流程' || groupName === '分享的流程') return 'custom';
-            if (groupName === '特殊賽制') return 'special';
-            if (groupName.includes('新式奧瑞岡')) return 'new-oregon';
-            if (groupName.includes('傳統奧瑞岡') || groupName.includes('經典')) return 'classic';
-            if (groupName.includes('BP') || groupName.includes('英國')) return 'bp';
-            return 'default';
-        };
-
-        const getIcon = (groupName, formatName) => {
-            if (formatName === 'CUSTOM_EMPTY') return '➕';
-            if (groupName === '自訂流程' || groupName === '分享的流程') return '📝';
-            if (groupName === '特殊賽制') return '⭐';
-            if (groupName.includes('新式奧瑞岡')) return '🔵';
-            if (groupName.includes('傳統奧瑞岡')) return '🟢';
-            if (groupName.includes('BP') || groupName.includes('英國')) return '🔴';
-            return '📋';
-        };
-
-        let html = '';
-        let hasResults = false;
-
-        // 定義群組順序
-        const groupOrder = ['分享的流程', '自訂流程', '特殊賽制'];
-        const allGroups = [...groupOrder, ...Object.keys(this.debateFormatGroups).filter(g => !groupOrder.includes(g))];
-
-        for (const groupName of allGroups) {
-            const formats = this.debateFormatGroups[groupName];
-            if (!formats) continue;
-
-            let groupItems = [];
-
-            // 處理自訂流程群組的「新增空白流程」選項
-            if (groupName === '自訂流程') {
-                const matchesSearch = !searchLower || '新增空白流程'.includes(searchLower) || 'custom_empty'.includes(searchLower);
-                const matchesTag = !tagFilter || tagFilter === '自訂';
-                if (matchesSearch && matchesTag) {
-                    groupItems.push({
-                        value: 'CUSTOM_EMPTY',
-                        text: '＋ 新增空白流程',
-                        icon: '➕',
-                        iconClass: 'custom'
-                    });
-                }
-            }
-
-            for (const formatName in formats) {
-                const matchesSearch = !searchLower || formatName.toLowerCase().includes(searchLower);
-                const matchesTag = !tagFilter || this.formatMatchesTag(groupName, tagFilter);
-
-                if (matchesSearch && matchesTag) {
-                    groupItems.push({
-                        value: formatName,
-                        text: formatName,
-                        icon: getIcon(groupName, formatName),
-                        iconClass: getIconClass(groupName, formatName)
-                    });
-                }
-            }
-
-            if (groupItems.length > 0) {
-                hasResults = true;
-                html += `<div class="searchable-dropdown-group">`;
-                html += `<div class="searchable-dropdown-group-label">${this.escapeHtml(groupName)}</div>`;
-                groupItems.forEach(item => {
-                    const isSelected = item.value === currentValue ? 'selected' : '';
-                    html += `
-                            <div class="searchable-dropdown-item ${isSelected}" data-value="${this.escapeHtml(item.value)}">
-                                <span class="searchable-dropdown-item-icon ${item.iconClass}">${item.icon}</span>
-                                <span class="dropdown-item-text">${this.escapeHtml(item.text)}</span>
-                            </div>
-                        `;
-                });
-                html += `</div>`;
-            }
-        }
-
-        if (!hasResults) {
-            html = `
-                    <div class="searchable-dropdown-empty">
-                        <div class="searchable-dropdown-empty-icon">🔍</div>
-                        <div class="text-sm font-medium">找不到符合的賽制</div>
-                        <div class="text-xs mt-1 opacity-70">試試其他關鍵字或清除篩選</div>
-                    </div>
-                `;
-        }
-
-        dropdownList.innerHTML = html;
-
-        // 綁定點擊事件
-        dropdownList.querySelectorAll('.searchable-dropdown-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const value = item.dataset.value;
-                formatSelect.value = value;
-                formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                this.hideFormatDropdown();
-            });
-        });
-    },
-
-    navigateFormatDropdown(direction) {
-        const dropdownList = document.getElementById('formatDropdownListPortal');
-        if (!dropdownList) return;
-
-        const items = dropdownList.querySelectorAll('.searchable-dropdown-item');
-        if (items.length === 0) return;
-
-        const currentHighlighted = dropdownList.querySelector('.searchable-dropdown-item.highlighted');
-        let currentIndex = -1;
-
-        if (currentHighlighted) {
-            items.forEach((item, i) => {
-                if (item === currentHighlighted) currentIndex = i;
-            });
-            currentHighlighted.classList.remove('highlighted');
-        }
-
-        let newIndex = currentIndex + direction;
-        if (newIndex < 0) newIndex = items.length - 1;
-        if (newIndex >= items.length) newIndex = 0;
-
-        items[newIndex].classList.add('highlighted');
-        items[newIndex].scrollIntoView({ block: 'nearest' });
-    },
-
-    formatMatchesTag(groupName, tag) {
-        // 如果 tag 是 '全部'，則所有群組都匹配
-        if (tag === '全部') return true;
-        // 直接比較群組名稱與標籤
-        return groupName === tag;
     },
 
     // 保存設定頁面表單值到 state
@@ -3761,17 +3348,7 @@ const App = {
     },
 
     renderSetupView() {
-        try {
-            const savedCustomFlows = localStorage.getItem('customDebateFlows');
-            if (savedCustomFlows) {
-                if (!App.debateFormatGroups['自訂流程']) App.debateFormatGroups['自訂流程'] = {};
-                Object.assign(App.debateFormatGroups['自訂流程'], JSON.parse(savedCustomFlows));
-            } else if (!App.debateFormatGroups['自訂流程']) {
-                App.debateFormatGroups['自訂流程'] = {};
-            }
-        } catch (e) {
-            if (!App.debateFormatGroups['自訂流程']) App.debateFormatGroups['自訂流程'] = {};
-        }
+        this.loadCustomFlowsFromStorage();
 
         let formatOptions = '';
         const esc = this.escapeHtml.bind(this);
@@ -4165,10 +3742,6 @@ const App = {
                             <svg class="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             <span class="text-xs">編輯流程</span>
                         </button>
-                        <button data-action="showImportModal" class="btn-icon-label hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-xl px-3 py-2 transition-all">
-                            <svg class="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            <span class="text-xs">匯入</span>
-                        </button>
                         <button data-action="shareFlow" class="btn-icon-label hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-xl px-3 py-2 transition-all">
                             <svg class="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                             <span class="text-xs">分享</span>
@@ -4181,7 +3754,7 @@ const App = {
                         <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                     </button>
                     ` : `
-                    <button data-action="startDebate" class="btn-start-match flex items-center gap-2 group">
+                    <button data-action="promptStartDebate" class="btn-start-match flex items-center gap-2 group">
                         <span>開始比賽</span>
                         <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                     </button>
@@ -4206,9 +3779,6 @@ const App = {
             Object.defineProperty(changeEvent, 'target', { value: formatSelect, writable: false });
             this.changeActions.formatChanged(changeEvent);
         }
-
-        // 初始化搜尋功能
-        this.initFormatSearch();
 
         // 清除盃賽名稱按鈕
         const clearTournamentBtn = document.getElementById('clearTournamentBtn');
@@ -4339,7 +3909,7 @@ const App = {
                         </div>
                     </div>
                     <div class="flex flex-col items-center gap-4">
-                        <button data-action="confirmNineSquare" class="px-8 py-3 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors font-semibold">確認佈陣並開始比賽</button>
+                        <button data-action="confirmNineSquare" class="px-8 py-3 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors font-semibold">確認並開始比賽</button>
                         <button data-action="backToSetup" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline">返回設定頁面</button>
                     </div>
                 </div>
@@ -4376,9 +3946,6 @@ const App = {
 
             <!-- 控制列 - 始終顯示 -->
             <div id="debateControlsContainer"></div>
-            
-            <!-- 贊助區 - 始終顯示 -->
-            <div id="promotionWrapper" class="mt-6 opacity-40 hover:opacity-100 transition-opacity duration-300">${this.renderPromotionArea()}</div>
         `;
         this.renderDebateFlowTracker();
         this.renderDebateStage();
@@ -4608,8 +4175,6 @@ const App = {
             </div>
             <!-- 控制列 - 始終顯示 -->
             <div id="debateControlsContainer"></div>
-            <!-- 贊助區 - 始終顯示 -->
-            <div id="promotionWrapper" class="mt-8 opacity-50 hover:opacity-100 transition-opacity">${this.renderPromotionArea()}</div>
         `;
 
         this._clearFreeDebateCache(); // 清除 DOM 快取
@@ -5695,6 +5260,53 @@ const App = {
         });
         observer.observe(document.body, { childList: true, subtree: false });
     },
+    // 贊助/合作勸募視窗。由 showPremiumModal（標題列/側欄）與 promptStartDebate（開始比賽前）共用。
+    // 無 footer 按鈕；X 與背景遮罩均走 dismissSponsor：若處於開始比賽流程則關閉並開始比賽，否則只關閉。
+    _showSponsorModal() {
+        this.renderModal({
+            title: '喜歡辯時計嗎？',
+            body: `
+                    <div class="space-y-4">
+                        <p class="text-sm leading-relaxed text-[var(--text-sub)]">
+                            辯時計是為辯論社群打造的免費開源工具，完全本地運行。你的支持能讓它持續更新、走得更遠。
+                        </p>
+
+                        <!-- 贊助開發 -->
+                        <div class="rounded-xl border border-[var(--border-color)] bg-[var(--surface-2)] p-4">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-lg">🧋</span>
+                                <h4 class="font-bold text-[var(--text-main)]">贊助開發</h4>
+                            </div>
+                            <p class="text-xs text-[var(--text-sub)]">小額贊助、請開發者喝瓶生茶，都是辯時計前進的動力。</p>
+                        </div>
+
+                        <!-- 賽事合作 -->
+                        <div class="rounded-xl border border-[var(--border-color)] bg-[var(--surface-2)] p-4">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-lg">🤝</span>
+                                <h4 class="font-bold text-[var(--text-main)]">賽事合作</h4>
+                            </div>
+                            <p class="text-xs text-[var(--text-sub)]">盃賽主辦、品牌贊助、客製需求，歡迎洽談合作。</p>
+                        </div>
+
+                        <p class="text-xs text-center text-[var(--text-sub)] pt-1">
+                            來信 <a href="mailto:james830.sc@gmail.com" class="text-[var(--color-primary)] hover:underline">james830.sc@gmail.com</a>
+                            ・<a href="https://github.com/chengsc83" target="_blank" rel="noopener" class="text-[var(--color-primary)] hover:underline">GitHub</a>
+                        </p>
+                    </div>
+                `,
+            footer: ''
+        });
+
+        // 將 X 按鈕和背景遮罩從 closeModal 改為 dismissSponsor，
+        // 這樣從「開始比賽」進來時，關閉視窗就會直接開始比賽。
+        const modal = document.querySelector('.modal-container');
+        if (modal) {
+            modal.querySelectorAll('[data-action="closeModal"]').forEach(el => {
+                el.setAttribute('data-action', 'dismissSponsor');
+            });
+        }
+    },
     showPromotionModal() {
         const modalBody = `
                 <div>
@@ -5711,7 +5323,7 @@ const App = {
         `;
 
         this.renderModal({
-            title: '🎉 歡迎來到辯時計 Pro 🎉',
+            title: '🎉 歡迎來到辯時計 🎉',
             body: modalBody,
             footer: `<button data-action="closeModal" class="px-6 py-2 rounded-lg text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]">開始使用</button>`
         });
@@ -6038,7 +5650,7 @@ const App = {
                 // 動態新增正方選手變數
                 for (let i = 0; i < playerCount; i++) {
                     variables.push({
-                        key: `{ {positive_player_${i + 1} } } `,
+                        key: `{{positive_player_${i + 1} }} `,
                         label: `正${numNames[i] || (i + 1)} `,
                         color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
                     });
@@ -6047,7 +5659,7 @@ const App = {
                 // 動態新增反方選手變數
                 for (let i = 0; i < playerCount; i++) {
                     variables.push({
-                        key: `{ {negative_player_${i + 1} } } `,
+                        key: `{{negative_player_${i + 1} }} `,
                         label: `反${numNames[i] || (i + 1)} `,
                         color: 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
                     });
@@ -6171,20 +5783,23 @@ const App = {
         }
     },
     renderPromotionArea() {
+        // 乾淨的贊助卡：標題 + 一行說明（左）＋ CTA（右，窄螢幕下移）。
+        // 不再用 opacity 變灰、不帶巨大 mt-12，外距由放置處控制。
         return `
-            <div class="mt-12 p-6 sm:p-8 rounded-2xl promo-card">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <div class="md:col-span-2">
-                        <h3 class="text-xl font-bold mb-2">探索「辯時計」的更多可能</h3>
-                        <p class="text-slate-600 mb-4 text-sm">
-                            感謝您使用本系統！我們致力於提供最專業的辯論計時體驗。點擊下方按鈕與我們合作或贊助我們的開發。
+            <div class="promo-card p-5 sm:p-6 rounded-2xl">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="min-w-0">
+                        <h3 class="text-lg font-bold mb-1 text-[var(--text-main)]">探索「辯時計」的更多可能</h3>
+                        <p class="text-sm text-[var(--text-sub)]">
+                            感謝您使用本系統！歡迎與我們合作或贊助開發。
                         </p>
-                        <a href="#" data-action="showPremiumModal" class="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors shadow">
-                            了解更多
-                        </a>
                     </div>
+                    <a href="#" data-action="showPremiumModal" class="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition-colors shadow">
+                        了解更多
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    </a>
                 </div>
-                </div>
+            </div>
             `;
     },
     renderSidebar() {
@@ -6235,8 +5850,8 @@ const App = {
                             <svg class="w-8 h-8 text-white opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
                         </div>
                         <div class="premium-card-content">
-                            <h3>升級 Premium</h3>
-                            <p>解鎖更多專業功能</p>
+                            <h3>喜歡辯時計嗎？</h3>
+                            <p>贊助開發・賽事合作歡迎洽談</p>
                         </div>
                         <div class="premium-card-arrow">
                             <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
@@ -6336,7 +5951,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.5.3<br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-[var(--border-color)]">辯時計 2.6<br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -7309,15 +6924,6 @@ const App = {
     },
 
     stopProjectorMode() {
-        // 關閉 Presentation API 連接
-        if (this.state.projector.presentationConnection) {
-            try {
-                this.state.projector.presentationConnection.terminate();
-            } catch (e) {
-                console.log('Failed to terminate presentation connection:', e);
-            }
-            this.state.projector.presentationConnection = null;
-        }
         // 關閉 window.open 視窗
         if (this.state.projector.displayWindow && !this.state.projector.displayWindow.closed) {
             this.state.projector.displayWindow.close();
@@ -8313,7 +7919,14 @@ const App = {
     },
 
     getDebateFormat(formatName) {
+        if (this.debateFormatGroups['分享的流程']?.[formatName]) {
+            return this.debateFormatGroups['分享的流程'][formatName];
+        }
+        if (this.debateFormatGroups['自訂流程']?.[formatName]) {
+            return this.debateFormatGroups['自訂流程'][formatName];
+        }
         for (const groupName in this.debateFormatGroups) {
+            if (groupName === '分享的流程' || groupName === '自訂流程') continue;
             if (this.debateFormatGroups[groupName][formatName]) {
                 return this.debateFormatGroups[groupName][formatName];
             }
@@ -8401,27 +8014,54 @@ const App = {
             const charData = decodedBinary.split('').map(c => c.charCodeAt(0));
             const compressedArray = new Uint8Array(charData);
             const decompressedString = pako.inflate(compressedArray, { to: 'string' });
-            const sharedFlow = JSON.parse(decompressedString);
+            const sharedPayload = JSON.parse(decompressedString);
 
-            if (Array.isArray(sharedFlow)) {
-                const flowName = `匯入的流程(${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
-
-                // [重要] 將匯入的流程視為「自訂流程」
-                if (!App.debateFormatGroups['自訂流程']) {
-                    App.debateFormatGroups['自訂流程'] = {};
-                }
-                App.debateFormatGroups['自訂流程'][flowName] = sharedFlow;
-
-                // [重要] 匯入後立刻存到 localStorage，使其永久保存
-                localStorage.setItem('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']));
-
-                return flowName; // 返回新流程的名稱
+            // 僅支援帶名稱的新格式 { name, flow }；舊版純陣列分享碼不再支援
+            const sharedFlow = sharedPayload?.flow;
+            const sharedName = String(sharedPayload?.name || '').trim();
+            if (!Array.isArray(sharedFlow) || !sharedName) {
+                console.error("不支援的分享格式：缺少流程名稱或流程內容（請使用新版分享碼）");
+                return null;
             }
-            return null;
+
+            this.loadCustomFlowsFromStorage();
+            const flowName = this.normalizeImportedFlowName(sharedName);
+
+            // [重要] 將匯入的流程視為「自訂流程」
+            if (!App.debateFormatGroups['自訂流程']) {
+                App.debateFormatGroups['自訂流程'] = {};
+            }
+            App.debateFormatGroups['自訂流程'][flowName] = sharedFlow;
+
+            // [重要] 匯入後立刻存到 localStorage，使其永久保存
+            App.safeSave('customDebateFlows', JSON.stringify(App.debateFormatGroups['自訂流程']), '匯入流程');
+
+            return flowName; // 返回新流程的名稱
         } catch (e) {
             console.error("Error parsing shared flow:", e);
             return null;
         }
+    },
+
+    normalizeImportedFlowName(flowName) {
+        const baseName = String(flowName || '').trim().slice(0, 80);
+
+        if (!this.hasDebateFormatName(baseName)) {
+            return baseName;
+        }
+
+        const suffixBase = baseName.slice(0, 72);
+        let counter = 2;
+        let candidate = `${suffixBase} (${counter})`;
+        while (this.hasDebateFormatName(candidate)) {
+            counter++;
+            candidate = `${suffixBase} (${counter})`;
+        }
+        return candidate;
+    },
+
+    hasDebateFormatName(flowName) {
+        return Object.values(this.debateFormatGroups).some(group => group && Object.prototype.hasOwnProperty.call(group, flowName));
     },
 
     checkForSharedFlow() {
@@ -8440,6 +8080,57 @@ const App = {
                 App.showNotification("載入分享的流程失敗，連結可能已損毀或版本不相容。", "error");
                 history.replaceState(null, '', window.location.pathname);
             }
+        }
+    },
+
+    async copyTextToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return;
+            } catch (e) {
+                console.warn('Clipboard API failed, falling back to textarea copy:', e);
+            }
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+
+        if (!copied) {
+            throw new Error('Clipboard copy failed');
+        }
+    },
+
+    renderFlowShareQr(shareUrl) {
+        const container = document.getElementById('flowShareQr');
+        if (!container) return;
+
+        container.innerHTML = '';
+        if (typeof QRCode === 'undefined') {
+            container.textContent = 'QR Code 函式庫載入失敗，請改用已複製到剪貼簿的分享連結。';
+            return;
+        }
+
+        try {
+            new QRCode(container, {
+                text: shareUrl,
+                width: 328,
+                height: 328,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        } catch (e) {
+            console.warn('Failed to generate flow share QR Code:', e);
+            container.textContent = '分享資料過長，無法產生 QR Code。請改用已複製到剪貼簿的分享連結。';
         }
     },
 
@@ -9992,6 +9683,9 @@ const App = {
                         </button>
                     </div>
 
+                    <!-- 贊助/合作：賽後高注意力時機 -->
+                    <div class="mt-6 pt-6 border-t border-[var(--border-color)]">${this.renderPromotionArea()}</div>
+
                     <!-- 返回按鈕 -->
                     <div class="text-center pt-4">
                         <button data-action="confirmReset" class="inline-flex items-center gap-2 text-base text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400 font-semibold py-2 px-4 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
@@ -10191,15 +9885,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 清除非必要的查詢參數，避免刷新重複匯入
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else {
-                // 如果解碼失敗，則主動開啟匯入彈窗，並將收到的文字填入
-                App.actions.showImportModal();
-                setTimeout(() => {
-                    const textarea = document.getElementById('import-flow-textarea');
-                    if (textarea) {
-                        textarea.value = sharedText;
-                        App.showNotification("自動解析失敗，請確認分享碼是否完整。", "warning");
-                    }
-                }, 100);
+                // 解碼失敗：可能是舊版或損毀的分享連結
+                App.showNotification("無法開啟分享的流程，連結可能已損毀或為舊版格式。", "error", 5000);
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
     }, 300); // 稍微延遲確保 App 已完成初始化
