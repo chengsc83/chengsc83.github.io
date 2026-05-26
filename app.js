@@ -878,6 +878,14 @@ const App = {
         // 1. 暫停當前的計時器
         this.clearAllTimers();
 
+        // [FIX] 取消進行中的語音，避免「設定結果 由X方優先結辯」等舊語音在復原後的階段被誤播。
+        this.cancelGoogleTTS();
+        if (this.synth) {
+            try { this.synth.cancel(); } catch (_) { }
+        }
+        this.state.speechQueue = [];
+        this.state.isSpeaking = false;
+
         // 2. 取出上一個狀態 (這個狀態裡現在「沒有」history 屬性)
         const previousState = this.state.history.pop();
 
@@ -1989,6 +1997,15 @@ const App = {
 
             App.clearAllTimers();
             // [全局語音控制] 不停止語音辨識
+
+            // [FIX] 與 nextStage / previousStage 一致：離開階段時取消進行中的語音與待執行回調，
+            // 避免「設定結果 由X方優先結辯」等被暫停或仍在合成中的舊語音在跳轉後的新階段被誤播。
+            App.cancelGoogleTTS();
+            if (window.speechSynthesis && App.state.isSpeaking) {
+                window.speechSynthesis.cancel();
+            }
+            App.state.speechQueue = [];
+            App.state.isSpeaking = false;
 
             // 清除抽籤結果（如果跳轉到抽籤階段之前）
             const hasDrawStageInPast = App.state.currentFlow.slice(0, targetIndex + 1).some(s => s.type === 'draw_rebuttal_order');
