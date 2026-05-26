@@ -1926,15 +1926,17 @@ const App = {
             }
             // -------------------------------------------------------
 
-            // 如果正在播報抽籤結果時手動點擊，必須強制取消語音
-            if (currentStage && currentStage.type === 'draw_rebuttal_order') {
-                App.cancelGoogleTTS();
-                if (window.speechSynthesis && App.state.isSpeaking) {
-                    window.speechSynthesis.cancel();
-                }
-                App.state.speechQueue = [];
-                App.state.isSpeaking = false;
+            // [FIX] 離開任何階段時都強制取消進行中的語音與待執行的佇列回調。
+            // 否則「暫停在播報中 → 跳到無腳本階段(如 manual_prep / 抽籤) → 恢復」時，
+            // 舊階段被暫停的「開始計時」會在恢復後播完，其 onDone 仍會以舊階段的時長
+            // 在新階段啟動主計時（清空 isSpeaking 即可讓 onDone 的回調被擋下）。
+            // 原本只在 draw_rebuttal_order 做，這裡推廣到所有階段。
+            App.cancelGoogleTTS();
+            if (window.speechSynthesis && App.state.isSpeaking) {
+                window.speechSynthesis.cancel();
             }
+            App.state.speechQueue = [];
+            App.state.isSpeaking = false;
 
             if (App.state.isAdvancingStage) return;
             // [FIX Bug Y] 已在最後一階段時不儲存 Undo 快照，避免在 Undo 堆疊中堆積未變動的狀態
@@ -2027,6 +2029,15 @@ const App = {
 
             App.clearAllTimers();
             // [全局語音控制] 不停止語音辨識
+
+            // [FIX] 與 nextStage 一致：離開階段時取消進行中的語音與待執行回調，
+            // 避免被暫停的舊階段播報恢復後以舊時長在新階段誤啟動主計時。
+            App.cancelGoogleTTS();
+            if (window.speechSynthesis && App.state.isSpeaking) {
+                window.speechSynthesis.cancel();
+            }
+            App.state.speechQueue = [];
+            App.state.isSpeaking = false;
 
             // 檢查並撤銷目前階段的動作計數
             const stageToUndo = App.state.currentFlow[App.state.currentStageIndex];
@@ -2312,6 +2323,23 @@ const App = {
                 // [FIX] Removed App.stopRecognition() to allow continuous listening
                 App.startMainSpeechTimer(stage.duration);
             }
+        },
+        // 比賽中途若使用者停止了畫面分享，提供當場重新擷取網頁音訊的入口，不必重設整場
+        async reshareDisplayAudio() {
+            const ok = await App.initializeDisplayAudio();
+            if (!ok) return; // initializeDisplayAudio 內已對取消/失敗顯示通知
+            App.showNotification("已重新擷取網頁音訊，線上偵測已恢復。", "success");
+
+            // 若目前正處於「網頁音訊」模式的緩衝(grace)階段且尚未開始計時，立即重啟偵測
+            const stage = App.state.currentFlow[App.state.currentStageIndex];
+            if (stage && App.state.timer.type === 'grace' && !App.state.mainSpeechTimerStartedByGrace) {
+                const team = App.getTeamForStage(stage);
+                if (team && App.state.audioSourceModes[team] === 'display') {
+                    App.deactivateAudioDetection(); // 清掉先前殘留狀態，再重新激活
+                    App.startAudioDetection(team);
+                }
+            }
+            App.scheduleRenderDebateControls(); // 重新渲染以隱藏「重新分享」按鈕
         },
         confirmStageChoice(e) {
             const selectedAction = e.target.closest('[data-choice]').dataset.choice;
@@ -3079,8 +3107,11 @@ const App = {
             App.state.enableSpeech = !App.state.enableSpeech; // 直接反轉狀態
             App.safeSave('debateSpeech', App.state.enableSpeech, '語音朗讀設定');
 
-            if (!App.state.enableSpeech && App.synth && App.synth.speaking) {
-                App.synth.cancel();
+            if (!App.state.enableSpeech) {
+                // 完整停止目前播放：Piper(主要管線，走 AudioContext)/Google 由 cancelGoogleTTS 停止，
+                // speechSynthesis(備援) 另外 cancel。只看 synth.speaking 會漏掉 Piper 仍在播的情況。
+                App.cancelGoogleTTS();
+                if (App.synth) { try { App.synth.cancel(); } catch (_) { } }
             }
             App.scheduleRenderDebateControls(); // 重新渲染以更新按鈕顏色
             App.showNotification(App.state.enableSpeech ? "已開啟語音朗讀" : "已關閉語音朗讀", "info");
@@ -3184,10 +3215,11 @@ const App = {
         toggleSpeech(e) {
             App.state.enableSpeech = e.target.checked;
             App.safeSave('debateSpeech', App.state.enableSpeech, '語音朗讀設定');
-            if (!App.state.enableSpeech && App.synth && App.synth.speaking) {
-                // 如果使用者是「關閉」朗讀，且當前正在朗讀中
+            if (!App.state.enableSpeech) {
+                // 使用者關閉朗讀：完整停止目前播放（含 Piper 主要管線，非僅 speechSynthesis）
                 console.log("Speech canceled by user toggle.");
-                App.synth.cancel();
+                App.cancelGoogleTTS();
+                if (App.synth) { try { App.synth.cancel(); } catch (_) { } }
             }
 
             const allToggles = document.querySelectorAll('[data-change-action="toggleSpeech"]');
@@ -3425,7 +3457,7 @@ const App = {
                                 </span>
                                 <div>
                                     <h3 class="text-lg font-bold text-[var(--text-main)]">Step 1：辯題與賽制</h3>
-                                    <p class="text-xs text-slate-500">設定本場比賽的辯題與賽制</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400">設定本場比賽的辯題與賽制</p>
                                 </div>
                             </div>
                             
@@ -3434,7 +3466,7 @@ const App = {
                                 <div>
                                     <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                                         <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                                        盃賽名稱 <span class="text-xs text-slate-400 font-normal">(選填)</span>
+                                        盃賽名稱 <span class="text-xs text-slate-500 dark:text-slate-400 font-normal">(選填)</span>
                                     </label>
                                     <div class="relative">
                                         <input type="text" id="tournamentNameInput" class="modern-input text-base pr-10" placeholder="在此輸入盃賽名稱" value="${this.state.tournamentName || ''}">
@@ -4232,7 +4264,8 @@ const App = {
             reset: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>`,
             speech: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`,
             auto: `<span class="font-bold text-xs">AUTO</span>`,
-            undo: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>`
+            undo: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>`,
+            reshare: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>`
         };
 
         const isFullscreen = document.fullscreenElement || document.body.classList.contains('presentation-mode');
@@ -4879,6 +4912,11 @@ const App = {
         const stage = currentFlow[currentStageIndex];
         const { isMicMuted, micAudioTrack } = recording;
 
+        // [顯示音訊恢復] 若本場有環節用「網頁音訊」偵測，但分享已中斷（中途停止分享），
+        // 提供當場「重新分享」入口，不必重設整場比賽。
+        const usesDisplayAudio = this.state.enableSpeechDetection && Object.values(this.state.audioSourceModes || {}).includes('display');
+        const needsReshareDisplay = usesDisplayAudio && !this.state.sharedDisplay.isInitialized;
+
         // --- 狀態判斷 ---
         const isReadyToStartManualPrep = (stage && stage.type === 'manual_prep' && timer.type !== 'manual_prep');
         const canForceStart = (stage && (stage.type === 'speech_auto' || stage.type === 'choice_speech') && timer.type === 'grace' && !this.state.mainSpeechTimerStartedByGrace);
@@ -4924,7 +4962,7 @@ const App = {
         const nextBtnDisabled = (isRunning && !isPaused) || isDrawNotCompleted;
         const prevBtnDisabled = currentStageIndex <= 0 || (isRunning && !isPaused);
 
-        const hasActiveHiddenFeatures = isAutoMode || enableSpeech || (pip && pip.isActive);
+        const hasActiveHiddenFeatures = isAutoMode || enableSpeech || (pip && pip.isActive) || needsReshareDisplay;
 
         const icons = {
             prev: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>`,
@@ -4943,7 +4981,8 @@ const App = {
             reset: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>`,
             speech: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`,
             auto: `<span class="font-bold text-xs">AUTO</span>`,
-            undo: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>`
+            undo: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>`,
+            reshare: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>`
         };
 
         const isFullscreen = document.fullscreenElement || document.body.classList.contains('presentation-mode');
@@ -4952,6 +4991,8 @@ const App = {
         container.innerHTML = `
             <div class="control-dock-wrapper">
                 <div id="dockPopupMenu" class="dock-popup-menu">
+                    ${needsReshareDisplay ? `<div class="menu-item-wrap"><button data-action="reshareDisplayAudio" class="dock-btn has-indicator animate-scale-in" style="color:#f59e0b; background:rgba(245,158,11,0.12);" aria-label="重新分享網頁音訊" title="網頁音訊已中斷，點擊重新分享">${icons.reshare}</button><span class="menu-label text-amber-400">重新分享</span></div>
+                    <div class="w-[1px] h-8 bg-white/10 mx-2 my-auto"></div>` : ''}
                     <div class="menu-item-wrap"><button data-action="toggleAutoMode" class="dock-btn ${isAutoMode ? 'is-active' : ''}" aria-label="切換自動模式">${icons.auto}</button><span class="menu-label">自動</span></div>
                     <div class="menu-item-wrap"><button data-action="toggleSpeech" class="dock-btn ${enableSpeech ? 'is-active' : ''}" aria-label="切換語音朗讀">${icons.speech}</button><span class="menu-label">朗讀</span></div>
                     <div class="w-[1px] h-8 bg-white/10 mx-2 my-auto"></div>
@@ -6527,6 +6568,15 @@ const App = {
             this.state.googleTtsAudio.removeAttribute('src');
         }
         this.state.isGoogleTtsPlaying = false;
+        // [FIX] 取消 TTS 時一併解除 VAD 抑制。vadSuppressed 只在 onDone 的 isSpeaking 區塊內解除，
+        // 而「取消」會把 isSpeaking 設為 false，使該解除被跳過，導致 vadSuppressed 永久卡在 true，
+        // 下一階段的 VAD(第二層)偵測被持續抑制、無法以說話自動開始計時。硬停 TTS 沒有殘響尾音需保護，
+        // 故可立即解除（若緊接著有新的 speak()，processSpeechQueue 會再次設回 true）。
+        if (this.state.vadSuppressionTimeout) {
+            clearTimeout(this.state.vadSuppressionTimeout);
+            this.state.vadSuppressionTimeout = null;
+        }
+        this.state.vadSuppressed = false;
     },
 
     pauseGoogleTTS() {
@@ -7003,7 +7053,6 @@ const App = {
                     const combinedTranscript = finalTranscript + interimTranscript;
                     if (/(主席好|各位好|大家好|謝謝主席|謝謝|豬洗好|竹溪好|出息好|出席好|熟悉好|祖席好|楚溪好|出戲好|主媳好|主席號|儲蓄好|大加好|打家好|打架好|大家號|大甲好|達佳好|大叫好|大假好|各為好|各為號|哥餵好|割胃好|各位號|主席|對方便有|對方辯友|對方變有|對方變油|對方便由|退房辯友|堆放便有|對方沒有|兌放辯友|謝謝出席|寫寫主席|謝謝出息|歇歇主席|謝謝主廚)/.test(combinedTranscript)) {
                         console.log("Layer 1 - Wake word detected:", combinedTranscript);
-                        if (this.state.graceOnresultTimeout) { clearTimeout(this.state.graceOnresultTimeout); this.state.graceOnresultTimeout = null; }
                         this.state.mainSpeechTimerStartedByGrace = true;
                         this.deactivateAudioDetection();
                         clearInterval(this.state.timer.graceInterval);
@@ -7014,7 +7063,6 @@ const App = {
                     // 排除含「系統」的文字（系統暫停/系統開始及其 interim 片段），避免誤觸發
                     else if (combinedTranscript.trim().length > 4 && !combinedTranscript.includes('系統')) {
                         console.log("Layer 1.5 - Speech text detected (>3 chars), triggering:", combinedTranscript);
-                        if (this.state.graceOnresultTimeout) { clearTimeout(this.state.graceOnresultTimeout); this.state.graceOnresultTimeout = null; }
                         this.state.mainSpeechTimerStartedByGrace = true;
                         this.deactivateAudioDetection();
                         clearInterval(this.state.timer.graceInterval);
@@ -7311,6 +7359,14 @@ const App = {
             console.warn('[TTS] Piper TTS attempt failed:', e.message);
         }
 
+        // [iOS Fix] Piper 失敗後，若此次發話在 await 期間已被新的 speak() 取代（epoch 變動），
+        // 絕不可再用 speechSynthesis 播放舊內容——否則舊階段的稿子會疊在新階段上一起播出，
+        // 重現「設定結果 由X方優先結辯」被誤播的問題。直接 return：較新的 speak() 已接管
+        // isSpeaking 與佇列，這裡不可重設任何共享狀態。
+        if ((this.state.speechEpoch || 0) !== myEpoch) {
+            return;
+        }
+
         // --- Fallback: speechSynthesis（Piper TTS 失敗時）---
         console.log('[TTS] Falling back to speechSynthesis for:', text.substring(0, 30) + '...');
         if (!this.synth) {
@@ -7436,6 +7492,15 @@ const App = {
             console.log("Persistent VAD already initialized, skipping.");
             return;
         }
+        // [race fix] 初始化過程含多個 await（getUserMedia、MicVAD.new），在 audioDetection.vad
+        // 被指派前若再次被呼叫（app 啟動的 1110 與開賽流程的 1666/7701 可能接近觸發），
+        // 兩次都會通過上面的 guard，重複建立 AudioContext 與麥克風流造成洩漏。
+        // 用同步旗標擋住並發呼叫，並在 finally 重置。
+        if (this._vadInitializing) {
+            console.log("Persistent VAD initialization already in progress, skipping.");
+            return;
+        }
+        this._vadInitializing = true;
 
         try {
             // 取得麥克風流並保持開啟（整場比賽共用）
@@ -7547,6 +7612,7 @@ const App = {
                 vad: myvad,
                 stream: stream,
                 isActive: false, // 初始化後不立即激活，等 grace period 開始時才激活
+                mode: 'microphone', // [FIX] 標記此 VAD 為麥克風模式，供 startAudioDetection 判斷是否需切換重建
             };
 
             myvad.start();
@@ -7555,6 +7621,8 @@ const App = {
         } catch (err) {
             console.error("Failed to initialize persistent VAD:", err);
             this.showNotification("無法啟動語音偵測，請檢查麥克風權限。", "error");
+        } finally {
+            this._vadInitializing = false;
         }
     },
 
@@ -7674,7 +7742,7 @@ const App = {
                         }
                     },
                 });
-                this.state.audioDetection = { vad: myvad, stream: stream, isActive: true };
+                this.state.audioDetection = { vad: myvad, stream: stream, isActive: true, mode: 'display' };
                 myvad.start();
                 console.log("VAD started in display audio mode.");
             } catch (err) {
@@ -7684,6 +7752,12 @@ const App = {
         }
 
         // 麥克風模式：直接激活已持久化的 VAD（無需重建）
+        // [FIX] 若目前的 VAD 是為 display（網頁音訊）模式建立的（前一個環節用網頁音訊），
+        // 它綁定的是 display 音訊串流，拿來聽麥克風會完全偵測不到發言。必須先銷毀再重建麥克風 VAD。
+        if (this.state.audioDetection.vad && this.state.audioDetection.mode === 'display') {
+            console.log("Switching from display-audio VAD back to microphone VAD; rebuilding.");
+            this.destroyPersistentVAD();
+        }
         if (!this.state.audioDetection.vad) {
             console.warn("Persistent VAD not initialized, initializing now...");
             await this.initPersistentVAD();
@@ -8279,6 +8353,14 @@ const App = {
                 this.state.sharedDisplay.audioTrack = null;
                 this.state.sharedDisplay.isInitialized = false;
 
+                // [FIX] 若目前正用「網頁音訊」VAD 偵測，來源已斷，其 clone 軌道也隨來源結束、收不到音訊，
+                // 卻仍 isActive 形成殭屍 VAD。立即停用並銷毀，讓本環節改由緩衝逾時自動開始、狀態保持乾淨。
+                // 僅針對 display 模式的 VAD（mode 比對），不影響麥克風 VAD。
+                if (this.state.audioDetection.mode === 'display' && this.state.audioDetection.vad) {
+                    this.deactivateAudioDetection();
+                    this.destroyPersistentVAD();
+                }
+
                 if (this.state.currentView === 'debate') {
                     this.showNotification("畫面分享已停止，線上音訊偵測將會失效。", "warning", 5000);
                 }
@@ -8412,14 +8494,12 @@ const App = {
         clearInterval(this.state.timer.graceInterval);
         if (this.state.endWordTimeout) clearTimeout(this.state.endWordTimeout);
         if (this.state.vadSilenceTimeout) clearTimeout(this.state.vadSilenceTimeout);
-        if (this.state.graceOnresultTimeout) clearTimeout(this.state.graceOnresultTimeout);
         if (this.state.vadFallbackTimeout) clearTimeout(this.state.vadFallbackTimeout);
         this.state.endWordTimeout = null;
         this.state.vadSilenceTimeout = null;
         this.state.vadFirstSpeechTime = null;
         this.state.vadFallbackTimeout = null;
         this.state.vadSpeechStartTime = null;
-        this.state.graceOnresultTimeout = null;
         this.state.graceLastOnresultTime = null;
         this.state.graceMaxTranscriptLen = 0;
 
@@ -8500,6 +8580,13 @@ const App = {
 
             if (type === 'grace') {
                 clearInterval(App.state.timer.graceInterval);
+                // [FIX] 緩衝結束：將 graceInterval 設 null 並停用語音偵測。
+                // 否則偵測層的 guard（皆檢查 timer.type==='grace' && timer.graceInterval）在
+                // 「緩衝時間到」播報的約 2 秒空窗內仍會通過——使用者此刻一出聲就會打斷播報、
+                // 重複觸發「開始計時」，且可能讓已排程的 vadFallbackTimeout 緊接著再觸發一次。
+                // deactivateAudioDetection() 同時會清掉還在排程中的 vadFallbackTimeout。
+                App.state.timer.graceInterval = null;
+                App.deactivateAudioDetection();
                 // [FIX] Removed App.stopRecognition() to allow continuous listening
                 const stage = App.state.currentFlow[App.state.currentStageIndex];
                 if (!App.state.mainSpeechTimerStartedByGrace) {
