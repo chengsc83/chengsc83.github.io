@@ -1,3 +1,9 @@
+        @property --progress {
+            syntax: "<percentage>";
+            inherits: false;
+            initial-value: 100%;
+        }
+
         /* =========================================
        🎨 1. 核心設計系統 (Design Tokens)
        ========================================= */
@@ -37,7 +43,7 @@
             --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
-            --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.2);
+            --shadow-glow: 0 0 15px color-mix(in srgb, var(--color-primary) 20%, transparent);
 
             /* Motion tokens — hover/狀態統一用 --ease-standard；--ease-bounce 只給「出現」動畫 */
             --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -54,6 +60,17 @@
                取代原本散落的 12/16/24/25/30/35px。 */
             --glass-blur: 20px;
             --glass-blur-strong: 30px;
+
+            /* Liquid Glass 反光層：頂緣高光 / 整圈柔光描邊 / 表面斜向反光（sheen）。
+               預設為淺色面用值，html.dark 會覆蓋成適合深色玻璃的較含蓄值。 */
+            --lg-rim: rgba(255, 255, 255, 0.9);
+            --lg-rim-soft: rgba(255, 255, 255, 0.55);
+            --lg-sheen: rgba(255, 255, 255, 0.45);
+            --glass-panel-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.52) 100%);
+            --glass-panel-border: rgba(255, 255, 255, 0.72);
+            --glass-panel-shadow: 0 12px 36px rgba(31, 38, 135, 0.10),
+                inset 0 1px 0 rgba(255, 255, 255, 0.95),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.58);
 
             --color-success: #10b981;
             --color-warning: #f59e0b;
@@ -128,13 +145,24 @@
             --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
             --shadow-md: 0 8px 20px -4px rgba(0, 0, 0, 0.3);
             --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-            --shadow-glow: 0 0 25px rgba(129, 140, 248, 0.3);
+            --shadow-glow: 0 0 25px color-mix(in srgb, var(--color-primary) 30%, transparent);
 
             /* Dock & Controls */
             --dock-bg: rgba(15, 23, 42, 0.85);
             --dock-border: rgba(255, 255, 255, 0.15);
             --dock-text: #cbd5e1;
             --dock-btn-hover: rgba(255, 255, 255, 0.1);
+
+            /* Liquid Glass（深色）：高光較含蓄，內側帶一抹靛紫呼應品牌 */
+            --lg-rim: rgba(255, 255, 255, 0.30);
+            --lg-rim-soft: rgba(255, 255, 255, 0.08);
+            --lg-sheen: rgba(255, 255, 255, 0.06);
+            --glass-panel-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.05) 100%);
+            --glass-panel-border: rgba(255, 255, 255, 0.20);
+            --glass-panel-shadow: 0 4px 30px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 var(--lg-rim),
+                inset 0 0 0 1px var(--lg-rim-soft),
+                inset 0 4px 20px rgba(255, 255, 255, 0.1);
 
             /* 錄音面板 */
             --rec-btn-bg: rgba(30, 41, 59, 0.5);
@@ -170,29 +198,33 @@
            改用半透明底浮在 modal 的玻璃背板 (.glass-panel) 上，達成相同的毛玻璃感——
            這正是側邊欄 .menu-item 的做法。 */
         .format-option {
-            background-color: rgba(255, 255, 255, 0.55);
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            /* [Phase 1] 深淺值合併為 light-dark() 單一來源（跟隨 html 的 color-scheme），
+               原本的 html.dark & 覆寫塊已併入下方各宣告 */
+            background-color: light-dark(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.04));
+            border: 1px solid light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.08));
             transition: background-color var(--dur-slow) var(--ease-standard),
                 border-color var(--dur-slow) var(--ease-standard),
                 transform var(--dur-slow) var(--ease-standard),
                 box-shadow var(--dur-slow) var(--ease-standard);
-        }
 
-        html.dark .format-option {
-            background-color: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.08);
-        }
+            /* hover：滑移 + 主色邊框 + 陰影（與 .menu-item:hover 同手感） */
+            &:hover {
+                transform: translateX(4px);
+                border-color: var(--color-primary);
+                box-shadow: var(--shadow-md);
+                background-color: light-dark(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.1));
+            }
 
-        /* hover：滑移 + 主色邊框 + 陰影（與 .menu-item:hover 同手感） */
-        .format-option:hover {
-            transform: translateX(4px);
-            border-color: var(--color-primary);
-            box-shadow: var(--shadow-md);
-            background-color: rgba(255, 255, 255, 0.85);
-        }
-
-        html.dark .format-option:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            /* 鍵盤焦點 / 方向鍵選取狀態：放在 hover 之後，確保聚焦時的外框與底色不被 hover 蓋掉 */
+            &.kbd-focused,
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 2px;
+                background-color: light-dark(
+                    color-mix(in srgb, var(--color-primary) 10%, transparent),
+                    color-mix(in srgb, var(--color-primary) 18%, transparent)
+                );
+            }
         }
 
         /* 圖示放大，對應 .menu-item:hover .menu-icon */
@@ -204,27 +236,20 @@
             transform: scale(1.1);
         }
 
-        /* 鍵盤焦點 / 方向鍵選取狀態：放在 hover 之後，確保聚焦時的外框與底色不被 hover 蓋掉 */
-        .format-option.kbd-focused,
-        .format-option:focus-visible {
-            outline: 2px solid var(--color-primary);
-            outline-offset: 2px;
-            background-color: rgba(99, 102, 241, 0.1);
-        }
-        html.dark .format-option.kbd-focused,
-        html.dark .format-option:focus-visible {
-            background-color: rgba(129, 140, 248, 0.18);
-        }
-
         /* --- 2. 全局基礎設定 --- */
         html {
+            color-scheme: light;
             transition: background-color 0.3s ease;
+
+            &.dark {
+                color-scheme: dark;
+            }
         }
 
         body {
             font-family: var(--font-body);
             background-color: var(--bg-page);
-            background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%),
+            background-image: radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary) 5%, transparent), transparent 40%),
                 radial-gradient(circle at bottom left, rgba(244, 63, 94, 0.05), transparent 40%);
             color: var(--text-main);
             min-height: 100vh;
@@ -251,6 +276,24 @@
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
         }
 
+        .toast {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: opacity 0.5s ease, transform 0.5s var(--ease-standard);
+
+            &.is-exiting {
+                opacity: 0;
+                transform: translateY(0.5rem) scale(0.98);
+            }
+        }
+
+        @starting-style {
+            .toast {
+                opacity: 0;
+                transform: translateY(0.5rem) scale(0.98);
+            }
+        }
+
         /* [效能優化] 使用 contain 屬性隔離重繪區域 */
         /* 注意：不能對包含 position:fixed 子元素的容器使用 contain: layout，會破壞 fixed 定位 */
         #timerContainer {
@@ -261,11 +304,17 @@
             contain: style;
         }
 
-        /* 強制修正 Tailwind 文字顏色 - 確保深淺模式正確切換 */
+        /* 強制修正 Tailwind 文字顏色 - 確保深淺模式正確切換
+           （!important 的對手是 HTML 上的字面色 utility，Phase 3 語意化後可拆）
+           [Phase 1] 原 html.dark 覆寫塊已併入：600 深色提亮用 light-dark()；
+           700/800 的深色覆寫值與基礎相同，屬冗餘，直接移除 */
         .text-slate-500,
-        .text-slate-400,
-        .text-slate-600 {
+        .text-slate-400 {
             color: var(--text-sub) !important;
+        }
+
+        .text-slate-600 {
+            color: light-dark(var(--text-sub), var(--text-main)) !important;
         }
 
         .text-slate-700,
@@ -275,13 +324,6 @@
 
         .text-slate-300 {
             color: var(--text-sub) !important;
-        }
-
-        /* 深色模式下強制淺色文字 */
-        html.dark .text-slate-600,
-        html.dark .text-slate-700,
-        html.dark .text-slate-800 {
-            color: var(--text-main) !important;
         }
 
         h1,
@@ -304,8 +346,10 @@
         header {
             background-color: var(--bg-header) !important;
             border-bottom: 1px solid var(--border-color) !important;
-            backdrop-filter: blur(var(--glass-blur));
-            -webkit-backdrop-filter: blur(var(--glass-blur));
+            /* Liquid Glass：微量 saturate/brightness + 頂緣柔光，讓頂列玻璃更通透立體 */
+            backdrop-filter: blur(var(--glass-blur)) saturate(150%) brightness(1.03);
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%) brightness(1.03);
+            box-shadow: inset 0 1px 0 var(--lg-rim-soft);
             transition: all 0.3s ease;
         }
 
@@ -331,29 +375,40 @@
             transition: background-color var(--dur-base) var(--ease-standard),
                 color var(--dur-base) var(--ease-standard),
                 transform var(--dur-base) var(--ease-standard);
-        }
 
-        .modal-close-btn:hover {
-            transform: scale(1.05);
-            background-color: var(--surface-2);
-        }
-
-        html.dark .modal-close-btn:hover {
-            background-color: rgba(255, 255, 255, 0.08);
+            &:hover {
+                transform: scale(1.05);
+                background-color: light-dark(var(--surface-2), rgba(255, 255, 255, 0.08));
+            }
         }
 
         /* --- 3. 通用元件 (Components) --- */
         .glass-panel {
-            background: var(--surface-1);
-            border: 1px solid var(--border-color);
+            /* Liquid Glass：深淺色各用自己的玻璃底，避免淺色模式沿用深色玻璃 */
+            background: var(--glass-panel-bg);
+            border: 1px solid var(--glass-panel-border);
             border-radius: 1.5rem;
-            box-shadow: var(--shadow-md);
-            /* saturate(180%) 與 dock / sidebar / action-bar 的玻璃對齊，
-               讓卡片/modal 玻璃同樣鮮豔通透，不再偏灰平 */
-            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
-            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
-            transition: transform 0.2s, box-shadow 0.2s;
+            /* 原深度陰影 + 頂緣高光 + 整圈柔光描邊，做出厚實玻璃的立體反光 */
+            box-shadow: var(--glass-panel-shadow);
+            color: var(--text-main);
+            /* saturate 提鮮 + 微量 brightness，讓背景穿透更通透鮮活 */
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(190%) brightness(1.06);
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(190%) brightness(1.06);
+            position: relative;
+            overflow: hidden;
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+                box-shadow 0.3s ease,
+                background-color 0.3s ease,
+                border-color 0.3s ease;
             transform: translateZ(0);
+            will-change: transform;
+        }
+
+        html:not(.dark) .glass-panel,
+        html.light .glass-panel {
+            color: var(--text-main);
         }
 
         .modern-input {
@@ -366,13 +421,13 @@
             font-size: 1rem;
             transition: all 0.2s;
             background-image: none !important;
-        }
 
-        .modern-input:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-            background-color: var(--surface-1);
+            &:focus {
+                outline: none;
+                border-color: var(--color-primary);
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+                background-color: var(--surface-1);
+            }
         }
 
         /* 淺色模式輸入框明確樣式 */
@@ -406,23 +461,23 @@
                 transform var(--dur-base) var(--ease-standard);
             cursor: pointer;
             user-select: none;
-        }
 
-        .format-tag:hover {
-            background-color: var(--surface-1);
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            transform: translateY(-1px);
-        }
+            &:hover {
+                background-color: var(--surface-1);
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+                transform: translateY(-1px);
+            }
 
-        .format-tag:active {
-            transform: translateY(0);
-        }
+            &:active {
+                transform: translateY(0);
+            }
 
-        .format-tag.active {
-            background-color: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
+            &.active {
+                background-color: var(--color-primary);
+                color: white;
+                border-color: var(--color-primary);
+            }
         }
 
         select.modern-input {
@@ -452,25 +507,30 @@
             transition: opacity 0.3s, visibility 0.3s;
             opacity: 1;
             visibility: visible;
-        }
 
-        #sidebar.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            display: block !important;
+            &.hidden {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                display: block !important;
+            }
         }
 
         #sidebar-panel {
             position: absolute;
             background-color: var(--surface-1);
             backdrop-filter: blur(var(--glass-blur-strong));
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong));
             box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             border: 1px solid var(--border-color);
             color: var(--text-main);
+            /* [FIX] 面板本身就是捲動容器：sticky 表頭才有作用、內容過高時在面板內捲，
+               而非溢出或把捲動傳遞給背景 body（後者會讓行動網址列開合 → 面板位移）。 */
+            overflow-y: auto;
+            overscroll-behavior: contain;
         }
 
         @media (min-width: 768px) {
@@ -490,7 +550,8 @@
 
         @media (max-width: 767px) {
             #sidebar-panel {
-                bottom: 1.5rem;
+                /* 底距含 safe-area，避免落在 iOS Home Indicator 上 */
+                bottom: calc(1.25rem + env(safe-area-inset-bottom));
                 left: 1rem;
                 right: 1rem;
                 top: auto;
@@ -499,6 +560,8 @@
                 margin: 0 auto;
                 height: auto;
                 max-height: 80vh;
+                /* dvh = 動態視窗高度：網址列開合時不會像 vh 一樣變動，面板高度與定位才穩定不位移 */
+                max-height: 80dvh;
                 border-radius: 1.5rem;
                 transform: translateY(calc(100% + 2rem));
             }
@@ -509,6 +572,13 @@
 
             #sidebar:not(.hidden) #sidebar-panel {
                 transform: translateY(0);
+            }
+
+            /* [FIX] 控制中心開啟時鎖住背景 body 捲動（純 CSS，依 #sidebar 狀態自動生效／解除，
+               不論用哪條路徑開關都正確）。背景不捲 → 行動網址列不開合 → dvh/bottom 定位的面板不位移。
+               只限行動版：桌機鎖 body 會因捲軸消失造成水平位移，故不套用。 */
+            body:has(#sidebar:not(.hidden)) {
+                overflow: hidden;
             }
         }
 
@@ -534,17 +604,17 @@
             border: 1px solid transparent;
             transition: background var(--dur-slow) var(--ease-standard), border-color var(--dur-slow) var(--ease-standard), transform var(--dur-slow) var(--ease-standard), box-shadow var(--dur-slow) var(--ease-standard);
             cursor: pointer;
-        }
 
-        .menu-item:hover {
-            background: var(--surface-1);
-            border-color: var(--color-primary);
-            transform: translateX(4px);
-            box-shadow: var(--shadow-sm);
-        }
+            &:hover {
+                background: var(--surface-1);
+                border-color: var(--color-primary);
+                transform: translateX(4px);
+                box-shadow: var(--shadow-sm);
+            }
 
-        .menu-item:hover .menu-icon {
-            transform: scale(1.1);
+            &:hover .menu-icon {
+                transform: scale(1.1);
+            }
         }
 
         .menu-toggle-wrapper {
@@ -554,51 +624,35 @@
         }
 
         .menu-icon {
+            /* [Phase 1] 深淺值合併為 light-dark()。原本 html.dark .menu-icon（0,2,1）會以特異度
+               壓過變體色 .menu-icon--*（0,2,0），逼出三條平鋪的 html.dark 變體規則反制——
+               合併後這場特異度戰爭整個消失，變體只需（0,2,0）即可在雙主題生效 */
             width: 2rem;
             height: 2rem;
             border-radius: 0.5rem;
-            background: rgba(0, 0, 0, 0.05);
+            background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.1));
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-main);
+            color: light-dark(var(--text-main), white);
             transition: transform 0.2s ease, background-color 0.2s ease;
-        }
 
-        html.dark .menu-icon {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+            /* 選單項目顏色區分 */
 
-        /* 選單項目顏色區分 - 使用高優先級確保覆蓋基礎樣式 */
-        .menu-icon.menu-icon--blue {
-            background: rgba(59, 130, 246, 0.15);
-            color: #3b82f6;
-        }
+            &.menu-icon--blue {
+                background: light-dark(rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.2));
+                color: light-dark(#3b82f6, #60a5fa);
+            }
 
-        .menu-icon.menu-icon--purple {
-            background: rgba(139, 92, 246, 0.15);
-            color: #8b5cf6;
-        }
+            &.menu-icon--purple {
+                background: light-dark(rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.2));
+                color: light-dark(#8b5cf6, #a78bfa);
+            }
 
-        .menu-icon.menu-icon--gray {
-            background: rgba(100, 116, 139, 0.15);
-            color: #64748b;
-        }
-
-        html.dark .menu-icon.menu-icon--blue {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-        }
-
-        html.dark .menu-icon.menu-icon--purple {
-            background: rgba(139, 92, 246, 0.2);
-            color: #a78bfa;
-        }
-
-        html.dark .menu-icon.menu-icon--gray {
-            background: rgba(100, 116, 139, 0.2);
-            color: #94a3b8;
+            &.menu-icon--gray {
+                background: light-dark(rgba(100, 116, 139, 0.15), rgba(100, 116, 139, 0.2));
+                color: light-dark(#64748b, #94a3b8);
+            }
         }
 
         /* 選單分組分隔線 */
@@ -612,11 +666,11 @@
         .sidebar-close-btn {
             background-color: var(--surface-2);
             color: var(--text-sub);
-        }
 
-        .sidebar-close-btn:hover {
-            background-color: var(--surface-3);
-            color: var(--text-main);
+            &:hover {
+                background-color: var(--surface-3);
+                color: var(--text-main);
+            }
         }
 
         /* Premium Card [遺失樣式修復] - 精簡橫向佈局 */
@@ -633,15 +687,15 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-        }
 
-        .premium-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
-        }
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+            }
 
-        .premium-card * {
-            color: #ffffff !important;
+            & * {
+                color: #ffffff !important;
+            }
         }
 
         /* 強制白色 */
@@ -652,20 +706,20 @@
         .premium-card-content {
             flex-grow: 1;
             min-width: 0;
-        }
 
-        .premium-card-content h3 {
-            font-size: 0.875rem;
-            font-weight: 700;
-            margin: 0;
-            line-height: 1.3;
-        }
+            & h3 {
+                font-size: 0.875rem;
+                font-weight: 700;
+                margin: 0;
+                line-height: 1.3;
+            }
 
-        .premium-card-content p {
-            font-size: 0.7rem;
-            opacity: 0.85;
-            margin: 0.125rem 0 0;
-            line-height: 1.3;
+            & p {
+                font-size: 0.7rem;
+                opacity: 0.85;
+                margin: 0.125rem 0 0;
+                line-height: 1.3;
+            }
         }
 
         .premium-card-arrow {
@@ -683,15 +737,15 @@
             color: var(--text-main);
             width: 100%;
             transition: all 0.3s ease;
-        }
 
-        .editor-header-input:focus {
-            outline: none;
-        }
+            &:focus {
+                outline: none;
+            }
 
-        .editor-header-input::placeholder {
-            color: var(--text-sub);
-            opacity: 0.6;
+            &::placeholder {
+                color: var(--text-sub);
+                opacity: 0.6;
+            }
         }
 
         /* 編輯器頂部面板 */
@@ -700,16 +754,16 @@
             border: 1px solid var(--border-color);
             position: relative;
             overflow: hidden;
-        }
 
-        .editor-top-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            }
         }
 
         /* 階段卡片 - 增強版 */
@@ -723,30 +777,30 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-        }
 
-        .timeline-card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--color-primary);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 3px;
+                background: var(--color-primary);
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
 
-        .timeline-card:hover {
+            &:hover {
             /* 規範類別 C：卡片統一抬升 -2px（原為 -3px + translateX(2px)） */
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.3), var(--shadow-md);
-            border-color: var(--color-primary);
-            z-index: 10;
-        }
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.3), var(--shadow-md);
+                border-color: var(--color-primary);
+                z-index: 10;
+            }
 
-        .timeline-card:hover::before {
-            opacity: 1;
+            &:hover::before {
+                opacity: 1;
+            }
         }
 
         /* 拖曳把手 */
@@ -760,15 +814,15 @@
             cursor: grab;
             color: var(--text-sub);
             transition: all 0.2s;
-        }
 
-        .card-drag-handle:hover {
-            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.15) 100%);
-            color: var(--color-primary);
-        }
+            &:hover {
+                background: linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.15) 100%);
+                color: var(--color-primary);
+            }
 
-        .card-drag-handle:active {
-            cursor: grabbing;
+            &:active {
+                cursor: grabbing;
+            }
         }
 
         /* 卡片內容 */
@@ -824,19 +878,19 @@
             color: var(--text-sub);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid transparent;
-        }
 
-        .icon-btn:hover {
-            background: var(--surface-2);
-            color: var(--text-main);
-            border-color: var(--border-color);
-            transform: scale(1.05);
-        }
+            &:hover {
+                background: var(--surface-2);
+                color: var(--text-main);
+                border-color: var(--border-color);
+                transform: scale(1.05);
+            }
 
-        .icon-btn.delete:hover {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--color-danger);
-            border-color: rgba(239, 68, 68, 0.3);
+            &.delete:hover {
+                background: rgba(239, 68, 68, 0.1);
+                color: var(--color-danger);
+                border-color: rgba(239, 68, 68, 0.3);
+            }
         }
 
         /* 迷你標籤 */
@@ -863,12 +917,12 @@
             padding: 1.25rem;
             cursor: pointer;
             background: transparent;
-        }
 
-        .add-stage-area:hover {
-            border-color: var(--color-primary);
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(99, 102, 241, 0.08) 100%);
-            transform: translateY(-2px);
+            &:hover {
+                border-color: var(--color-primary);
+                background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(99, 102, 241, 0.08) 100%);
+                transform: translateY(-2px);
+            }
         }
 
         .btn-add-stage {
@@ -922,14 +976,14 @@
         /* --- 6. 賽前設定頁面 (Setup Page) --- */
         .setup-container {
             padding-bottom: 140px;
-        }
 
-        .setup-container .space-y-6>* {
-            margin-bottom: 1rem;
-        }
+            /* 賽前設定的欄位間距一律交給 space-y-6（1.5rem＝24px），不再用 `.space-y-6 > *` 覆寫。
+           原本那條 (0,2,0) 規則會壓過 v4 的 :where() space-y（0 特異度），把間距吃成 16px；
+           移除後：欄位間距 24px，且最後一欄無多餘底距 → 卡片上下對稱（上緣＝下緣＝卡片 padding）。 */
 
-        .setup-container .glass-panel {
-            padding: 1.25rem !important;
+            & .glass-panel {
+                padding: 1.25rem !important;
+            }
         }
 
         @media (min-width: 768px) {
@@ -977,14 +1031,14 @@
         /* Toggle 開關平滑過渡 */
         .toggle-switch {
             transition: background-color 0.3s ease, box-shadow 0.2s ease;
-        }
 
-        .toggle-switch::after {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease !important;
-        }
+            &::after {
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease !important;
+            }
 
-        .toggle-switch:hover::after {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            &:hover::after {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            }
         }
 
         /* Header 品牌區域 Logo 漸層效果 */
@@ -1037,22 +1091,26 @@
             overflow: hidden;
             background: var(--surface-1);
             border-radius: 1.5rem;
-        }
+            /* [現代 CSS] 宣告為 container query 容器：計時數字改用 cqi 隨「卡片」縮放，
+               而非 vw 隨整個視窗——在 PiP / 投影 / 分割版面下大小更穩定合理。 */
+            container: timercard / inline-size;
 
-        .hero-timer-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
-            pointer-events: none;
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--color-primary) 8%, transparent) 0%, transparent 60%);
+                pointer-events: none;
+            }
         }
 
         .timer-digits {
             font-family: var(--font-mono);
-            font-size: clamp(4rem, 15vw, 9rem);
+            /* cqi = 容器寬度的 1%（取代原本的 15vw） */
+            font-size: clamp(4rem, 18cqi, 9rem);
             font-weight: 800;
             line-height: 1;
             letter-spacing: -0.05em;
@@ -1064,6 +1122,13 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+        }
+
+        @container timercard (max-width: 28rem) {
+            .timer-digits {
+                font-size: clamp(3.25rem, 20cqi, 5.5rem);
+                letter-spacing: -0.04em;
+            }
         }
 
         .state-running .timer-digits {
@@ -1093,10 +1158,33 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--color-primary), #a855f7);
-            transition: width 1s linear;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-            will-change: width;
+            width: 100%;
+            background-image: linear-gradient(90deg, var(--color-primary), #a855f7);
+            background-position: left center;
+            background-repeat: no-repeat;
+            background-size: var(--progress) 100%;
+            transition: --progress 1s linear;
+            box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 50%, transparent);
+            will-change: background-size;
+        }
+
+        #posProgressBar,
+        #negProgressBar {
+            width: 100%;
+            background-color: transparent;
+            background-position: left center;
+            background-repeat: no-repeat;
+            background-size: var(--progress) 100%;
+            transition: --progress 0.3s ease;
+            will-change: background-size;
+        }
+
+        #posProgressBar {
+            background-image: linear-gradient(90deg, #22c55e, #10b981);
+        }
+
+        #negProgressBar {
+            background-image: linear-gradient(90deg, #ef4444, #f43f5e);
         }
 
         /* [效能優化] 計時器卡片 GPU 加速 */
@@ -1148,25 +1236,166 @@
             }
         }
 
-        .state-warning .timer-digits {
-            background: linear-gradient(180deg, var(--color-warning) 0%, #b45309 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
+        .state-warning {
+            & .timer-digits {
+                background: linear-gradient(180deg, var(--color-warning) 0%, #b45309 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+            }
+
+            & .progress-fill {
+                background-image: linear-gradient(90deg, var(--color-warning), var(--color-warning));
+            }
         }
 
-        .state-warning .progress-fill {
-            background: linear-gradient(90deg, var(--color-warning), var(--color-warning));
+        .state-danger {
+            & .timer-digits {
+                background: linear-gradient(180deg, var(--color-danger) 0%, #991b1b 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+                animation: pulse-red 0.5s infinite, timerShake 0.3s infinite;
+            }
+
+            & .progress-fill {
+                background-image: linear-gradient(90deg, var(--color-danger), #f43f5e);
+            }
+        }
+        /* ====== 自由辯：點選首位發言方的毛玻璃 CTA 覆蓋 ====== */
+        /* frosted 背景蓋住底下的 02:00（選擇前時間無意義），避免文字與數字重疊 */
+        .fd-select {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            border: 2px dashed var(--fd-color);
+            background: var(--fd-bg);
+            -webkit-backdrop-filter: blur(7px) saturate(120%);
+            backdrop-filter: blur(7px) saturate(120%);
+            transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+            animation: fdSelectPulse 2.2s ease-in-out infinite;
         }
 
-        .state-danger .timer-digits {
-            background: linear-gradient(180deg, var(--color-danger) 0%, #991b1b 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: pulse-red 0.5s infinite, timerShake 0.3s infinite;
+        /* [勿刪] 下兩條由 app.js 動態拼接產生（`fd-select-${team}`），
+           靜態掃描找不到完整 class 名，屬「假性死碼」——死代碼審計時已列白名單 */
+        .fd-select-positive {
+            --fd-color: #22c55e;
+            --fd-bg: rgba(34, 197, 94, 0.12);
+            --fd-bg-hover: rgba(34, 197, 94, 0.22);
         }
 
-        .state-danger .progress-fill {
-            background: linear-gradient(90deg, var(--color-danger), #f43f5e);
+        .fd-select-negative {
+            --fd-color: #ef4444;
+            --fd-bg: rgba(239, 68, 68, 0.12);
+            --fd-bg-hover: rgba(239, 68, 68, 0.22);
+        }
+
+        .fd-select:hover {
+            background: var(--fd-bg-hover);
+            border-style: solid;
+            transform: scale(1.03);
+            box-shadow: 0 10px 34px -8px var(--fd-color);
+            animation: none;
+        }
+
+        .fd-select:active {
+            transform: scale(0.98);
+        }
+
+        .fd-select-badge {
+            width: 3.25rem;
+            height: 3.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            background: var(--fd-color);
+            color: #fff;
+            box-shadow: 0 6px 18px -4px var(--fd-color);
+            margin-bottom: 0.15rem;
+            transition: transform 0.18s ease;
+        }
+
+        .fd-select:hover .fd-select-badge {
+            transform: scale(1.08);
+        }
+
+        .fd-select-badge svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-left: 3px;
+            /* 視覺置中三角形 */
+        }
+
+        .fd-select-hint {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--fd-color);
+            opacity: 0.9;
+            letter-spacing: 0.08em;
+        }
+
+        .fd-select-team {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--text-main);
+            line-height: 1.1;
+            text-align: center;
+            padding: 0 0.5rem;
+        }
+
+        .fd-select-sub {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--fd-color);
+            opacity: 0.7;
+            letter-spacing: 0.12em;
+        }
+
+        @keyframes fdSelectPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 transparent;
+            }
+
+            50% {
+                box-shadow: 0 0 26px -6px var(--fd-color);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fd-select {
+                animation: none;
+            }
+        }
+
+        /* 投影/全螢幕模式：放大字級與徽章 */
+        body.presentation-mode .fd-select-badge {
+            width: clamp(3.5rem, 6vw, 5rem);
+            height: clamp(3.5rem, 6vw, 5rem);
+        }
+
+        body.presentation-mode .fd-select-badge svg {
+            width: clamp(1.6rem, 3vw, 2.5rem);
+            height: clamp(1.6rem, 3vw, 2.5rem);
+        }
+
+        body.presentation-mode .fd-select-hint {
+            font-size: clamp(1rem, 1.6vw, 1.5rem);
+        }
+
+        body.presentation-mode .fd-select-team {
+            font-size: clamp(1.5rem, 3vw, 3rem);
+        }
+
+        body.presentation-mode .fd-select-sub {
+            font-size: clamp(0.85rem, 1.2vw, 1.2rem);
         }
 
         @keyframes pulse-red {
@@ -1227,14 +1456,14 @@
             cursor: pointer;
             transition: all 0.2s ease;
             z-index: 10;
-        }
 
-        .fullscreen-btn:hover {
-            background: linear-gradient(135deg, var(--color-primary), #a855f7);
-            color: white;
-            border-color: transparent;
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            &:hover {
+                background: linear-gradient(135deg, var(--color-primary), #a855f7);
+                color: white;
+                border-color: transparent;
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            }
         }
 
         /* 計時器右下角按鈕組 */
@@ -1259,21 +1488,21 @@
             color: var(--text-muted);
             cursor: pointer;
             transition: all 0.2s ease;
-        }
 
-        .timer-action-btn:hover {
-            background: linear-gradient(135deg, var(--color-primary), #a855f7);
-            color: white;
-            border-color: transparent;
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
+            &:hover {
+                background: linear-gradient(135deg, var(--color-primary), #a855f7);
+                color: white;
+                border-color: transparent;
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            }
 
-        .timer-action-btn.active {
-            background: linear-gradient(135deg, var(--color-primary), #a855f7);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+            &.active {
+                background: linear-gradient(135deg, var(--color-primary), #a855f7);
+                color: white;
+                border-color: transparent;
+                box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+            }
         }
 
         /* --- 8. 懸浮控制列 (Dock V2 - Enhanced) --- */
@@ -1289,10 +1518,10 @@
             gap: 0.75rem;
             width: 95%;
             pointer-events: none;
-        }
 
-        .control-dock-wrapper>* {
-            pointer-events: auto;
+            &>* {
+                pointer-events: auto;
+            }
         }
 
         /* Dock 主體樣式 */
@@ -1338,13 +1567,13 @@
                用 visibility（非 display:none）以保留 getBoundingClientRect，教學 tour 仍能定位此元素。 */
             visibility: hidden;
             transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
 
-        .dock-popup-menu.open {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: auto;
-            visibility: visible;
+            &.open {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                pointer-events: auto;
+                visibility: visible;
+            }
         }
 
         /* 選單項目包裝 */
@@ -1353,14 +1582,14 @@
             flex-direction: column;
             align-items: center;
             gap: 0.25rem;
-        }
 
-        .menu-item-wrap .menu-label {
-            font-size: 0.65rem;
-            font-weight: 500;
+            & .menu-label {
+                font-size: 0.65rem;
+                font-weight: 500;
             /* [a11y] dock 彈出層標籤字僅 ~10px，疊在毛玻璃上；用較亮的 --text-sub
                而非最暗的 --text-muted，且移除 opacity:0.8（小字疊半透明會掉到 AA 以下）。 */
-            color: var(--text-sub);
+                color: var(--text-sub);
+            }
         }
 
         /* Dock 按鈕基礎樣式 */
@@ -1377,69 +1606,72 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             cursor: pointer;
-        }
 
-        .dock-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15)) !important;
-            color: var(--color-primary) !important;
-            transform: translateY(-2px) scale(1.05);
-        }
+            &:hover:not(:disabled) {
+                background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15)) !important;
+                color: var(--color-primary) !important;
+                transform: translateY(-2px) scale(1.05);
+            }
 
-        .dock-btn:active:not(:disabled) {
-            transform: translateY(0) scale(0.98);
-        }
+            &:active:not(:disabled) {
+                transform: translateY(0) scale(0.98);
+            }
 
-        .dock-btn:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-        }
+            &:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+            }
 
-        /* 主播放按鈕 - 特殊樣式 */
-        .dock-btn.primary-play {
-            width: 3.5rem;
-            height: 3.5rem;
-            margin: 0 0.35rem;
-            border-radius: 1rem;
-            background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%) !important;
-            color: white !important;
-            box-shadow:
+            /* 主播放按鈕 - 特殊樣式 */
+
+            &.primary-play {
+                width: 3.5rem;
+                height: 3.5rem;
+                margin: 0 0.35rem;
+                border-radius: 1rem;
+                background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%) !important;
+                color: white !important;
+                box-shadow:
                 0 4px 15px rgba(99, 102, 241, 0.4),
                 0 2px 4px rgba(99, 102, 241, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
+            }
 
-        .dock-btn.primary-play:hover:not(:disabled) {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
-            transform: translateY(-3px) scale(1.08);
-            box-shadow:
+            &.primary-play:hover:not(:disabled) {
+                background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+                transform: translateY(-3px) scale(1.08);
+                box-shadow:
                 0 8px 25px rgba(99, 102, 241, 0.5),
                 0 4px 8px rgba(99, 102, 241, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
+            }
 
-        .dock-btn.primary-play:active:not(:disabled) {
-            transform: translateY(-1px) scale(1.02);
-        }
+            &.primary-play:active:not(:disabled) {
+                transform: translateY(-1px) scale(1.02);
+            }
 
-        /* 啟用狀態按鈕 */
-        .dock-btn.is-active {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)) !important;
-            color: var(--color-primary) !important;
-            box-shadow: inset 0 0 0 1.5px var(--color-primary);
-        }
+            /* 啟用狀態按鈕 */
 
-        /* 帶指示器的按鈕（有啟用的隱藏功能時） */
-        .dock-btn.has-indicator::before {
-            content: '';
-            position: absolute;
-            top: 0.35rem;
-            right: 0.35rem;
-            width: 0.5rem;
-            height: 0.5rem;
-            background: linear-gradient(135deg, #22c55e, var(--color-success));
-            border-radius: 50%;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
-            animation: indicatorPulse 2s ease-in-out infinite;
+            &.is-active {
+                background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)) !important;
+                color: var(--color-primary) !important;
+                box-shadow: inset 0 0 0 1.5px var(--color-primary);
+            }
+
+            /* 帶指示器的按鈕（有啟用的隱藏功能時） */
+
+            &.has-indicator::before {
+                content: '';
+                position: absolute;
+                top: 0.35rem;
+                right: 0.35rem;
+                width: 0.5rem;
+                height: 0.5rem;
+                background: linear-gradient(135deg, #22c55e, var(--color-success));
+                border-radius: 50%;
+                box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+                animation: indicatorPulse 2s ease-in-out infinite;
+            }
         }
 
         @keyframes indicatorPulse {
@@ -1496,14 +1728,6 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
 
-        /* Dock 分隔線 */
-        .dock-divider {
-            width: 1px;
-            height: 1.75rem;
-            background: linear-gradient(180deg, transparent, var(--border-color), transparent);
-            margin: 0 0.25rem;
-        }
-
         /* --- 9. 轉錄面板 (Transcription Panel) --- */
         .transcription-card {
             height: 100%;
@@ -1520,48 +1744,27 @@
             margin-bottom: 0.75rem;
         }
 
-        .btn-record-toggle {
-            background-color: var(--rec-btn-bg) !important;
-            color: var(--rec-btn-text) !important;
-            border: 1px solid var(--rec-btn-border) !important;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-record-toggle:hover {
-            background-color: var(--surface-1) !important;
-        }
-
-        .btn-record-toggle:has(svg.w-3) {
-            background-color: var(--color-danger) !important;
-            color: white !important;
-            border-color: #dc2626 !important;
-        }
-
-        .transcription-ctrl-group {
-            background-color: var(--rec-group-bg) !important;
-            border-radius: 0.5rem;
-        }
-
         /* --- 10. 投影模式 (Presentation Mode V4 - Enhanced) --- */
         body.presentation-mode {
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%) !important;
             overflow: hidden !important;
-        }
 
-        /* 動態背景效果 */
-        body.presentation-mode::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(ellipse at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-            animation: presentationBgPulse 8s ease-in-out infinite;
+            /* 動態背景效果 */
+
+            &::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background:
+                radial-gradient(ellipse at 20% 30%, light-dark(rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.15)) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, light-dark(rgba(168, 85, 247, 0.08), rgba(168, 85, 247, 0.1)) 0%, transparent 50%);
+                pointer-events: none;
+                z-index: 0;
+                animation: presentationBgPulse 8s ease-in-out infinite;
+            }
         }
 
         @keyframes presentationBgPulse {
@@ -1634,14 +1837,23 @@
 
         /* 超大計時器數字 */
         body.presentation-mode #timerDisplay {
-            font-family: 'Roboto Mono', monospace;
-            font-size: 28vw !important;
+            /* [FIX] 用實際載入的 JetBrains Mono（var(--font-mono)），不要用未載入的 'Roboto Mono'，
+               否則退回系統 monospace（Windows 為 Consolas 斜槓零），數字會很醜。 */
+            font-family: var(--font-mono), monospace !important;
+            font-size: clamp(6rem, 20vw, 22rem) !important;
             line-height: 1;
-            font-weight: 900;
-            color: #ffffff !important;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            /* [FIX] .timer-digits 用漸層裁切文字（-webkit-text-fill-color:transparent），
+               若不重設，這裡的 color:#fff 無效、數字會是灰階漸層。重設回實心白以恢復乾淨發光。 */
+            background: none !important;
+            -webkit-background-clip: border-box !important;
+            background-clip: border-box !important;
+            -webkit-text-fill-color: light-dark(#1e293b, #ffffff) !important;
+            color: light-dark(#1e293b, #ffffff) !important;
             text-shadow:
-                0 0 60px rgba(99, 102, 241, 0.4),
-                0 0 120px rgba(99, 102, 241, 0.2);
+                0 0 60px light-dark(rgba(99, 102, 241, 0.25), rgba(99, 102, 241, 0.45)),
+                0 0 120px light-dark(rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.25));
             letter-spacing: -0.02em;
             animation: timerGlow 2s ease-in-out infinite;
         }
@@ -1660,10 +1872,11 @@
 
         /* 警告狀態 - 黃色 */
         body.presentation-mode .state-warning #timerDisplay {
-            color: #fbbf24 !important;
+            color: light-dark(#d97706, #fbbf24) !important;
+            -webkit-text-fill-color: light-dark(#d97706, #fbbf24) !important;
             text-shadow:
-                0 0 60px rgba(251, 191, 36, 0.5),
-                0 0 120px rgba(251, 191, 36, 0.3);
+                0 0 60px light-dark(rgba(217, 119, 6, 0.35), rgba(251, 191, 36, 0.5)),
+                0 0 120px light-dark(rgba(217, 119, 6, 0.2), rgba(251, 191, 36, 0.3));
             animation: warningPulse 1s ease-in-out infinite;
         }
 
@@ -1681,10 +1894,11 @@
 
         /* 危急狀態 - 紅色閃爍 */
         body.presentation-mode .state-danger #timerDisplay {
-            color: var(--color-danger) !important;
+            color: light-dark(#dc2626, var(--color-danger)) !important;
+            -webkit-text-fill-color: light-dark(#dc2626, var(--color-danger)) !important;
             text-shadow:
-                0 0 80px rgba(239, 68, 68, 0.6),
-                0 0 160px rgba(239, 68, 68, 0.4);
+                0 0 80px light-dark(rgba(220, 38, 38, 0.4), rgba(239, 68, 68, 0.6)),
+                0 0 160px light-dark(rgba(220, 38, 38, 0.25), rgba(239, 68, 68, 0.4));
             animation: dangerPulse 0.5s ease-in-out infinite;
         }
 
@@ -1708,6 +1922,16 @@
             border: none !important;
             box-shadow: none !important;
             width: auto !important;
+            /* [FIX] 投影模式下卡片在 flex-column 容器中被算成 0 寬（overflow:hidden 的 flex item 交叉尺寸會塌成 0），
+               其 overflow:hidden 會把置中的超大計時數字整個裁掉 → 中央空白。卡片在投影下已透明無框，
+               改成 overflow:visible 讓數字正常溢出顯示（仍置中，因容器 align-items:center）。 */
+            overflow: visible !important;
+            /* [FIX] .glass-panel 帶 backdrop-filter:blur+saturate，背景設透明後仍會糊出一塊圓角藍玻璃方塊，
+               在投影背景上看起來像多餘的框。一併移除濾鏡與圓角，讓數字真正懸浮。 */
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
         }
 
         /* 隱藏進度條和標籤 */
@@ -1722,7 +1946,9 @@
         body.presentation-mode #stageContainer {
             display: block !important;
             position: fixed !important;
-            bottom: 8% !important;
+            /* [FIX] 至少離底部 8rem，確保字幕在懸停控制列（dock，bottom:2rem + 高度約 4.5rem）上方留出間距，
+               不被蓋住；在矮螢幕（如橫向手機）也成立，避免用百分比在矮螢幕貼到 dock。 */
+            bottom: max(8rem, 9%) !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
             width: 90% !important;
@@ -1737,22 +1963,25 @@
         /* 講稿文字樣式 - 電影字幕風格 */
         body.presentation-mode #stageContainer .glass-panel {
             display: block !important;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 100%) !important;
+            /* [FIX] 移除 glass-panel 的 backdrop-filter，避免字幕區也糊出玻璃方塊；改用純柔和漸層 */
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0) 0%, rgba(2, 6, 23, 0.55) 60%, rgba(2, 6, 23, 0.78) 100%) !important;
             border: none !important;
             box-shadow: none !important;
-            padding: 2rem 3rem !important;
-            border-radius: 1rem !important;
+            padding: 2.5rem 3rem 1.5rem !important;
+            border-radius: 1.25rem !important;
         }
 
         body.presentation-mode #stageContainer p {
             font-size: clamp(1.5rem, 3.5vw, 3rem) !important;
             line-height: 1.4 !important;
             font-weight: 600 !important;
-            color: #ffffff !important;
+            color: light-dark(#1e293b, #ffffff) !important;
             text-align: center;
             text-shadow:
-                0 2px 4px rgba(0, 0, 0, 0.9),
-                0 4px 8px rgba(0, 0, 0, 0.5);
+                0 2px 4px light-dark(rgba(255, 255, 255, 0.9), rgba(0, 0, 0, 0.9)),
+                0 4px 8px light-dark(rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.5));
             background: transparent !important;
             padding: 0 !important;
             border-radius: 0 !important;
@@ -1774,10 +2003,10 @@
             transform: translateX(-50%);
             font-size: 1.5rem;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.6);
+            color: light-dark(rgba(30, 41, 59, 0.5), rgba(255, 255, 255, 0.6));
             text-transform: uppercase;
             letter-spacing: 0.2em;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 2px 4px light-dark(rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.5));
         }
 
         /* 退出全螢幕按鈕 */
@@ -1801,12 +2030,12 @@
             cursor: pointer;
             opacity: 0;
             transition: opacity 0.3s ease, background 0.2s ease, transform 0.2s ease;
-        }
 
-        .exit-fullscreen-btn:hover {
-            background: rgba(239, 68, 68, 0.8);
-            border-color: rgba(239, 68, 68, 0.5);
-            transform: scale(1.05);
+            &:hover {
+                background: rgba(239, 68, 68, 0.8);
+                border-color: rgba(239, 68, 68, 0.5);
+                transform: scale(1.05);
+            }
         }
 
         body.presentation-mode .exit-fullscreen-btn {
@@ -1830,60 +2059,412 @@
             box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
         }
 
-        /* ====== 淺色模式投影模式 ====== */
+        /* ====== 對戰式 Versus 投影版面（由 updatePresentationOverlay 注入並更新） ====== */
+        #presentationOverlay { display: none; }
+
+        body.presentation-mode #presentationOverlay {
+            display: block;
+            position: fixed;
+            inset: 0;
+            z-index: 6;
+            pointer-events: none;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+
+        /* 頂部：階段名 + 第 N / M 環節 + 進度點 */
+        body.presentation-mode .pres-header {
+            position: fixed;
+            top: 4%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            text-align: center;
+        }
+
+        body.presentation-mode .pres-stage-name {
+            font-size: clamp(1.5rem, 3vw, 2.75rem);
+            font-weight: 800;
+            color: light-dark(#1e293b, #fff);
+            letter-spacing: 0.04em;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+        }
+
+        body.presentation-mode .pres-stage-count {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: clamp(0.8rem, 1.2vw, 1.1rem);
+            font-weight: 600;
+            color: light-dark(rgba(30, 41, 59, 0.55), rgba(255, 255, 255, 0.55));
+            letter-spacing: 0.2em;
+        }
+
+        body.presentation-mode .pres-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            max-width: 70vw;
+            margin: 0.9rem auto 0;
+        }
+
+        body.presentation-mode .pres-dot {
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 999px;
+            background: light-dark(rgba(30, 41, 59, 0.2), rgba(255, 255, 255, 0.2));
+            transition: all 0.3s ease;
+        }
+
+        body.presentation-mode .pres-dot.done {
+            background: light-dark(rgba(30, 41, 59, 0.4), rgba(255, 255, 255, 0.5));
+        }
+
+        body.presentation-mode .pres-dot.current {
+            width: 1.5rem;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.8);
+        }
+
+        /* 左右名牌，垂直對齊中央計時器 */
+        body.presentation-mode .pres-nameplate {
+            position: fixed;
+            top: 42%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+            max-width: 17vw;
+            transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease;
+        }
+
+        body.presentation-mode .pres-left {
+            left: 3.5%;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        body.presentation-mode .pres-right {
+            right: 3.5%;
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        body.presentation-mode .pres-side-label {
+            font-size: clamp(0.85rem, 1.4vw, 1.3rem);
+            font-weight: 800;
+            letter-spacing: 0.25em;
+            padding: 0.25rem 0.9rem;
+            border-radius: 999px;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        body.presentation-mode .pres-left .pres-side-label {
+            color: #34d399;
+            border: 1.5px solid rgba(52, 211, 153, 0.5);
+        }
+
+        body.presentation-mode .pres-right .pres-side-label {
+            color: #fb7185;
+            border: 1.5px solid rgba(251, 113, 133, 0.5);
+        }
+
+        body.presentation-mode .pres-team-name {
+            font-size: clamp(1.2rem, 2.3vw, 2.5rem);
+            font-weight: 800;
+            color: light-dark(#1e293b, #fff);
+            line-height: 1.15;
+            word-break: break-word;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 非發言方：變淡去飽和；發言方：點亮 + 放大 + 細光暈條 */
+        body.presentation-mode .pres-nameplate.is-dim {
+            opacity: 0.3;
+            filter: grayscale(0.6);
+        }
+
+        body.presentation-mode .pres-left.is-active .pres-side-label {
+            background: rgba(52, 211, 153, 0.18);
+            box-shadow: 0 0 24px rgba(52, 211, 153, 0.45);
+        }
+
+        body.presentation-mode .pres-right.is-active .pres-side-label {
+            background: rgba(251, 113, 133, 0.18);
+            box-shadow: 0 0 24px rgba(251, 113, 133, 0.45);
+        }
+
+        body.presentation-mode .pres-nameplate.is-active .pres-team-name {
+            transform: scale(1.04);
+        }
+
+        body.presentation-mode .pres-nameplate.is-active::after {
+            content: '';
+            display: block;
+            height: 3px;
+            width: 100%;
+            border-radius: 999px;
+            margin-top: 0.2rem;
+        }
+
+        body.presentation-mode .pres-left.is-active::after {
+            background: linear-gradient(90deg, #34d399, transparent);
+        }
+
+        body.presentation-mode .pres-right.is-active::after {
+            background: linear-gradient(270deg, #fb7185, transparent);
+        }
+
+        /* ====== 自由辯（對辯）：兩隊計時卡並排成「對戰計分板」，置中、不溢出 ====== */
+        /* 投影模式預設把 #timerContainer 設為 flex-column，會把兩張卡疊成直向又過大而爆版；
+           偵測到內含 #posTimerCard 時改為橫向並排並縮放。 */
+        body.presentation-mode #timerContainer:has(#posTimerCard) {
+            flex-direction: row !important;
+            gap: 2.5vw !important;
+            width: 92% !important;
+            max-width: 1600px !important;
+            align-items: stretch !important;
+            justify-content: center !important;
+        }
+
+        body.presentation-mode #posTimerCard,
+        body.presentation-mode #negTimerCard {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            padding: clamp(1rem, 3vh, 2.5rem) !important;
+            border-radius: 1.5rem !important;
+            margin: 0 !important;
+        }
+
+        body.presentation-mode #posTimerNum,
+        body.presentation-mode #negTimerNum {
+            font-size: clamp(2.5rem, 11vw, 11rem) !important;
+            margin: 0.4rem 0 !important;
+        }
+
+        /* ====== 互動階段卡（抽籤 / 裁判講評）：置中、限寬、放大標題與按鈕、避免在小螢幕溢出 ====== */
+        /* 用 :has(h3) 只鎖定含標題的互動卡，避免誤套到「只有超大數字」的主計時卡（會被限寬裁掉數字）。 */
+        body.presentation-mode #timerContainer .hero-timer-card:has(h3) {
+            max-width: min(92vw, 900px) !important;
+            margin: 0 auto !important;
+            max-height: 76vh !important;
+            overflow-y: auto !important;
+        }
+
+        body.presentation-mode #timerContainer .hero-timer-card:has(h3) h3 {
+            font-size: clamp(1.5rem, 3.5vw, 2.75rem) !important;
+        }
+
+        /* 主要操作按鈕（開始抽籤等）放大、易點 */
+        body.presentation-mode #timerContainer .hero-timer-card:has(h3) [data-action="startDraw"] {
+            font-size: clamp(1.1rem, 2vw, 1.75rem) !important;
+            padding: clamp(0.75rem, 1.5vw, 1.5rem) clamp(1.5rem, 3vw, 3rem) !important;
+        }
+
+        /* ====== 行動裝置 / 窄螢幕適配 ====== */
+        /* 手機（含直式與小尺寸）：縮小計時器、名牌改成頂部下方左右小晶片列、字幕縮字 */
+        @media (max-width: 768px) {
+            body.presentation-mode #timerDisplay {
+                font-size: clamp(3.25rem, 17vw, 8rem) !important;
+            }
+
+            body.presentation-mode #timerContainer {
+                top: 46% !important;
+            }
+
+            body.presentation-mode .pres-header {
+                top: 2.5%;
+                width: 94%;
+            }
+
+            body.presentation-mode .pres-stage-name {
+                font-size: clamp(1.1rem, 5.5vw, 1.7rem);
+            }
+
+            body.presentation-mode .pres-stage-count {
+                font-size: 0.7rem;
+                letter-spacing: 0.15em;
+                margin-top: 0.35rem;
+            }
+
+            body.presentation-mode .pres-dots {
+                max-width: 88vw;
+                margin-top: 0.6rem;
+            }
+
+            /* 名牌不再垂直夾住計時器，改置於頂部標題下方、左右成一列小晶片 */
+            body.presentation-mode .pres-nameplate {
+                top: 16% !important;
+                bottom: auto !important;
+                transform: none !important;
+                max-width: 44vw !important;
+                gap: 0.3rem !important;
+            }
+
+            body.presentation-mode .pres-left {
+                left: 4% !important;
+            }
+
+            body.presentation-mode .pres-right {
+                right: 4% !important;
+            }
+
+            body.presentation-mode .pres-side-label {
+                font-size: 0.7rem;
+                padding: 0.15rem 0.6rem;
+                letter-spacing: 0.12em;
+            }
+
+            body.presentation-mode .pres-team-name {
+                font-size: clamp(0.95rem, 4.8vw, 1.4rem);
+            }
+
+            /* 小螢幕拿掉發言方底部光暈條，避免擁擠 */
+            body.presentation-mode .pres-nameplate.is-active::after {
+                display: none;
+            }
+
+            body.presentation-mode #stageContainer p {
+                font-size: clamp(1rem, 4.6vw, 1.6rem) !important;
+            }
+
+            body.presentation-mode #stageContainer .glass-panel {
+                padding: 1.5rem 1.25rem 1rem !important;
+            }
+        }
+
+        /* 矮螢幕（橫放手機、矮視窗）：不論寬度，只要高度矮就壓縮。計時器改用 vh 基準，
+           名牌縮成頂部左右橫向小晶片，與置中的階段標題並排成一列；字幕貼底但仍在 dock 上方。 */
+        @media (max-height: 500px) {
+            /* 計時器上移、縮小，讓「標題 → 計時器 → 字幕 → dock」在矮螢幕排得下不重疊 */
+            body.presentation-mode #timerContainer {
+                top: 37% !important;
+            }
+
+            body.presentation-mode #timerDisplay {
+                font-size: clamp(2.25rem, 25vh, 7rem) !important;
+            }
+
+            /* 矮螢幕字幕底距：dock wrapper 為直向排列＋安全區 padding，比單純按鈕高，
+               需 7rem 才穩定高過它不被蓋；其餘垂直空間靠縮小計時器擠出。 */
+            body.presentation-mode #stageContainer {
+                bottom: 7rem !important;
+            }
+
+            body.presentation-mode .pres-header {
+                top: 0.5rem;
+                width: 60%;
+            }
+
+            body.presentation-mode .pres-stage-name {
+                font-size: clamp(1rem, 4.5vh, 1.6rem);
+            }
+
+            body.presentation-mode .pres-stage-count {
+                font-size: 0.65rem;
+                margin-top: 0.2rem;
+            }
+
+            body.presentation-mode .pres-dots {
+                margin-top: 0.4rem;
+            }
+
+            /* 名牌移到頂部角落、橫向排列的小晶片，與中央標題並排，不占用垂直空間 */
+            body.presentation-mode .pres-nameplate {
+                top: 0.7rem !important;
+                bottom: auto !important;
+                transform: none !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0.4rem !important;
+                max-width: 24vw !important;
+            }
+
+            body.presentation-mode .pres-left {
+                left: 1.5% !important;
+            }
+
+            body.presentation-mode .pres-right {
+                right: 1.5% !important;
+            }
+
+            body.presentation-mode .pres-side-label {
+                font-size: 0.6rem;
+                padding: 0.1rem 0.5rem;
+                letter-spacing: 0.1em;
+            }
+
+            body.presentation-mode .pres-team-name {
+                font-size: clamp(0.8rem, 3vh, 1.15rem);
+                line-height: 1;
+            }
+
+            body.presentation-mode .pres-nameplate.is-active::after {
+                display: none;
+            }
+
+            body.presentation-mode #stageContainer p {
+                font-size: clamp(0.85rem, 4vh, 1.5rem) !important;
+                line-height: 1.3 !important;
+            }
+
+            body.presentation-mode #stageContainer .glass-panel {
+                padding: 0.75rem 1.25rem !important;
+            }
+        }
+
+        /* [FIX] 觸控裝置沒有 hover，原本靠 :hover 才顯示的控制列與退出鈕在手機上永遠叫不出來、
+           也無法退出投影模式。對 hover:none 的裝置改為常駐顯示。 */
+        @media (hover: none) {
+            body.presentation-mode .control-dock-wrapper {
+                display: flex !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                bottom: 2rem;
+                z-index: 100;
+            }
+
+            body.presentation-mode .exit-fullscreen-btn {
+                display: flex !important;
+                opacity: 1 !important;
+            }
+        }
+
+        /* 隱藏舊的、未被設定內容的 ::before 階段名（改由 .pres-header 提供） */
+        body.presentation-mode #stageContainer::before {
+            content: none !important;
+        }
+
+        /* ====== 淺色模式投影模式 ======
+           [Phase 1] 原本 14 條 html.light/html:not(.dark) 覆寫規則，凡「幾何相同、只差顏色」者
+           已全部以 light-dark() 併入上方深色基礎規則（單一來源、跟隨 color-scheme），
+           此區只剩三種必須留下的：
+           1. 幾何不同（漸層結構/陰影模糊半徑不同），light-dark() 只能換色、不能換形
+           2. hero-timer-card 淺色覆寫與基礎完全同值，屬冗餘 → 已整條刪除
+              （基礎規則 (0,2,1)+!important 本就壓得住 html.light .glass-panel (0,2,0) 的白底）
+           3. body::after 光條另有後置 !important 規則參戰，三角關係暫不動 */
+
+        /* 背景漸層：淺色 3 停點 135deg vs 深色 4 停點 -45deg，幾何不同 → 保留 */
         html.light body.presentation-mode,
         html:not(.dark) body.presentation-mode {
             background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f8fafc 100%) !important;
         }
 
-        html.light body.presentation-mode::before,
-        html:not(.dark) body.presentation-mode::before {
-            background:
-                radial-gradient(ellipse at 20% 30%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 70%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
-        }
-
-        html.light body.presentation-mode #timerDisplay,
-        html:not(.dark) body.presentation-mode #timerDisplay {
-            color: #1e293b !important;
-            text-shadow:
-                0 0 60px rgba(99, 102, 241, 0.25),
-                0 0 120px rgba(99, 102, 241, 0.15);
-        }
-
-        html.light body.presentation-mode .state-warning #timerDisplay,
-        html:not(.dark) body.presentation-mode .state-warning #timerDisplay {
-            color: #d97706 !important;
-            text-shadow:
-                0 0 60px rgba(217, 119, 6, 0.35),
-                0 0 120px rgba(217, 119, 6, 0.2);
-        }
-
-        html.light body.presentation-mode .state-danger #timerDisplay,
-        html:not(.dark) body.presentation-mode .state-danger #timerDisplay {
-            color: #dc2626 !important;
-            text-shadow:
-                0 0 80px rgba(220, 38, 38, 0.4),
-                0 0 160px rgba(220, 38, 38, 0.25);
-        }
-
+        /* 字幕底漸層：淺色 2 停點 vs 深色 3 停點，幾何不同 → 只保留 background */
         html.light body.presentation-mode #stageContainer .glass-panel,
         html:not(.dark) body.presentation-mode #stageContainer .glass-panel {
             background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
         }
 
-        html.light body.presentation-mode #stageContainer p,
-        html:not(.dark) body.presentation-mode #stageContainer p {
-            color: #1e293b !important;
-            text-shadow:
-                0 2px 4px rgba(255, 255, 255, 0.9),
-                0 4px 8px rgba(255, 255, 255, 0.5);
+        /* 陰影模糊半徑不同（8px vs 12px / 10px）→ text-shadow 留此，color 已併入基礎 */
+        html.light body.presentation-mode .pres-stage-name,
+        html:not(.dark) body.presentation-mode .pres-stage-name {
+            text-shadow: 0 2px 8px rgba(255, 255, 255, 0.7);
         }
 
-        html.light body.presentation-mode #stageContainer::before,
-        html:not(.dark) body.presentation-mode #stageContainer::before {
-            color: rgba(30, 41, 59, 0.5);
-            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+        html.light body.presentation-mode .pres-team-name,
+        html:not(.dark) body.presentation-mode .pres-team-name {
+            text-shadow: 0 2px 8px rgba(255, 255, 255, 0.6);
         }
 
         html.light body.presentation-mode::after,
@@ -1941,14 +2522,14 @@
             -webkit-overflow-scrolling: touch;
             touch-action: pan-x;
             cursor: grab;
-        }
 
-        .debate-flow-tracker:active {
-            cursor: grabbing;
-        }
+            &:active {
+                cursor: grabbing;
+            }
 
-        .debate-flow-tracker::-webkit-scrollbar {
-            display: none;
+            &::-webkit-scrollbar {
+                display: none;
+            }
         }
 
         .flow-stage {
@@ -1965,26 +2546,26 @@
             color: var(--text-muted);
             border: 1px solid transparent;
             cursor: default;
-        }
 
-        .flow-stage.completed {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--color-success);
-            border-color: rgba(34, 197, 94, 0.2);
-        }
+            &.completed {
+                background: rgba(34, 197, 94, 0.1);
+                color: var(--color-success);
+                border-color: rgba(34, 197, 94, 0.2);
+            }
 
-        .flow-stage.current {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
-            color: var(--color-primary);
-            border-color: rgba(99, 102, 241, 0.3);
-            font-weight: 700;
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
-            cursor: default;
-        }
+            &.current {
+                background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+                color: var(--color-primary);
+                border-color: rgba(99, 102, 241, 0.3);
+                font-weight: 700;
+                transform: scale(1.05);
+                box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+                cursor: default;
+            }
 
-        .flow-stage.upcoming {
-            opacity: 0.5;
+            &.upcoming {
+                opacity: 0.5;
+            }
         }
 
         .flow-connector {
@@ -1992,349 +2573,12 @@
             height: 2px;
             background: var(--border-color);
             flex-shrink: 0;
-        }
 
-        .flow-connector.completed {
-            background: linear-gradient(90deg, var(--color-success), var(--color-primary));
-        }
-
-        /* 比賽資訊區塊增強 */
-        .debate-info-header {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: 1rem 1.25rem;
-            background: var(--surface-1);
-            border-radius: 1rem;
-            border: 1px solid var(--border-color);
-            margin-bottom: 1rem;
-        }
-
-        .debate-info-header .team-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .debate-info-header .team-badge.affirmative {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--color-success);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        }
-
-        .debate-info-header .team-badge.negative {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--color-danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .debate-info-header .vs-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            padding: 0.25rem 0.5rem;
-            background: var(--surface-2);
-            border-radius: 0.375rem;
-        }
-
-        /* 環節資訊卡片增強 */
-        .stage-info-card {
-            background: var(--surface-1);
-            border-radius: 1.25rem;
-            border: 1px solid var(--border-color);
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-        }
-
-        .stage-info-card .stage-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-        }
-
-        .stage-info-card .stage-title {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .stage-info-card .stage-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--color-primary), #a855f7);
-            color: white;
-        }
-
-        .stage-info-card .stage-name {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--text-main);
-        }
-
-        .stage-info-card .stage-meta {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .stage-info-card .stage-progress-bar {
-            height: 4px;
-            background: var(--surface-2);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .stage-info-card .stage-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--color-primary), #a855f7);
-            transition: width 0.3s ease;
-        }
-
-        /* 控制面板樣式優化 */
-        .debate-controls-panel {
-            background: var(--surface-1);
-            border-radius: 1.25rem;
-            border: 1px solid var(--border-color);
-            padding: 1rem 1.25rem;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-        }
-
-        .debate-controls-panel .control-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1.25rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-            border: 1px solid var(--border-color);
-            background: var(--surface-2);
-            color: var(--text-main);
-        }
-
-        .debate-controls-panel .control-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .debate-controls-panel .control-btn.primary {
-            background: linear-gradient(135deg, var(--color-primary), #a855f7);
-            color: white;
-            border: none;
-        }
-
-        .debate-controls-panel .control-btn.primary:hover {
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-        }
-
-        .debate-controls-panel .control-btn.success {
-            background: linear-gradient(135deg, var(--color-success), #22c55e);
-            color: white;
-            border: none;
-        }
-
-        .debate-controls-panel .control-btn.danger {
-            background: linear-gradient(135deg, var(--color-danger), #f43f5e);
-            color: white;
-            border: none;
-        }
-
-        /* =========================================
-       ✨ 旗艦級 UI 升級套件 (Ultimate UI Pack)
-       ========================================= */
-
-        /* 1. 動態環境背景 (Ambient Orbs) */
-        /* 這是漂浮在背景的彩色光球，創造深邃感 */
-        .ambient-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-            /* 確保在最底層 */
-            pointer-events: none;
-        }
-
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.6;
-            animation: floatOrb 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-            will-change: transform, opacity;
-        }
-
-        /* 定義三顆光球的位置與顏色 */
-        .orb-1 {
-            top: -10%;
-            left: -10%;
-            width: 50vw;
-            height: 50vw;
-            background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
-            animation-duration: 25s;
-        }
-
-        .orb-2 {
-            bottom: -10%;
-            right: -10%;
-            width: 60vw;
-            height: 60vw;
-            background: radial-gradient(circle, #818cf8 0%, transparent 70%);
-            /* Indigo-400 */
-            animation-duration: 30s;
-            animation-delay: -5s;
-        }
-
-        .orb-3 {
-            top: 40%;
-            left: 40%;
-            width: 40vw;
-            height: 40vw;
-            background: radial-gradient(circle, #c084fc 0%, transparent 70%);
-            /* Purple-400 */
-            animation-duration: 20s;
-            animation-delay: -10s;
-            opacity: 0.4;
-        }
-
-        /* 投影模式下隱藏光球，保持乾淨 */
-        body.presentation-mode .ambient-canvas {
-            opacity: 0;
-        }
-
-        @keyframes floatOrb {
-            0% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            100% {
-                transform: translate(10%, 15%) scale(1.1);
+            &.completed {
+                background: linear-gradient(90deg, var(--color-success), var(--color-primary));
             }
         }
 
-        /* 2. 深度毛玻璃卡片 (Deep Glass) */
-        /* 增加內陰影與邊框高光，提升立體感 */
-        .glass-panel {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
-            /* 提高飽和度讓背景透出來更漂亮 */
-            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow:
-                0 4px 30px rgba(0, 0, 0, 0.1),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                /* 內邊框 */
-                inset 0 4px 20px rgba(255, 255, 255, 0.1);
-            /* 頂部內高光 */
-        }
-
-        html.light .glass-panel,
-        html:not(.dark) .glass-panel {
-            background: rgba(255, 255, 255, 0.85) !important;
-            border-color: rgba(200, 200, 220, 0.5) !important;
-            box-shadow:
-                0 8px 32px rgba(31, 38, 135, 0.08),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
-        }
-
-        /* 3. 按鈕微互動 (Button Physics) */
-        button,
-        .dock-btn {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            /* 彈性曲線 */
-        }
-
-        /* 點擊時的縮放效果 (Clicky feel) */
-        button:active,
-        .dock-btn:active {
-            transform: scale(0.92) !important;
-        }
-
-        /* 4. 光澤掃過效果 (Shimmer Hover) */
-        /* 當滑鼠移過重要按鈕時，有一道光閃過 */
-        .btn-start-match,
-        .premium-card {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-start-match::before,
-        .premium-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transform: skewX(-25deg);
-            transition: 0.5s;
-        }
-
-        .btn-start-match:hover::before,
-        .premium-card:hover::before {
-            left: 150%;
-            transition: 0.7s ease-in-out;
-        }
-
-        /* 5. 計時器呼吸燈 (Breathing Timer) */
-        /* 讓計時器在倒數時有細微的縮放，彷彿在呼吸 */
-        .state-running .timer-digits {
-            animation: breathe 2s infinite ease-in-out;
-        }
-
-        @keyframes breathe {
-
-            0%,
-            100% {
-                transform: scale(1);
-                text-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
-            }
-
-            50% {
-                transform: scale(1.02);
-                text-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
-            }
-        }
-
-        /* 6. 進場動畫優化 */
-        /* 讓所有主要區塊依序進場 */
-        .setup-header {
-            animation: fadeInUp 0.6s ease-out 0s backwards;
-        }
-
-        .setup-container>div:nth-child(2) {
-            animation: fadeInUp 0.6s ease-out 0.1s backwards;
-        }
-
-        /* 比賽資訊 */
-        .setup-container>div:nth-child(3) {
-            animation: fadeInUp 0.6s ease-out 0.2s backwards;
-        }
-
-        /* 隊伍 */
-        .setup-container>div:nth-child(4) {
-            animation: fadeInUp 0.6s ease-out 0.3s backwards;
-        }
-
-        /* 規則 */
         /* =========================================
        🚑 底部行動列緊急修復 (Action Bar Fix)
        ========================================= */
@@ -2376,8 +2620,18 @@
         }
 
         /* 淺色模式下的陰影微調 */
-        html:not(.dark) .sticky-action-bar {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        html:not(.dark) .sticky-action-bar,
+        html:not(.dark) .editor-sticky-bar {
+            background-color: rgba(255, 255, 255, 0.72) !important;
+            background-image: linear-gradient(150deg, var(--lg-sheen) 0%, transparent 46%) !important;
+            border-color: var(--glass-panel-border) !important;
+            color: var(--text-main) !important;
+            box-shadow:
+                0 14px 36px rgba(31, 38, 135, 0.12),
+                inset 0 1px 0 var(--lg-rim),
+                inset 0 0 0 1px var(--lg-rim-soft) !important;
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) brightness(1.03);
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) brightness(1.03);
         }
 
         /* 2. 開始比賽按鈕 (紫色漸層按鈕) */
@@ -2394,15 +2648,15 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-        }
 
-        .btn-start-match:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
-        }
+            &:hover {
+                transform: scale(1.05);
+                box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
+            }
 
-        .btn-start-match:active {
-            transform: scale(0.95);
+            &:active {
+                transform: scale(0.95);
+            }
         }
 
         /* 次要按鈕（modal 取消 / 關閉 / 繼續編輯…）— 與主要鈕成對的中性鈕。
@@ -2418,16 +2672,16 @@
             transition: background-color var(--dur-base) var(--ease-standard),
                 border-color var(--dur-base) var(--ease-standard),
                 color var(--dur-base) var(--ease-standard);
-        }
 
-        .btn-secondary:hover {
-            background-color: var(--surface-1);
-            border-color: var(--color-primary);
-            color: var(--text-main);
-        }
+            &:hover {
+                background-color: var(--surface-1);
+                border-color: var(--color-primary);
+                color: var(--text-main);
+            }
 
-        .btn-secondary:active {
-            transform: scale(0.97);
+            &:active {
+                transform: scale(0.97);
+            }
         }
 
         /* 3. 左側功能按鈕 (編輯/匯入/分享) */
@@ -2444,16 +2698,17 @@
             transition: all 0.2s;
             background: transparent;
             border: none;
-        }
 
-        .btn-icon-label svg {
-            margin-bottom: 0.25rem;
-        }
+            & svg {
+                margin-bottom: 0.25rem;
+            }
 
-        /* 按鈕 Hover 效果 */
-        .btn-icon-label:hover {
-            background-color: var(--dock-btn-hover) !important;
-            color: var(--text-main) !important;
+            /* 按鈕 Hover 效果 */
+
+            &:hover {
+                background-color: var(--dock-btn-hover) !important;
+                color: var(--text-main) !important;
+            }
         }
 
         /* 4. 確保底部不被遮擋 */
@@ -2536,36 +2791,20 @@
             }
         }
 
-        /* 2. 深度毛玻璃卡片 (Deep Glass) */
-        /* 增加內陰影與邊框高光，提升立體感 */
-        .glass-panel {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
-            /* 提高飽和度讓背景透出來更漂亮 */
-            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow:
-                0 4px 30px rgba(0, 0, 0, 0.1),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                /* 內邊框 */
-                inset 0 4px 20px rgba(255, 255, 255, 0.1);
-            /* 頂部內高光 */
-        }
-
-        /* 3. 按鈕微互動 (Button Physics) */
+        /* 2. 按鈕微互動 (Button Physics) */
         button,
         .dock-btn {
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             /* 彈性曲線 */
         }
 
-        /* 點擊時的縮放效果 (Clicky feel) */
-        button:active,
-        .dock-btn:active {
-            transform: scale(0.92) !important;
+        /* 點擊時的縮放效果 (Clicky feel)
+           button 元素由後方第 4 節以獨立 scale 屬性處理。 */
+        .dock-btn:active:not(button) {
+            transform: scale(0.92);
         }
 
-        /* 4. 光澤掃過效果 (Shimmer Hover) */
+        /* 3. 光澤掃過效果 (Shimmer Hover) */
         /* 當滑鼠移過重要按鈕時，有一道光閃過 */
         .btn-start-match,
         .premium-card {
@@ -2592,7 +2831,7 @@
             transition: 0.7s ease-in-out;
         }
 
-        /* 5. 計時器呼吸燈 (Breathing Timer) */
+        /* 4. 計時器呼吸燈 (Breathing Timer) */
         /* 讓計時器在倒數時有細微的縮放，彷彿在呼吸 */
         .state-running .timer-digits {
             animation: breathe 2s infinite ease-in-out;
@@ -2612,7 +2851,7 @@
             }
         }
 
-        /* 6. 進場動畫優化 */
+        /* 5. 進場動畫優化 */
         /* 讓所有主要區塊依序進場 */
         .setup-header {
             animation: fadeInUp 0.6s ease-out 0s backwards;
@@ -2647,14 +2886,15 @@
             border-radius: 0.5rem;
             padding: 0.5rem 0.75rem;
             transition: all 0.2s;
-        }
 
-        /* 聚焦時的效果 */
-        .form-element:focus {
-            outline: none;
-            border-color: var(--color-primary) !important;
-            background-color: var(--surface-1) !important;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            /* 聚焦時的效果 */
+
+            &:focus {
+                outline: none;
+                border-color: var(--color-primary) !important;
+                background-color: var(--surface-1) !important;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            }
         }
 
         /* 修復下拉選單 (Select) 的外觀與箭頭 */
@@ -2666,11 +2906,12 @@
             background-position: right 0.7rem center !important;
             background-size: 1.25em 1.25em !important;
             padding-right: 2.5rem !important;
-        }
 
-        /* 深色模式下的下拉箭頭圖示 (淺灰色) */
-        html.dark select.form-element {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+            /* 深色模式下的下拉箭頭圖示 (淺灰色) */
+
+            html.dark & {
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+            }
         }
 
         /* 淺色模式下的下拉箭頭圖示 (深灰色) */
@@ -2734,43 +2975,52 @@
             /* 底部陰影 */
 
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
 
-        .btn-start-match:hover {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 1)) !important;
-            box-shadow:
+            &:hover {
+                background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 1)) !important;
+                box-shadow:
                 0 12px 30px rgba(79, 70, 229, 0.5),
                 inset 0 2px 10px rgba(255, 255, 255, 0.4) !important;
-            transform: translateY(-2px) scale(1.02);
+                transform: translateY(-2px) scale(1.02);
+            }
         }
 
         /* 3. 懸浮控制列 (Main Dock) & 彈出選單 */
         .main-dock-bar,
         .dock-popup-menu {
-            /* 極致通透感 */
+            /* 極致通透感 + Liquid Glass 表面斜向反光 */
             background-color: rgba(15, 23, 42, 0.6) !important;
-            backdrop-filter: blur(var(--glass-blur-strong)) saturate(200%) !important;
-            /* 提高飽和度 */
-            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(200%) !important;
+            background-image: linear-gradient(150deg, var(--lg-sheen) 0%, transparent 46%) !important;
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(200%) brightness(1.08) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(200%) brightness(1.08) !important;
 
             /* 玻璃邊框 */
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
 
-            /* 深度陰影 */
+            /* 深度陰影 + 頂緣高光 + 整圈柔光（Liquid Glass 立體反光） */
             box-shadow:
                 0 20px 50px -10px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+                inset 0 1px 0 var(--lg-rim),
+                inset 0 0 0 1px var(--lg-rim-soft) !important;
         }
 
         /* Dock 淺色模式適配 */
         html:not(.dark) .main-dock-bar,
         html:not(.dark) .dock-popup-menu {
-            background-color: rgba(255, 255, 255, 0.7) !important;
-            border-color: rgba(255, 255, 255, 0.5) !important;
-            color: #334155 !important;
+            background-color: rgba(255, 255, 255, 0.72) !important;
+            background-image: linear-gradient(150deg, var(--lg-sheen) 0%, transparent 46%) !important;
+            border-color: var(--glass-panel-border) !important;
+            color: var(--text-main) !important;
             box-shadow:
-                0 20px 50px -10px rgba(0, 0, 0, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+                0 18px 44px -12px rgba(31, 38, 135, 0.18),
+                inset 0 1px 0 var(--lg-rim),
+                inset 0 0 0 1px var(--lg-rim-soft) !important;
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) brightness(1.03) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) brightness(1.03) !important;
+        }
+
+        html:not(.dark) .menu-item-wrap .menu-label {
+            color: var(--text-sub);
         }
 
         /* Dock 按鈕微調 - 增加懸停時的玻璃光澤 */
@@ -2804,52 +3054,6 @@
             filter: blur(0);
         }
 
-        /* 2. 隊伍卡片進場：對決感動畫 */
-        /* 正方從左側滑入，反方從右側滑入 */
-        .team-setup-card.team-positive {
-            animation: slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-            animation-delay: 0.1s;
-            border-left: 3px solid #3b82f6 !important;
-        }
-
-        .team-setup-card.team-positive h3 {
-            color: #3b82f6 !important;
-        }
-
-        .team-setup-card.team-negative {
-            animation: slideInRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-            animation-delay: 0.2s;
-            border-left: 3px solid var(--color-danger) !important;
-        }
-
-        .team-setup-card.team-negative h3 {
-            color: var(--color-danger) !important;
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
         /* 3. 錄音與直播狀態：呼吸脈衝 */
         /* 讓紅點真的在「跳動」 */
         .animate-pulse {
@@ -2870,40 +3074,13 @@
             }
         }
 
-        /* 4. 按鈕微互動：果凍效應 (Jelly Effect) */
-        /* 當點擊任何按鈕時，產生Ｑ彈感 */
-        button:active {
-            animation: jelly 0.4s;
-        }
-
-        @keyframes jelly {
-            0% {
-                transform: scale(1, 1);
-            }
-
-            30% {
-                transform: scale(1.15, 0.85);
-            }
-
-            40% {
-                transform: scale(0.85, 1.15);
-            }
-
-            50% {
-                transform: scale(1.05, 0.95);
-            }
-
-            65% {
-                transform: scale(0.98, 1.02);
-            }
-
-            75% {
-                transform: scale(1.02, 0.98);
-            }
-
-            100% {
-                transform: scale(1, 1);
-            }
+        /* 4. 按鈕微互動：一般按壓縮放。
+           用獨立的 scale 屬性而非 transform——部分按鈕帶 transform !important 定位規則，
+           會壓掉 :active 的 transform 縮放；scale 是獨立屬性，與 transform 疊加不衝突。
+           過渡曲線沿用上方 button 的彈性 transition（all 已涵蓋 scale）。
+           排除 disabled 與已有自己縮放回饋的 dock 圖示按鈕。 */
+        button:active:not(:disabled):not(.dock-btn) {
+            scale: 0.97;
         }
 
         /* 5. 標題文字：漸層流光 */
@@ -2976,8 +3153,8 @@
             transform: translateY(-1px);
         }
 
-        /* 8. 彈出視窗 (Modal)：彈性展開 */
-        .modal-container>div.relative {
+        /* 8. 彈出視窗 (Modal)：彈性展開（<dialog> 版內板為 .glass-panel，原為 div.relative） */
+        .modal-container>.glass-panel {
             animation: modalElastic 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
@@ -2994,10 +3171,6 @@
         }
 
         /* 9. 載入提示/空狀態：浮動動畫 */
-        /* 讓「流程是空的」或「等待發言」圖示上下漂浮 */
-        .animate-float {
-            animation: floating 3s ease-in-out infinite;
-        }
 
         @keyframes floating {
             0% {
@@ -3024,7 +3197,6 @@
 
         /* 1. 懸浮力場 (Physics Lift) */
         /* 讓主要卡片在懸浮時有「浮起來」的感覺 */
-        .glass-panel,
         .menu-item,
         .btn-start-match {
             transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
@@ -3048,18 +3220,6 @@
             /* 確保浮在最上層 */
         }
 
-        /* 2. 流光追蹤 (Spotlight Effect) */
-        /* 在卡片上建立一個跟隨滑鼠的光暈層 */
-        .glass-panel {
-            position: relative;
-            /* 確保光暈定位正確 */
-            overflow: hidden;
-            /* 確保光暈不出界 */
-            --mouse-x: 50%;
-            /* 預設值 */
-            --mouse-y: 50%;
-        }
-
         .glass-panel::after {
             content: "";
             position: absolute;
@@ -3071,10 +3231,9 @@
             pointer-events: none;
             /* 讓滑鼠事件穿透 */
 
-            /* 核心魔法：徑向漸層跟隨變數 */
-            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y),
-                    rgba(255, 255, 255, 0.1),
-                    transparent 40%);
+            /* 核心魔法：徑向漸層跟隨變數——實際漸層由下方深淺主題規則提供
+               （html 恆為 .dark 或 :not(.dark) 之一，兩條 (0,2,1) 規則覆蓋全部情境；
+               淺色停點 42% vs 深色 40%，幾何不同故不併入 light-dark()） */
 
             opacity: 0;
             /* 預設隱藏 */
@@ -3094,14 +3253,14 @@
                     transparent 40%);
         }
 
-        /* 3. 選單項目的滑動互動 */
-        .menu-item:hover {
-            transform: translateX(6px);
-            /* 向右滑動 */
-            background-color: var(--surface-1);
+        html:not(.dark) .glass-panel::after,
+        html.light .glass-panel::after {
+            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y),
+                    color-mix(in srgb, var(--color-primary) 12%, rgba(255, 255, 255, 0.55)),
+                    transparent 42%);
         }
 
-        /* 4. 輸入框互動 */
+        /* 3. 輸入框互動 */
         .modern-input:hover {
             border-color: var(--color-primary);
             background-color: var(--surface-1);
@@ -3132,10 +3291,16 @@
 
         /* 2. 淺色模式適配 */
         html:not(.dark) #sidebar-panel {
-            background-color: rgba(255, 255, 255, 0.75) !important;
-            border-left: 1px solid rgba(255, 255, 255, 0.6) !important;
-            color: #1e293b !important;
-            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1) !important;
+            background-color: rgba(255, 255, 255, 0.74) !important;
+            background-image: linear-gradient(150deg, var(--lg-sheen) 0%, transparent 46%) !important;
+            border-left: 1px solid var(--glass-panel-border) !important;
+            color: var(--text-main) !important;
+            box-shadow:
+                -10px 0 40px rgba(31, 38, 135, 0.12),
+                inset 1px 0 0 var(--lg-rim),
+                inset 0 0 0 1px var(--lg-rim-soft) !important;
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) brightness(1.03) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%) brightness(1.03) !important;
         }
 
         /* 3. 內部標題列透明化 */
@@ -3166,12 +3331,14 @@
         }
 
         html:not(.dark) #sidebar-panel .menu-item {
-            background-color: rgba(255, 255, 255, 0.4) !important;
-            border: 1px solid rgba(0, 0, 0, 0.03);
+            background-color: rgba(255, 255, 255, 0.48) !important;
+            border: 1px solid rgba(255, 255, 255, 0.58);
+            color: var(--text-main);
         }
 
         html:not(.dark) #sidebar-panel .menu-item:hover {
             background-color: rgba(255, 255, 255, 0.8) !important;
+            border-color: var(--glass-panel-border);
         }
 
         /* =========================================
@@ -3220,11 +3387,8 @@
             z-index: 91 !important;
         }
 
-        /* 4. 彈出視窗 (Modal) - 最高層級 */
-        .modal-container {
-            z-index: 110 !important;
-            /* 確保蓋過一切 */
-        }
+        /* 4. 彈出視窗 (Modal)：改用原生 <dialog> 後位於 top layer，
+           永遠在所有 z-index 之上，不再需要 z-index 規則 */
 
         /* 5. 防呆機制：確保主容器不會因為動畫屬性而破壞 Fixed 定位 */
         #main-content {
@@ -3263,14 +3427,14 @@
         /* 2. 計時器呼吸光暈 (Timer Glow Pulse) */
         /* 讓巨大的數字有生命力 */
         body.presentation-mode #timerDisplay {
-            animation: timerPulse 3s ease-in-out infinite;
+            animation: presentationTimerPulse 3s ease-in-out infinite;
             transition: color 0.3s ease, text-shadow 0.3s ease;
             /* [效能優化] 提示瀏覽器這個元素會變化 */
             will-change: transform, text-shadow;
             contain: layout style;
         }
 
-        @keyframes timerPulse {
+        @keyframes presentationTimerPulse {
 
             0%,
             100% {
@@ -3286,10 +3450,10 @@
 
         /* 警示狀態的紅色呼吸燈 */
         body.presentation-mode .state-danger #timerDisplay {
-            animation: dangerPulse 1s ease-in-out infinite !important;
+            animation: presentationDangerPulse 1s ease-in-out infinite !important;
         }
 
-        @keyframes dangerPulse {
+        @keyframes presentationDangerPulse {
 
             0%,
             100% {
@@ -3342,20 +3506,20 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
 
-        .onboarding-overlay.active {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
+            &.active {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
 
-        .onboarding-overlay .backdrop {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
+            & .backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+            }
         }
 
         /* 2. 高亮元素框 */
@@ -3366,15 +3530,15 @@
             z-index: 1001;
             pointer-events: none;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
 
-        .onboarding-highlight::before {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border: 2px solid var(--color-primary);
-            border-radius: inherit;
-            animation: highlightPulse 2s ease-in-out infinite;
+            &::before {
+                content: '';
+                position: absolute;
+                inset: -4px;
+                border: 2px solid var(--color-primary);
+                border-radius: inherit;
+                animation: highlightPulse 2s ease-in-out infinite;
+            }
         }
 
         @keyframes highlightPulse {
@@ -3645,11 +3809,11 @@
         .onboarding-tooltip.center-mode {
             width: 400px;
             max-width: calc(100vw - 2rem);
-        }
 
-        .onboarding-tooltip.center-mode .chapter-header {
-            text-align: center;
-            justify-content: center;
+            & .chapter-header {
+                text-align: center;
+                justify-content: center;
+            }
         }
 
         /* 9. 響應式調整 */
@@ -3658,15 +3822,15 @@
                 width: calc(100vw - 2rem);
                 left: 1rem !important;
                 right: 1rem !important;
-            }
 
-            .onboarding-tooltip .chapter-progress {
-                gap: 0.25rem;
-            }
+                & .chapter-progress {
+                    gap: 0.25rem;
+                }
 
-            .onboarding-tooltip .chapter-dot {
-                width: 20px;
-                height: 5px;
+                & .chapter-dot {
+                    width: 20px;
+                    height: 5px;
+                }
             }
         }
 
@@ -3710,12 +3874,13 @@
             #sidebar-panel {
                 border-top-left-radius: 1.5rem;
                 border-top-right-radius: 1.5rem;
-            }
 
-            /* 標題區塊調整：移除上方空白，讓標題貼近頂部 */
-            #sidebar-panel>div:first-child {
-                padding-top: 0.75rem !important;
-                padding-bottom: 0.75rem !important;
+                /* 標題區塊調整：移除上方空白，讓標題貼近頂部 */
+
+                &>div:first-child {
+                    padding-top: 0.75rem !important;
+                    padding-bottom: 0.75rem !important;
+                }
             }
 
             /* 移除拖曳把手（白色線條） */
@@ -3792,11 +3957,32 @@
             .dock-btn {
                 width: 2.75rem;
                 height: 2.75rem;
-            }
 
-            .dock-btn.primary-play {
-                width: 3.5rem;
-                height: 3.5rem;
-                margin: 0 0.25rem;
+                &.primary-play {
+                    width: 3.5rem;
+                    height: 3.5rem;
+                    margin: 0 0.25rem;
+                }
             }
         }
+
+/* =====================================================================
+   原生 <dialog> Modal（renderModal）
+   視覺沿用內層 .glass-panel；此處只定義 dialog 外殼與 ::backdrop。
+   top layer 置中由 margin:auto 完成，取代舊的 fixed+flex 容器與遮罩 div。
+   ===================================================================== */
+dialog.modal-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    width: calc(100% - 2rem);
+    max-width: 28rem;           /* = Tailwind max-w-md，對齊舊版寬度 */
+    margin: auto;
+    overflow: visible;
+
+    &::backdrop {
+        background: rgba(0, 0, 0, .6);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+}

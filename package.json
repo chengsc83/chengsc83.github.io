@@ -1,0 +1,14 @@
+{
+  "name": "debate-timer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "辯時計 — 辯論計時系統。Tailwind CSS v4 預編譯（取代 cdn.tailwindcss.com 執行期 JIT）。",
+  "scripts": {
+    "build:css:app": "tailwindcss -i ./tailwind-app.src.css -o ./app.tw.css --minify",
+    "build:css:site": "tailwindcss -i ./tailwind-site.src.css -o ./site.css --minify",
+    "build:css": "npm run build:css:app && npm run build:css:site"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0"
+  }
+}

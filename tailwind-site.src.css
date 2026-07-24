@@ -1,0 +1,27 @@
+/* =====================================================================
+   辯時計 — index.html / privacy.html 專用 Tailwind CSS v4 編譯入口
+   這兩頁不使用深色模式、不載入 style.css；自帶 inline <style> 為其客製樣式。
+   重新產生：  npm run build:css        （輸出 site.css）
+   =====================================================================
+
+   utilities「不分層」（理由同 app 版）：讓 utility 與各頁 inline <style> 回到
+   純 specificity 競爭，inline 的 #id/後代選擇器才不會被 utility 整層蓋掉。 */
+
+@layer theme, base;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" source(none);
+@source "./index.html";
+@source "./privacy.html";
+
+/* v3 → v4 邊框色相容墊片（base 層，最弱，被自訂樣式與 border-* utility 正常覆蓋）。 */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'debate-clock-v2.6';
+const CACHE_NAME = 'debate-clock-v3.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -12,13 +12,17 @@ const ASSETS_TO_CACHE = [
   // 程式碼與樣式（原本缺漏，導致離線白屏）
   './app.js',
   './piper-worker.js',
+  // 樣式：app.css（進入點，@import 串接以下兩者）／app.tw.css（Tailwind v4 utilities）／style.css（手寫，保持原樣）
+  './app.css',
+  './app.tw.css',
   './style.css',
+  './site.css',
   './debateFormatGroups.json'
 ];
 
 // 安裝 Service Worker 並快取靜態資源
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing v2.6...');
+  console.log(`SW: Installing ${CACHE_NAME}...`);
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
@@ -71,7 +75,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 其餘資源（圖片、音檔、字型、CDN 函式庫…）維持 cache-first：優先快取，無則請求網路
+  // 其餘資源（圖片、音檔、字型、CDN 函式庫…）：先查快取（實際只有 install 預快取的
+  // 自家資源會命中），未命中走網路且「不落地快取」。
+  // 已知限制（刻意接受）：CDN 函式庫（transformers.js / piper / onnxruntime / Sortable /
+  // qrcodejs…）不被 SW 快取，離線時 Whisper 轉錄、口播、語音偵測等功能無法載入，
+  // 只能仰賴瀏覽器 HTTP cache。若要補這個缺口，方案是對 esm.run / cdn.jsdelivr.net
+  // 加 stale-while-revalidate 專用快取（曾有半成品，2026-07 決策移除）。
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
@@ -91,7 +100,15 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keyList) => {
       return Promise.all(
         keyList.map((key) => {
-          if (key !== CACHE_NAME) {
+          // [FIX] 只清理「自家」的舊版快取（debate-clock- 前綴）。
+          // 原本會刪除所有非 CACHE_NAME 的快取——包含 transformers-cache（Whisper 模型，
+          // 由 transformers.js 自管）——每次 SW 升版都把使用者下載的模型整批清掉，
+          if (key.startsWith('debate-clock-') && key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+          // [一次性清理] WebLLM「AI 生成流程」功能已於 2026-07 移除，
+          // 遺留的模型快取（webllm/model 最大可達數 GB）順手釋放本機空間
+          if (key.startsWith('webllm/')) {
             return caches.delete(key);
           }
         })

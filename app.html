@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- [a11y] 不鎖縮放：maximum-scale=1 / user-scalable=no 違反 WCAG 2.1 SC 1.4.4（低視力使用者需放大） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>辯時計 - 新世代辯論主計系統</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
@@ -35,18 +35,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="辯時計">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="appstore-images/ios/180.png">
 
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.12/dist/bundle.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Tailwind 配置：使用 class 策略的深色模式
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <!-- Tailwind CSS 改為預編譯（app.css，原始入口 tailwind-app.src.css），
+         不再使用 cdn.tailwindcss.com 執行期 JIT。darkMode:'class' 已寫進編譯設定。 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,7 +48,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <!-- app.css 進入點以 @import 串接 app.tw.css（Tailwind utilities）與 style.css（layer components）。
+         先 preload 兩個子表，讓瀏覽器平行抓取、避免 @import 造成的瀑布延遲。 -->
+    <link rel="preload" href="app.tw.css" as="style">
+    <link rel="preload" href="style.css" as="style">
+    <link rel="stylesheet" href="app.css">
     <style>
         /* 支援 Window Controls Overlay (視窗控制項疊加層) */
         @media (display-mode: window-controls-overlay) {
@@ -154,7 +152,7 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <button data-action="showPremiumModal"
-                            class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-[var(--color-accent-light)] to-[var(--color-accent)] hover:opacity-90 transition-opacity">
+                            class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-(--color-accent-light) to-(--color-accent) hover:opacity-90 transition-opacity">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                 fill="currentColor">
                                 <path fill-rule="evenodd"
@@ -172,7 +170,7 @@
                                     d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                             </svg>
                             <span
-                                class="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-slate-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">教學說明</span>
+                                class="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-slate-800 text-white rounded-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">教學說明</span>
                         </button>
                         <button id="themeToggleBtn" data-action="toggleTheme"
                             class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -204,14 +202,18 @@
             </div>
         </header>
 
-        <main id="main-content" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <main id="main-content" class="grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         </main>
 
-        <div id="sidebar" class="fixed inset-0 z-50 hidden">
-            <div id="sidebar-overlay" data-action="toggleSidebar" class="absolute inset-0 bg-black/50 backdrop-blur-sm">
+        <!-- 定位/層級由 style.css #sidebar 控制（z-index:60，與 header 同層）。保留 hidden 作為開關狀態類別
+             （style.css #sidebar.hidden 以 !important display:block + opacity/visibility 過渡接管）。 -->
+        <div id="sidebar" class="hidden">
+            <div id="sidebar-overlay" data-action="toggleSidebar" class="absolute inset-0 bg-black/50 backdrop-blur-xs">
             </div>
-            <div id="sidebar-panel"
-                class="fixed top-0 right-0 h-full w-full max-w-sm glass-card border-l border-slate-900/10 dark:border-slate-300/10">
+            <!-- 定位/尺寸/邊框全由 style.css #sidebar-panel 控制（桌機側拉、行動底部浮卡）。
+                 v4 下 utilities 層會蓋過 components 層的 #sidebar-panel，故移除這些會「贏過」ID 規則的
+                 重複 utility（top-0/h-full…），否則行動版面板會被釘在頂端而非底部浮起。 -->
+            <div id="sidebar-panel" class="glass-card">
             </div>
         </div>
 

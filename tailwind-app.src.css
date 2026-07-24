@@ -1,0 +1,43 @@
+/* =====================================================================
+   辯時計 — app.html 專用 Tailwind CSS v4 編譯入口
+   取代原本的 cdn.tailwindcss.com 執行期 JIT。
+   重新產生：  npm run build:css        （輸出 app.tw.css）
+   =====================================================================
+
+   【為何 utilities「不分層」】
+   v4 預設把 utilities 包進 @layer utilities，使其「整層」壓過 style.css，
+   無視 specificity（連 #id 規則都會輸給 .class utility）——這會讓手寫 style.css 的
+   ID/後代選擇器失效（側欄定位、z-index 等 bug）。
+   這裡只把 theme 與 preflight(reset) 留在低優先層，utilities 不加 layer()，
+   讓 utilities 與 style.css 回到「純 specificity + 來源順序」競爭（= 撰寫 style.css 時的模型）：
+     - #id / 後代選擇器（style.css）靠特異度贏過 utility class
+     - 同特異度時，utility 因排在 style.css 之後而贏（見 app.css 載入順序）
+     - style.css 的 !important 照常有效
+*/
+
+/* 樓層宣告：只有 theme 與 base 兩個低優先層；utilities 不在此列（= 不分層）。 */
+@layer theme, base;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+/* utilities 不加 layer() → 不分層。source(none) 關閉自動偵測，改用下方 @source 精準指定範圍。 */
+@import "tailwindcss/utilities.css" source(none);
+@source "./app.html";
+@source "./app.js";
+
+/* class 策略深色模式：對齊 v3 的 darkMode:'class'（app 切換 <html class="dark">）。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* v3 → v4 相容墊片：v4 預設邊框色由 gray-200 改成 currentColor，這裡還原為 gray-200。
+   放在 base 層（最弱），會被 style.css 的邊框規則與 border-* utility 正常覆蓋。 */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+/* （果凍按壓動畫已移除：按鈕按壓改用 style.css 第 4 節的一般 scale 縮放。） */

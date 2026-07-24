@@ -10,7 +10,8 @@
     <meta name="description" content="辯時計隱私權政策：完全本地運行，不蒐集、不上傳、不追蹤任何使用者資料。">
     <meta name="robots" content="index, follow">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS 預編譯（site.css，原始入口 tailwind-site.src.css），取代 cdn.tailwindcss.com -->
+    <link rel="stylesheet" href="site.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -42,7 +43,7 @@
 </head>
 
 <body>
-    <header class="border-b border-white/10 bg-slate-950/70 backdrop-blur sticky top-0 z-10">
+    <header class="border-b border-white/10 bg-slate-950/70 backdrop-blur-sm sticky top-0 z-10">
         <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
             <a href="./index.html" class="flex items-center gap-2 text-lg font-semibold">
                 <img src="favicon.svg" alt="辯時計" class="w-7 h-7">
@@ -56,9 +57,9 @@
         <h1 class="text-4xl md:text-5xl font-bold mb-3">
             <span class="text-gradient">隱私權政策</span>
         </h1>
-        <p class="text-slate-400 mb-2">最後更新：2026 年 5 月</p>
+        <p class="text-slate-400 mb-2">最後更新日期：2026 年 7 月 19 日</p>
         <p class="text-slate-300 text-lg leading-relaxed mb-10">
-            辯時計（以下稱「本應用程式」）是一套<strong class="text-white">完全在使用者裝置本地運行</strong>的辯論計時系統。我們不蒐集、不傳輸、不儲存任何個人資料於伺服器端。
+            辯時計（以下稱「本應用程式」）是一套<strong class="text-white">在使用者瀏覽器中運作</strong>的辯論計時系統。我們不蒐集、不傳輸、不儲存任何個人資料於本應用程式之伺服器端。
         </p>
 
         <section class="card rounded-2xl p-6 md:p-8 mb-6">
@@ -67,14 +68,13 @@
                 <li>本應用程式<strong class="text-white">沒有後端伺服器</strong>，沒有使用者註冊機制，也沒有登入系統。</li>
                 <li>不使用任何第三方分析工具（Google Analytics、Facebook Pixel、Hotjar 等皆未導入）。</li>
                 <li>不使用 Cookie 或追蹤像素進行行為分析。</li>
-                <li>不會將您的辯論內容、計時紀錄、語音資料傳送到網際網路上的任何伺服器。</li>
             </ul>
         </section>
 
         <section class="card rounded-2xl p-6 md:p-8 mb-6">
             <h2 class="text-2xl font-semibold mb-4 text-white">2. 本機儲存（Local Storage）</h2>
             <p class="text-slate-300 leading-relaxed mb-3">
-                為了提供良好的使用體驗，本應用程式會使用瀏覽器內建的 <code class="bg-slate-800 px-2 py-0.5 rounded text-sm">localStorage</code> 儲存以下資訊於<strong class="text-white">您自己的裝置上</strong>：
+                為了提供良好的使用體驗，本應用程式會使用瀏覽器內建的 <code class="bg-slate-800 px-2 py-0.5 rounded-sm text-sm">localStorage</code> 儲存以下資訊於<strong class="text-white">您自己的裝置上</strong>：
             </p>
             <ul class="space-y-2 text-slate-300 leading-relaxed list-disc pl-6">
                 <li>使用者的偏好設定（介面主題、提示音量、預設賽制等）。</li>
@@ -92,10 +92,9 @@
                 本應用程式的「智慧語音偵測」與「語音即時轉錄」功能需要存取麥克風。關於麥克風使用的承諾：
             </p>
             <ul class="space-y-2 text-slate-300 leading-relaxed list-disc pl-6">
-                <li>所有語音處理<strong class="text-white">完全在您的瀏覽器內進行</strong>，使用 WebAssembly 在本地執行。</li>
-                <li>音訊資料<strong class="text-white">不會被錄製、儲存或上傳</strong>到任何伺服器。</li>
-                <li>麥克風僅在您主動啟用相關功能時才會被請求；您可隨時於瀏覽器設定撤銷權限。</li>
-                <li>若您未啟用語音功能，本應用程式完全不會請求麥克風權限。</li>
+                <li>為了進行語音即時轉錄，本應用程式採用了您瀏覽器內建的 Web Speech API。當您啟用轉錄功能時，您的語音資料將由您使用的瀏覽器（如 Google Chrome、Apple Safari）接管，並可能被傳送至該瀏覽器供應商（如 Google 或 Apple）的伺服器進行文字轉換。具體的資料處理方式受您所屬瀏覽器的隱私權政策規範。</li>
+                <li>除了由瀏覽器接管的轉錄服務外，部分功能可能需要存取您的麥克風，但這些資料不會被儲存或傳輸到任何伺服器。</li>
+                <li>麥克風僅在您主動啟用相關功能時才會被請求；您可隨時於瀏覽器設定撤銷權限。若您未啟用語音功能，本應用程式完全不會請求麥克風權限。</li>
             </ul>
         </section>
 
@@ -106,9 +105,7 @@
             </p>
             <ul class="space-y-2 text-slate-300 leading-relaxed list-disc pl-6">
                 <li><strong class="text-white">jsDelivr</strong>（cdn.jsdelivr.net）— 載入 ONNX Runtime、語音偵測模型、Piper TTS 語音合成模組。</li>
-                <li><strong class="text-white">Google Fonts</strong>（fonts.googleapis.com / fonts.gstatic.com）— 載入 Inter 與 Noto Sans TC 字型。</li>
                 <li><strong class="text-white">cdnjs</strong>（cdnjs.cloudflare.com）— 載入 Sortable.js 拖曳排序函式庫。</li>
-                <li><strong class="text-white">Tailwind CSS CDN</strong>（cdn.tailwindcss.com）— 載入樣式框架。</li>
                 <li><strong class="text-white">unpkg</strong>（unpkg.com）— 載入動畫函式庫 AOS。</li>
             </ul>
             <p class="text-slate-300 leading-relaxed mt-3">
@@ -126,7 +123,7 @@
         <section class="card rounded-2xl p-6 md:p-8 mb-6">
             <h2 class="text-2xl font-semibold mb-4 text-white">6. 政策更新</h2>
             <p class="text-slate-300 leading-relaxed">
-                若本政策有任何修訂，將於本頁面更新並標註修訂日期。重大變更將於應用程式中以顯著方式公告。
+                若本政策有任何修訂，將於本頁面更新並標註修訂日期。
             </p>
         </section>
 

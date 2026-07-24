@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- [a11y] 不鎖縮放（WCAG 2.1 SC 1.4.4） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>辯時計 - 投影顯示</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
@@ -720,8 +720,8 @@
         .settings-panel {
             position: fixed;
             top: 0;
-            right: -400px;
-            width: 400px;
+            right: calc(-1 * min(400px, 100vw));
+            width: min(400px, 100vw);
             height: 100vh;
             background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(20px);
@@ -1361,7 +1361,7 @@
                         <div class="debater-column">
                             <div class="debater-label">${posLabel}</div>
                             <div class="debater-name-card">
-                                <span class="debater-name-vertical">${d.name || ''}</span>
+                                <span class="debater-name-vertical">${this.escText(d.name || '')}</span>
                             </div>
                             ${isClosing ? '<div class="debater-closing-badge">結</div>' : ''}
                         </div>
@@ -1369,6 +1369,39 @@
                 });
 
                 container.innerHTML = html;
+            },
+
+            // [FIX P1] 綁定的控制端工作階段 id；null = 尚未綁定（接受第一個推送更新的控制端）。
+            // 沒有它時，同機兩個分頁各跑一場比賽會同時對本視窗以 1Hz 推送，畫面在兩場比賽間閃爍。
+            controllerSessionId: null,
+            // 最近一次由控制端同步進來的欄位值（syncField 變化偵測用）
+            _lastSynced: {},
+
+            // HTML 逃逸：辯士名等由 BroadcastChannel 傳入的字串要過這層再進 innerHTML
+            escText(s) {
+                return String(s == null ? '' : s)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            },
+
+            // 向控制端宣告本視窗存在，並附上目前綁定的控制端（讓其他控制端知道別接手）
+            announceConnected() {
+                try {
+                    if (this.channel) this.channel.postMessage({ type: 'DISPLAY_CONNECTED', boundSessionId: this.controllerSessionId || null });
+                } catch (e) { }
+            },
+
+            // [FIX P2] 控制端欄位同步（變化偵測）：
+            // 首次同步沿用舊行為（空值不覆蓋 display 本地設定）；
+            // 之後控制端的值「有變化」就同步——包含清成空字串，
+            // 修掉原本真值判斷造成「在 app 清空欄位永遠傳不過來、display 殘留舊值」的問題
+            syncField(key, value, apply) {
+                if (value === undefined) return;
+                const prev = this._lastSynced[key];
+                if (prev === value) return;
+                this._lastSynced[key] = value;
+                if (prev === undefined && !value) return; // 首次且為空：保留本地設定
+                apply(value);
             },
 
             setupChannel() {
@@ -1389,27 +1422,27 @@
 
                     // Request initial state - send multiple times to ensure connection
                     console.log('Display: Sending DISPLAY_CONNECTED');
-                    this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                    this.announceConnected();
 
                     // 延遲再發送幾次，確保主頁面已經初始化
                     setTimeout(() => {
                         if (!this.isConnected && this.channel) {
                             console.log('Display: Retry sending DISPLAY_CONNECTED (500ms)');
-                            this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                            this.announceConnected();
                         }
                     }, 500);
 
                     setTimeout(() => {
                         if (!this.isConnected && this.channel) {
                             console.log('Display: Retry sending DISPLAY_CONNECTED (1500ms)');
-                            this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                            this.announceConnected();
                         }
                     }, 1500);
 
                     setTimeout(() => {
                         if (!this.isConnected && this.channel) {
                             console.log('Display: Retry sending DISPLAY_CONNECTED (3000ms)');
-                            this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                            this.announceConnected();
                         }
                     }, 3000);
 
@@ -1434,19 +1467,37 @@
             },
 
             handleMessage(data) {
-                this.lastUpdate = Date.now();
-                this.reconnectAttempts = 0; // 重置連接嘗試次數
+                if (!data) return;
 
-                console.log('[Display] handleMessage:', data?.type);
+                // [FIX P3] 忽略其他 display 視窗廣播的訊息：
+                // 同時開兩個投影視窗時，彼此的 DISPLAY_* 訊息會讓對方誤以為已連上控制端、
+                // 提前隱藏等待畫面顯示空白計時
+                if (data.type === 'DISPLAY_CONNECTED' || data.type === 'DISPLAY_HEARTBEAT') return;
 
-                // 收到 CONTROLLER_READY 時，立即發送 DISPLAY_CONNECTED
-                if (data && data.type === 'CONTROLLER_READY') {
+                console.log('[Display] handleMessage:', data.type);
+
+                // 收到 CONTROLLER_READY 時，立即回報連線（含目前綁定的控制端）。
+                // 注意：CONTROLLER_READY 在 app 啟動時就會廣播（投影未必開啟），
+                // 所以不在此綁定控制端、也不刷新 lastUpdate，避免壓住重連迴圈
+                if (data.type === 'CONTROLLER_READY') {
                     console.log('[Display] Controller is ready, sending DISPLAY_CONNECTED');
-                    try {
-                        this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
-                    } catch (e) { }
+                    this.announceConnected();
                     return;
                 }
+
+                // [FIX P1] 控制端綁定：只跟隨一個控制端（第一個推送 TIMER_UPDATE/HEARTBEAT 的），
+                // 其他分頁跑的比賽一律忽略，投影畫面不再被兩場比賽交錯刷新
+                if (data.sessionId) {
+                    if (!this.controllerSessionId) {
+                        this.controllerSessionId = data.sessionId;
+                        console.log('[Display] Bound to controller:', data.sessionId);
+                    } else if (data.sessionId !== this.controllerSessionId) {
+                        return; // 另一個控制端的訊息
+                    }
+                }
+
+                this.lastUpdate = Date.now();
+                this.reconnectAttempts = 0; // 重置連接嘗試次數
 
                 if (!this.isConnected) {
                     this.isConnected = true;
@@ -1473,14 +1524,14 @@
                         if (data.payload.negativeDebaters) {
                             this.matchData.negativeDebaters = data.payload.negativeDebaters;
                         }
-                        if (data.payload.positiveTeamName) {
-                            this.matchData.positiveTeamName = data.payload.positiveTeamName;
-                            document.getElementById('settingPositiveTeam').value = data.payload.positiveTeamName;
-                        }
-                        if (data.payload.negativeTeamName) {
-                            this.matchData.negativeTeamName = data.payload.negativeTeamName;
-                            document.getElementById('settingNegativeTeam').value = data.payload.negativeTeamName;
-                        }
+                        this.syncField('positiveTeamName', data.payload.positiveTeamName, (v) => {
+                            this.matchData.positiveTeamName = v;
+                            document.getElementById('settingPositiveTeam').value = v;
+                        });
+                        this.syncField('negativeTeamName', data.payload.negativeTeamName, (v) => {
+                            this.matchData.negativeTeamName = v;
+                            document.getElementById('settingNegativeTeam').value = v;
+                        });
                         // 同步結辯索引
                         if (data.payload.positiveClosingIndex !== undefined) {
                             this.matchData.positiveClosingIndex = data.payload.positiveClosingIndex;
@@ -1490,15 +1541,15 @@
                             this.matchData.negativeClosingIndex = data.payload.negativeClosingIndex;
                             document.getElementById('settingNegativeClosing').value = data.payload.negativeClosingIndex;
                         }
-                        // 同步賽事名稱和辯題（只要 app.html 有值就更新）
-                        if (data.payload.tournamentName) {
-                            this.matchData.tournamentName = data.payload.tournamentName;
-                            document.getElementById('settingTournamentName').value = data.payload.tournamentName;
-                        }
-                        if (data.payload.debateTopic) {
-                            this.matchData.topic = data.payload.debateTopic;
-                            document.getElementById('settingTopic').value = data.payload.debateTopic;
-                        }
+                        // 同步賽事名稱和辯題（變化偵測：app 端改動才覆蓋，含清空）
+                        this.syncField('tournamentName', data.payload.tournamentName, (v) => {
+                            this.matchData.tournamentName = v;
+                            document.getElementById('settingTournamentName').value = v;
+                        });
+                        this.syncField('debateTopic', data.payload.debateTopic, (v) => {
+                            this.matchData.topic = v;
+                            document.getElementById('settingTopic').value = v;
+                        });
                         if (this.displayMode === 'match') {
                             this.updateMatchDisplay();
                         }
@@ -1602,9 +1653,20 @@
                 // Consider disconnected if no update for 5 seconds
                 if (timeSinceLastUpdate > 5000) {
                     this.isConnected = false;
+                    // [FIX P1] 解除控制端綁定並重置同步基準，讓重載後的原控制端或新控制端能接手
+                    this.controllerSessionId = null;
+                    this._lastSynced = {};
                     this.updateConnectionStatus(false);
                     // 嘗試重新連接
                     this.tryReconnect();
+                } else if (this.isConnected && this.channel) {
+                    // [FIX P4] 連線期間定時回報心跳。控制端在「app 重載後沒有視窗引用」的
+                    // 重連情境下，靠 DISPLAY_HEARTBEAT 判斷本視窗是否還活著；原本 display
+                    // 連上後就不再發任何訊息，10 秒後被控制端誤判斷線、停止推送，本視窗
+                    // 又偵測到靜默而重連……形成每十幾秒閃爍一次的斷連迴圈
+                    try {
+                        this.channel.postMessage({ type: 'DISPLAY_HEARTBEAT', sessionId: this.controllerSessionId || null });
+                    } catch (e) { }
                 }
             },
 
@@ -1620,7 +1682,7 @@
                     if (this.channel) {
                         // 不關閉現有 channel，只是重新發送連接請求
                         console.log('Display: 重新發送 DISPLAY_CONNECTED');
-                        this.channel.postMessage({ type: 'DISPLAY_CONNECTED' });
+                        this.announceConnected();
                     } else {
                         this.setupChannel();
                     }

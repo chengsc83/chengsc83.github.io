@@ -1,0 +1,18 @@
+/* =====================================================================
+   辯時計 — app.html 樣式進入點（手寫，不經 Tailwind/Lightning CSS 建置）
+   ---------------------------------------------------------------------
+   載入順序很重要（決定層疊）：
+
+     1) style.css   先載入、不分層（手寫設計系統，原檔不被改寫）
+     2) app.tw.css  後載入：theme/base(reset) 在低優先層，utilities「不分層」
+
+   為何這樣排（重現 style.css 撰寫時依據的層疊模型）：
+     - style.css 與 utilities 都不分層 → 回到「純 specificity + 來源順序」競爭。
+     - #id / 後代選擇器（style.css）靠特異度贏過 utility class（側欄定位等 bug 因此消失）。
+     - 同特異度時，utilities 因排在 style.css 之後（app.tw.css 後載入）而贏 → utility 仍能覆蓋元件 class。
+     - style.css 的 !important 照常有效；theme/base 兩層永遠最弱（被兩者覆蓋）。
+
+   style.css 不進建置：避免 Lightning CSS 改寫它（會砍掉 backdrop-filter / 漸層文字的 -webkit- 前綴）。
+   ===================================================================== */
+@import url("./style.css");
+@import url("./app.tw.css");
