@@ -1288,20 +1288,10 @@ const App = {
                     console.warn("Silent buffer unlock failed:", err);
                 }
             }
-            // [<audio> Fallback 解鎖] 必須在 routeAudioElement 之前執行：
-            // 一旦 createMediaElementSource 接管 audio 元素，部分 iOS 實作會繞過 HTML muted 屬性。
-            // 在路由之前先 play 一次（HTML 已 muted），確保 100% 無聲解鎖。
-            const ring = document.getElementById('ringSound');
-            if (ring) {
-                ring.play().then(() => {
-                    ring.pause();
-                    ring.currentTime = 0;
-                    ring.muted = false;
-                    App.state.isAudioUnlocked = true;
-                }).catch(() => {
-                    ring.muted = false;
-                });
-            }
+            // [iOS HTMLMediaElement 解鎖] 用程式產生的靜音 WAV 解鎖，完全不碰 ringSound。
+            // 舊做法用 ringSound.play(muted) 但 routeAudioElement(createMediaElementSource) 會
+            // 繞過 HTML muted 屬性導致鈴聲洩漏（race condition：play 是 async，route 是 sync）。
+            App._playUnlockSilence();
             // 路由所有音效元素到 AudioContext，讓 Meet 分享可擷取（fallback 路徑用）
             ['ringSound', 'stageAdvanceSound', 'speechDetectedSound', 'drawSound'].forEach(id => {
                 App.routeAudioElement(id);
@@ -1664,16 +1654,8 @@ const App = {
                     src.start(0);
                 }
                 App._loadRingBuffer().catch(() => { });
-                const ring = document.getElementById('ringSound');
-                if (ring && !App.state.isAudioUnlocked) {
-                    ring.muted = true;
-                    ring.play().then(() => {
-                        ring.pause();
-                        ring.currentTime = 0;
-                        ring.muted = false;
-                        App.state.isAudioUnlocked = true;
-                    }).catch(() => { ring.muted = false; });
-                }
+                // 靜音解鎖 HTMLMediaElement（不碰 ringSound，避免鈴聲洩漏）
+                App._playUnlockSilence();
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(' ');
                     utterance.volume = 0;
@@ -3575,14 +3557,12 @@ const App = {
                         <!-- Step 1：辯題與賽制 -->
                         ${currentStep === 1 ? `
                         <div class="glass-panel p-6 md:p-8 relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                             <div class="flex items-center gap-3 mb-6">
                                 <span class="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-500">
                                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
                                 </span>
                                 <div>
                                     <h3 class="text-lg font-bold text-(--text-main)">Step 1：辯題與賽制</h3>
-                                    <p class="text-xs text-slate-600 dark:text-slate-400">設定本場比賽的辯題與賽制</p>
                                 </div>
                             </div>
                             
@@ -3595,7 +3575,7 @@ const App = {
                                     </label>
                                     <div class="relative">
                                         <input type="text" id="tournamentNameInput" class="modern-input text-base pr-10" placeholder="在此輸入盃賽名稱" value="${this.escapeHtml(this.state.tournamentName || '')}">
-                                        <button type="button" id="clearTournamentBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" title="清除">
+                                        <button type="button" id="clearTournamentBtn" aria-label="清除盃賽名稱" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 transition-colors" title="清除">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
                                     </div>
@@ -3609,7 +3589,7 @@ const App = {
                                     </label>
                                     <div class="relative">
                                         <input type="text" id="debateTopicInput" class="modern-input text-base pr-10" placeholder="在此輸入辯題" value="${this.escapeHtml(this.state.debateTopic)}">
-                                        <button type="button" id="clearTopicBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" title="清除">
+                                        <button type="button" id="clearTopicBtn" aria-label="清除辯題" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 transition-colors" title="清除">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
                                     </div>
@@ -3652,14 +3632,12 @@ const App = {
                         <!-- Step 2：隊伍資訊 -->
                         ${currentStep === 2 ? `
                         <div class="glass-panel p-6 md:p-8 relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-red-500"></div>
                             <div class="flex items-center gap-3 mb-6">
                                 <span class="p-2.5 rounded-xl bg-gradient-to-br from-green-500/20 to-red-500/20 text-emerald-500">
                                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                 </span>
                                 <div>
                                     <h3 class="text-lg font-bold text-(--text-main)">Step 2：隊伍資訊</h3>
-                                    <p class="text-xs text-slate-500">設定正反方隊伍名稱與辯士</p>
                                 </div>
                             </div>
                             
@@ -3778,14 +3756,12 @@ const App = {
                         ${currentStep === 3 ? `
                         <!-- 設定摘要 -->
                         <div class="glass-panel p-6 md:p-8 relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
                             <div class="flex items-center gap-3 mb-6">
                                 <span class="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-500">
                                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 </span>
                                 <div>
                                     <h3 class="text-lg font-bold text-(--text-main)">Step 3：確認設定</h3>
-                                    <p class="text-xs text-slate-500">檢查設定並開始比賽</p>
                                 </div>
                             </div>
                             
@@ -3895,11 +3871,14 @@ const App = {
                             <span class="text-sm font-medium">上一步</span>
                         </button>
                         ` : ''}
-                        <button data-action="openEditor" class="btn-icon-label hover:text-(--color-primary) hover:bg-(--color-primary)/10 rounded-xl px-3 py-2 transition-all">
+                        <!-- [a11y] 必須有 aria-label：≤480px 時 .sticky-action-bar .btn-icon-label > span
+                             會被設為 display:none（刻意的窄螢幕設計，只留圖示），
+                             此時按鈕就失去可存取名稱，螢幕閱讀器只會唸出「按鈕」。 -->
+                        <button data-action="openEditor" aria-label="編輯流程" class="btn-icon-label hover:text-(--color-primary) hover:bg-(--color-primary)/10 rounded-xl px-3 py-2 transition-all">
                             <svg class="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             <span class="text-xs">編輯流程</span>
                         </button>
-                        <button data-action="shareFlow" class="btn-icon-label hover:text-(--color-primary) hover:bg-(--color-primary)/10 rounded-xl px-3 py-2 transition-all">
+                        <button data-action="shareFlow" aria-label="分享流程" class="btn-icon-label hover:text-(--color-primary) hover:bg-(--color-primary)/10 rounded-xl px-3 py-2 transition-all">
                             <svg class="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                             <span class="text-xs">分享</span>
                         </button>
@@ -4279,7 +4258,6 @@ const App = {
                     <!-- 頂部資訊列 - 行動裝置隱藏 -->
                     <div id="debateInfoContainer" class="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="md:col-span-2 glass-panel p-5 flex flex-col justify-center relative overflow-hidden min-h-[5rem]">
-                            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-(--color-primary) to-(--color-primary-dark)"></div>
                             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 pl-2">本場辯題</span>
                             <h2 class="text-xl md:text-2xl font-black text-(--text-main) leading-tight pl-2">
                                 ${this.escapeHtml(this.state.debateTopic) || "（未設定辯題）"}
@@ -4783,7 +4761,6 @@ const App = {
         infoContainer.innerHTML = `
             <!-- 辯題橫幅 -->
             <div class="md:col-span-2 glass-panel p-4 relative overflow-hidden group">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-500"></div>
                 <div class="flex items-center justify-between gap-4">
                     <div class="grow pl-3">
                         <div class="flex items-center gap-2 mb-1">
@@ -4814,7 +4791,6 @@ const App = {
 
             <!-- 正方卡片 -->
             <div class="glass-panel p-3 flex items-center gap-3 relative overflow-hidden group hover:shadow-md hover:shadow-green-500/10 transition-all">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-green-400 to-emerald-500"></div>
                 <div class="grow min-w-0 pl-2">
                     <span class="text-[10px] font-bold uppercase text-green-500 tracking-wider">正方</span>
                     <p class="font-bold text-base truncate text-(--text-main)" title="${this.escapeHtml(this.state.positiveTeamName)}">${this.escapeHtml(this.state.positiveTeamName)}</p>
@@ -4823,7 +4799,6 @@ const App = {
 
             <!-- 反方卡片 -->
             <div class="glass-panel p-3 flex items-center gap-3 relative overflow-hidden group hover:shadow-md hover:shadow-red-500/10 transition-all">
-                <div class="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-400 to-rose-500"></div>
                 <div class="grow min-w-0 text-right pr-2">
                     <span class="text-[10px] font-bold uppercase text-red-500 tracking-wider">反方</span>
                     <p class="font-bold text-base truncate text-(--text-main)" title="${this.escapeHtml(this.state.negativeTeamName)}">${this.escapeHtml(this.state.negativeTeamName)}</p>
@@ -5012,7 +4987,6 @@ const App = {
                 const orderedNames = this.state.judgeCommentOrder.map(i => this.escapeHtml(judges[i])).join(' → ');
                 stageContainer.innerHTML = `
                             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
-                                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50"></div>
                                 <div class="flex flex-col gap-2 text-center">
                                     <div class="text-4xl mb-2">✅</div>
                                     <h3 class="font-bold text-lg text-(--text-main) mb-2">裁判講評完畢</h3>
@@ -5026,7 +5000,6 @@ const App = {
                 const orderText = commentedCount === 1 ? '第一位' : (commentedCount === judges.length ? '最後一位' : `第 ${commentedCount} 位`);
                 stageContainer.innerHTML = `
                             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
-                                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50"></div>
                                 <div class="flex flex-col gap-2 text-center">
                                     <div class="text-4xl mb-2">🎓</div>
                                     <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wider">裁判講評</span>
@@ -5039,7 +5012,6 @@ const App = {
                 // 尚未選擇裁判
                 stageContainer.innerHTML = `
                             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
-                                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50"></div>
                                 <div class="flex flex-col gap-2 text-center">
                                     <div class="text-4xl mb-2">🎓</div>
                                     <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wider">裁判講評</span>
@@ -5052,7 +5024,6 @@ const App = {
         } else {
             stageContainer.innerHTML = `
                         <div class="glass-panel p-5 rounded-2xl relative overflow-hidden animate-scale-in">
-                            <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-(--color-primary) to-transparent opacity-50"></div>
                             <div class="flex flex-col gap-2">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-[10px] font-bold text-(--color-primary) uppercase tracking-wider">${stageTypeLabel[stage.type] || '階段'}</span>
@@ -6155,7 +6126,7 @@ const App = {
             <div class="p-6 border-b border-(--border-color) flex justify-between items-center bg-(--surface-1) rounded-t-[1.5rem] md:rounded-none sticky top-0 z-10">
                     <div><h2 class="font-bold text-xl">控制中心</h2></div>
                     
-                    <button data-action="toggleSidebar" class="sidebar-close-btn p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <button data-action="toggleSidebar" aria-label="關閉側邊欄" class="sidebar-close-btn p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
@@ -6267,7 +6238,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-(--border-color)">辯時計 3.0<br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-(--border-color)">辯時計 3.0.1<br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -6302,6 +6273,40 @@ const App = {
             this.state.audioContext.resume().catch(() => { });
         }
         return this.state.audioContext;
+    },
+
+    // [iOS 靜音解鎖] 產生 45 bytes 的靜音 WAV blob，透過臨時 Audio 元素播放。
+    // 目的：在 user gesture 內呼叫 .play() 以解鎖 iOS 的 HTMLMediaElement 播放限制，
+    // 但完全不碰 ringSound，杜絕 createMediaElementSource 繞過 muted 屬性導致的鈴聲洩漏。
+    // WAV 格式：PCM 8-bit mono, 8kHz, 1 sample (值 0x80 = 靜音)。
+    _playUnlockSilence() {
+        if (App.state.isAudioUnlocked) return;
+        try {
+            const wav = new Uint8Array([
+                0x52,0x49,0x46,0x46, 0x25,0x00,0x00,0x00, // RIFF header, size=37
+                0x57,0x41,0x56,0x45,                       // WAVE
+                0x66,0x6D,0x74,0x20, 0x10,0x00,0x00,0x00,  // fmt chunk, size=16
+                0x01,0x00, 0x01,0x00,                       // PCM, 1 channel
+                0x40,0x1F,0x00,0x00, 0x40,0x1F,0x00,0x00,  // 8000 Hz, 8000 bytes/sec
+                0x01,0x00, 0x08,0x00,                       // block align=1, 8 bits/sample
+                0x64,0x61,0x74,0x61, 0x01,0x00,0x00,0x00,  // data chunk, size=1
+                0x80                                        // 1 sample: silence (128 for unsigned 8-bit)
+            ]);
+            const blob = new Blob([wav], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play().then(() => {
+                audio.pause();
+                audio.remove();
+                URL.revokeObjectURL(url);
+                App.state.isAudioUnlocked = true;
+                console.log('[iOS] HTMLMediaElement unlocked via silent WAV blob.');
+            }).catch(() => {
+                URL.revokeObjectURL(url);
+            });
+        } catch (e) {
+            console.warn('[iOS] Silent unlock failed:', e);
+        }
     },
 
     routeAudioElement(elementId) {
@@ -6538,8 +6543,8 @@ const App = {
             // 每個 worker 有自己的 loadId；onerror 或 60s timeout 會 reject，
             // 避免 piper-worker.js 載入失敗時 _loadPiperTTS 永久 hang。
             // 使用 allSettled：若任一失敗，把已成功的 worker 一併 terminate，避免洩漏。
-            const LOAD_TIMEOUT_MS = 60000;
-            const loadPromises = Array.from({ length: n }, (_, idx) => {
+            const LOAD_TIMEOUT_MS = 180000;
+            const startWorker = (idx) => {
                 const worker = new Worker('piper-worker.js', { type: 'module' });
                 const loadId = ++this._piperMsgId;
 
@@ -6570,9 +6575,22 @@ const App = {
                     };
                     worker.postMessage({ type: 'load', id: loadId, voiceId: this._piperTtsVoice });
                 });
-            });
+            };
 
-            const results = await Promise.allSettled(loadPromises);
+            // [效能修復] 原本 N 個 Worker 同時啟動並各自 await tts.download()。piper-tts-web 是
+            // 先 stored() 檢查快取、沒有才下載——兩個 Worker 同時檢查時都還沒下載完，
+            // 於是「同一個 60MB 模型被完整下載兩次」（實測首次開頁傳輸 121MB，其中 120MB 是它）。
+            // 改為：先讓第 0 號 Worker 下載完成，其餘 Worker 再啟動——此時 stored() 會命中快取、
+            // 直接跳過下載。總傳輸量減半，且不影響並行合成能力（載入後仍是 N 個 Worker）。
+            const results = [];
+            results.push(await Promise.allSettled([startWorker(0)]).then(r => r[0]));
+            if (results[0].status === 'fulfilled' && n > 1) {
+                const rest = await Promise.allSettled(
+                    Array.from({ length: n - 1 }, (_, i) => startWorker(i + 1))
+                );
+                results.push(...rest);
+            }
+
             const workers = [];
             const errors = [];
             for (const r of results) {
@@ -8857,7 +8875,11 @@ const App = {
 
     interpolateScript(script, options = {}) {
         if (!script) return "";
-        let firstTeam = "", secondTeam = "";
+        // [FIX] 尚未抽籤時給語意正確的預設值（原本是空字串，會讓下方的 `||` 回退成
+        // 原樣輸出 "{{first_rebuttal_team_name}}"）。使用者可經由流程追蹤器直接跳到結辯
+        // 階段而跳過抽籤（goToStage 只在「往回跳過抽籤」時清除 rebuttalOrder），
+        // 此時主席稿會把樣板字面顯示在畫面上、並被 TTS 朗讀出來。
+        let firstTeam = "先結辯方", secondTeam = "後結辯方";
         if (this.state.rebuttalOrder) {
             firstTeam = this.state.rebuttalOrder === 'positive' ? this.state.positiveTeamName : this.state.negativeTeamName;
             secondTeam = this.state.rebuttalOrder === 'positive' ? this.state.negativeTeamName : this.state.positiveTeamName;
@@ -8885,7 +8907,12 @@ const App = {
             replacements[`judge_${i + 1}`] = this.state.judges[i] || `裁判${numNames[i] || (i + 1)}`;
         }
 
-        return script.replace(/\{\{(\w+)\}\}/g, (match, key) => replacements[key] || match);
+        // [FIX] 用「鍵是否存在」判斷，而非真值判斷。原本 `replacements[key] || match` 會讓
+        // 任何空字串值（如未選擇的 selected_player、未填的辯題）回退成原樣輸出 "{{key}}"——
+        // 樣板語法直接出現在主席稿與語音播報中。改為：已知變數即使是空字串也照常替換掉，
+        // 只有「真正不認識的變數」才保留原樣（方便使用者發現自訂腳本打錯字）。
+        return script.replace(/\{\{(\w+)\}\}/g, (match, key) =>
+            Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : match);
     },
 
 
@@ -10146,7 +10173,7 @@ const App = {
                             <span class="font-bold text-sm">錄音播放器</span>
                             ${recordings.length > 1 ? `<span class="text-xs bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-sm">第 ${rec.index + 1} / ${recordings.length} 段</span>` : ''}
                         </div>
-                        <button data-action="closeRecordingPlayer" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <button data-action="closeRecordingPlayer" aria-label="關閉錄音播放器" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>

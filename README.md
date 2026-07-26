@@ -4,7 +4,7 @@
 
 **純前端、零後端、零帳號、免費開源。所有 AI 運算 100% 在你的裝置上完成，語音不上傳任何伺服器。**
 
-🔗 **線上使用**：<https://chengsc83.github.io/>
+🔗 **線上使用**：[https://chengsc83.github.io/](https://chengsc83.github.io/)
 
 ---
 
@@ -53,14 +53,14 @@
 
 ### ⌨️ 鍵盤快捷鍵
 
-| 按鍵 | 功能 | 按鍵 | 功能 |
-|---|---|---|---|
-| `B` | 上一階段 | `F` | 切換全螢幕 |
-| `N` | 下一階段 | `T` | 切換亮／暗主題 |
-| `Space` / `P` | 暫停 / 繼續計時 | `M` | 切換投影模式 |
-| `A` | 切換自動模式 | `Esc` | 關閉彈出視窗或側邊欄 |
-| `I` | 切換畫中畫模式 | `Ctrl+Z` | 復原 |
-| `R` | 重設辯論 | `?` | 顯示快捷鍵說明 |
+| 按鍵              | 功能            | 按鍵       | 功能                 |
+| ----------------- | --------------- | ---------- | -------------------- |
+| `B`             | 上一階段        | `F`      | 切換全螢幕           |
+| `N`             | 下一階段        | `T`      | 切換亮／暗主題       |
+| `Space` / `P` | 暫停 / 繼續計時 | `M`      | 切換投影模式         |
+| `A`             | 切換自動模式    | `Esc`    | 關閉彈出視窗或側邊欄 |
+| `I`             | 切換畫中畫模式  | `Ctrl+Z` | 復原                 |
+| `R`             | 重設辯論        | `?`      | 顯示快捷鍵說明       |
 
 ---
 
@@ -74,28 +74,28 @@
 
 ### 瀏覽器 API
 
-| API | 用途 |
-|---|---|
-| Web Speech API | 即時語音轉錄、語音指令 |
-| Web Audio API | 響鈴、TTS 播放、RMS 音量分析 |
-| MediaRecorder | 比賽錄音 |
-| Compression Streams | 賽制分享碼壓縮（取代 pako） |
-| Picture-in-Picture | 畫中畫計時器 |
-| Web Locks | 多分頁比賽衝突防護 |
-| IndexedDB | TTS 語音快取 |
-| Vibration | 響鈴觸覺回饋（Android） |
-| Service Worker | PWA 離線快取 |
-| Screen Wake Lock | 比賽中防止螢幕休眠 |
+| API                 | 用途                         |
+| ------------------- | ---------------------------- |
+| Web Speech API      | 即時語音轉錄、語音指令       |
+| Web Audio API       | 響鈴、TTS 播放、RMS 音量分析 |
+| MediaRecorder       | 比賽錄音                     |
+| Compression Streams | 賽制分享碼壓縮（取代 pako）  |
+| Picture-in-Picture  | 畫中畫計時器                 |
+| Web Locks           | 多分頁比賽衝突防護           |
+| IndexedDB           | TTS 語音快取                 |
+| Vibration           | 響鈴觸覺回饋（Android）      |
+| Service Worker      | PWA 離線快取                 |
+| Screen Wake Lock    | 比賽中防止螢幕休眠           |
 
 ### 外部函式庫（皆由 CDN 載入）
 
-| 函式庫 | 用途 |
-|---|---|
-| [@ricky0123/vad-web](https://github.com/ricky0123/vad) + [onnxruntime-web](https://onnxruntime.ai) | Silero VAD 語音偵測 |
-| [@huggingface/transformers](https://github.com/huggingface/transformers.js) | Whisper 裝置端逐字稿（動態載入） |
-| [piper-tts-web](https://github.com/Mintplex-Labs/piper-tts-web) | 本地神經語音合成（動態載入） |
-| [Sortable.js](https://github.com/SortableJS/Sortable) | 流程編輯器拖曳排序 |
-| [qrcodejs](https://github.com/davidshimjs/qrcodejs) | 賽制分享 QR Code |
+| 函式庫                                                                                           | 用途                             |
+| ------------------------------------------------------------------------------------------------ | -------------------------------- |
+| [@ricky0123/vad-web](https://github.com/ricky0123/vad) + [onnxruntime-web](https://onnxruntime.ai) | Silero VAD 語音偵測              |
+| [@huggingface/transformers](https://github.com/huggingface/transformers.js)                       | Whisper 裝置端逐字稿（動態載入） |
+| [piper-tts-web](https://github.com/Mintplex-Labs/piper-tts-web)                                   | 本地神經語音合成（動態載入）     |
+| [Sortable.js](https://github.com/SortableJS/Sortable)                                             | 流程編輯器拖曳排序               |
+| [qrcodejs](https://github.com/davidshimjs/qrcodejs)                                               | 賽制分享 QR Code                 |
 
 > AI 模型（Silero VAD / Whisper / Piper）全部在使用者裝置上執行，**音訊不會上傳到任何伺服器**。
 
@@ -105,7 +105,7 @@
 
 ### 一般使用者
 
-直接開啟 <https://chengsc83.github.io/> 即可，無需安裝。建議使用 **Chrome 或 Edge**（語音轉錄與語音指令依賴 Web Speech API，Firefox / Safari 支援有限）。
+直接開啟 [https://chengsc83.github.io/](https://chengsc83.github.io/) 即可，無需安裝。建議使用 **Chrome 或 Edge**（語音轉錄與語音指令依賴 Web Speech API，Firefox / Safari 支援有限）。
 
 1. **賽前設定**：填寫盃賽名稱（選填）、辯題、正反方隊名，選擇比賽流程；可在進階設定調整準備時間與語音偵測。若要修改流程，點「自訂流程」進入編輯器。
 2. **開始比賽**：點「開始辯論」，依畫面主席稿提示，用「上一階段／下一階段／暫停」控制賽程，或交給自動模式。
@@ -134,18 +134,18 @@ python -m http.server 8000
 
 **檔案結構**
 
-| 檔案 | 說明 |
-|---|---|
-| `index.html` | 官網／介紹頁 |
-| `app.html` | 計時器主程式頁面 |
-| `app.js` | 應用程式主體（單一 `App` 物件） |
-| `display.html` | 投影模式的外接顯示畫面 |
-| `style.css` | 手寫樣式（主題、玻璃質感、動畫） |
+| 檔案                          | 說明                                      |
+| ----------------------------- | ----------------------------------------- |
+| `index.html`                | 官網／介紹頁                              |
+| `app.html`                  | 計時器主程式頁面                          |
+| `app.js`                    | 應用程式主體（單一`App` 物件）          |
+| `display.html`              | 投影模式的外接顯示畫面                    |
+| `style.css`                 | 手寫樣式（主題、玻璃質感、動畫）          |
 | `app.tw.css` / `site.css` | Tailwind 編譯輸出（**勿手動編輯**） |
-| `tailwind-*.src.css` | Tailwind 編譯入口與設定 |
-| `debateFormatGroups.json` | 內建賽制資料 |
-| `piper-worker.js` | Piper TTS 的 Web Worker |
-| `sw.js` / `manifest.json` | PWA Service Worker 與應用程式資訊 |
+| `tailwind-*.src.css`        | Tailwind 編譯入口與設定                   |
+| `debateFormatGroups.json`   | 內建賽制資料                              |
+| `piper-worker.js`           | Piper TTS 的 Web Worker                   |
+| `sw.js` / `manifest.json` | PWA Service Worker 與應用程式資訊         |
 
 ---
 
@@ -186,6 +186,6 @@ python -m http.server 8000
 
 ## ✍️ 作者
 
-**鄭世駿 James Cheng** — 主要開發者 — <https://github.com/chengsc83>
+**鄭世駿 James Cheng** — 主要開發者 — [https://github.com/chengsc83](https://github.com/chengsc83)
 
 合作邀約或問題請聯繫：`james830.sc@gmail.com`

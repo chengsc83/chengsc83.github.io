@@ -37,22 +37,38 @@
     <meta name="apple-mobile-web-app-title" content="辯時計">
     <link rel="apple-touch-icon" href="appstore-images/ios/180.png">
 
-    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.12/dist/bundle.min.js"></script>
+    <!-- [效能] 這四個函式庫一律加 defer：它們對「首屏繪製」毫無貢獻，同步載入卻會擋住
+         HTML 解析與首次繪製（Lighthouse 實測 render-blocking 約 1.3 秒，其中 onnxruntime
+         體積最大）。defer 保證「文件解析完成後、DOMContentLoaded 觸發前」依序執行完畢，
+         而 App.init() 正是掛在 DOMContentLoaded 上 → 執行時 vad / Sortable / QRCode 皆已就緒。
+         各使用點另有 typeof 防護（initPersistentVAD / renderEditorStageList / renderFlowShareQr）。 -->
+    <script defer src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.12/dist/bundle.min.js"></script>
     <!-- Tailwind CSS 改為預編譯（app.css，原始入口 tailwind-app.src.css），
          不再使用 cdn.tailwindcss.com 執行期 JIT。darkMode:'class' 已寫進編譯設定。 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
-        rel="stylesheet">
-    <!-- app.css 進入點以 @import 串接 app.tw.css（Tailwind utilities）與 style.css（layer components）。
-         先 preload 兩個子表，讓瀏覽器平行抓取、避免 @import 造成的瀑布延遲。 -->
-    <link rel="preload" href="app.tw.css" as="style">
-    <link rel="preload" href="style.css" as="style">
-    <link rel="stylesheet" href="app.css">
+    <!-- [效能] Google Fonts 樣式表改為非阻塞載入：原本它是 render-blocking，實測擋住首屏約 800ms。
+         media="print" 讓瀏覽器以低優先度、不阻塞繪製的方式下載，onload 再切回 all 套用。
+         字型本身已帶 display=swap，套用前先用系統字型顯示，不會有空白文字。
+         停用 JS 時由 <noscript> 保底。 -->
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <link rel="stylesheet" media="print" onload="this.media='all'"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <noscript>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    </noscript>
+    <!-- [效能] 原本是 <link href="app.css">，而 app.css 只用 @import 串接下面兩個檔案。
+         @import 會造成瀑布：必須先下載並解析 app.css，才發現還要載入另外兩個。
+         改為直接依序連結，順序與 app.css 內完全一致（style.css 先、app.tw.css 後），
+         層疊結果不變（已用 235 個元素的 computed style 逐項比對驗證）。
+         保留 app.css 檔案本身以維持相容（sw.js 仍會預快取）。 -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="app.tw.css">
     <style>
         /* 支援 Window Controls Overlay (視窗控制項疊加層) */
         @media (display-mode: window-controls-overlay) {
@@ -265,8 +281,8 @@
             </div>
         </div>
 
-        <!-- muted 屬性從 HTML 起就生效，確保 iOS 第一次 play 真的無聲（JS 後續解鎖會 unmute） -->
-        <audio id="ringSound" preload="auto" src="ring.m4a" muted></audio>
+        <!-- ringSound 不再用於 iOS 解鎖（改用程式產生的靜音 WAV blob），故移除 muted 屬性 -->
+        <audio id="ringSound" preload="auto" src="ring.m4a"></audio>
         <!-- 以下音效為可選，如果檔案不存在會靜默失敗 -->
         <audio id="stageAdvanceSound" preload="auto"></audio>
         <audio id="speechDetectedSound" preload="auto"></audio>

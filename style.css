@@ -754,16 +754,7 @@
             border: 1px solid var(--border-color);
             position: relative;
             overflow: hidden;
-
-            &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-            }
+            /* [樣式簡化] 原有 &::before 頂端 3px 漸層裝飾線已移除（與各卡片的漸層條一併清除）。 */
         }
 
         /* 階段卡片 - 增強版 */
