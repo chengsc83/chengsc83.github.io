@@ -1582,7 +1582,7 @@
             {
                 "name": "反方二辯 質詢 正方一辯",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝正方一辯。接著請反方二辯上臺質詢正方一辯，時間五分半。您有一分鐘時間開始發言。",
                 "timerLabel": "質詢時間",
                 "graceEndAction": "auto_start"
@@ -1590,7 +1590,7 @@
             {
                 "name": "反方一辯 申論",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝雙方。現在請反方一辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。",
                 "timerLabel": "申論時間",
                 "graceEndAction": "auto_start"
@@ -1598,7 +1598,7 @@
             {
                 "name": "正方三辯 質詢 反方一辯",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝反方一辯。接著請正方三辯上臺質詢反方一辯，時間五分半。您有一分鐘時間開始發言。",
                 "timerLabel": "質詢時間",
                 "graceEndAction": "auto_start"
@@ -1606,7 +1606,7 @@
             {
                 "name": "正方二辯 申論",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝雙方。現在請正方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。",
                 "timerLabel": "申論時間",
                 "graceEndAction": "auto_start"
@@ -1614,7 +1614,7 @@
             {
                 "name": "反方三辯 質詢 正方二辯",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝正方二辯。接著請反方三辯上臺質詢正方二辯，時間五分半。您有一分鐘時間開始發言。",
                 "timerLabel": "質詢時間",
                 "graceEndAction": "auto_start"
@@ -1622,7 +1622,7 @@
             {
                 "name": "反方二辯 申論",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝雙方。現在請反方二辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。",
                 "timerLabel": "申論時間",
                 "graceEndAction": "auto_start"
@@ -1630,7 +1630,7 @@
             {
                 "name": "正方一辯 質詢 反方二辯",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝反方二辯。接著請正方一辯上臺質詢反方二辯，時間五分半。您有一分鐘時間開始發言。",
                 "timerLabel": "質詢時間",
                 "graceEndAction": "auto_start"
@@ -1638,7 +1638,7 @@
             {
                 "name": "正方三辯 申論",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝雙方。現在請正方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。",
                 "timerLabel": "申論時間",
                 "graceEndAction": "auto_start"
@@ -1646,7 +1646,7 @@
             {
                 "name": "反方一辯 質詢 正方三辯",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝正方三辯。接著請反方一辯上臺質詢正方三辯，時間五分半。您有一分鐘時間開始發言。",
                 "timerLabel": "質詢時間",
                 "graceEndAction": "auto_start"
@@ -1654,7 +1654,7 @@
             {
                 "name": "反方三辯 申論",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝雙方。現在請反方三辯上臺申論，時間五分鐘。您有一分鐘時間開始發言。",
                 "timerLabel": "申論時間",
                 "graceEndAction": "auto_start"
@@ -1662,7 +1662,7 @@
             {
                 "name": "正方二辯 質詢 反方三辯",
                 "type": "speech_auto",
-                "duration": 330,
+                "duration": 270,
                 "script": "感謝反方三辯。接著請正方二辯上臺質詢反方三辯，時間五分半。您有一分鐘時間開始發言。",
                 "timerLabel": "質詢時間",
                 "graceEndAction": "auto_start"

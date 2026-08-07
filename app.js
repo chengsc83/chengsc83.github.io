@@ -6188,7 +6188,7 @@ const App = {
                         </button>
                     </div>
                 </div>
-                <div class="p-4 text-center text-xs text-slate-500 border-t border-(--border-color)">辯時計 3.0.2<br> 技術，為了更好的思辯</div>
+                <div class="p-4 text-center text-xs text-slate-500 border-t border-(--border-color)">辯時計 3.0.3<br> 技術，為了更好的思辯</div>
         `;
     },
 
@@ -6286,7 +6286,16 @@ const App = {
     _piperTtsVoice: 'zh_CN-huayan-medium',
     _piperTtsLoading: false,
     _piperTtsLoadingPromise: null,
-    _piperTtsLoadFailed: false,
+    // [FIX] 原本是單一的 _piperTtsLoadFailed 布林值：一旦設為 true 就沒有任何地方重設，
+    // 導致「CDN 抖一下 / 網路瞬斷」這種暫時性失敗會讓整場比賽都退回瀏覽器語音，
+    // 音色中途改變且使用者毫不知情。改為「冷卻重試 + 次數上限」：
+    //   - 失敗後進入冷卻（30s → 60s → 90s 遞增），冷卻期間不重試，避免拖慢每次播報
+    //   - 冷卻結束自動再試一次，暫時性故障因此能自行復原
+    //   - 連續失敗達上限才真正放棄（避免離線環境無止境重試）
+    _piperTtsFailCount: 0,          // 累計失敗次數
+    _piperTtsRetryAfter: 0,         // 冷卻到期時間戳（Date.now()）
+    _piperTtsFallbackNotified: false, // 是否已提示過使用者（整場只提示一次）
+    _PIPER_MAX_ATTEMPTS: 4,         // 連續失敗上限
     _piperTtsCache: new Map(),        // text -> WAV Blob cache
     _piperAudioBufferCache: new Map(), // text -> AudioBuffer cache（已解碼，播放零等待）
     _piperWorker: null,        // 首個 Worker（相容性參考，指向 _piperWorkers[0]）
@@ -6489,7 +6498,9 @@ const App = {
 
     async _loadPiperTTS() {
         if (this._piperWorker) return this._piperWorker;
-        if (this._piperTtsLoadFailed) return null;
+        // [FIX] 冷卻中或已達失敗上限才放棄；否則允許再次嘗試（見上方欄位說明）
+        if (this._piperTtsFailCount >= this._PIPER_MAX_ATTEMPTS) return null;
+        if (Date.now() < this._piperTtsRetryAfter) return null;
         // [FIX] 併發呼叫時共享同一個 in-flight promise，避免第二個 caller 拿到 null 而 fallback
         if (this._piperTtsLoadingPromise) return this._piperTtsLoadingPromise;
 
@@ -6600,14 +6611,46 @@ const App = {
             this._piperWorker = workers[0]; // 相容性參考
             this._piperTtsModule = workers[0];
             this._piperTtsLoading = false;
+            // [FIX] 載入成功即歸零失敗計數：先前的暫時性故障不應繼續影響本場
+            if (this._piperTtsFailCount > 0) {
+                console.log(`[Piper TTS] 前 ${this._piperTtsFailCount} 次失敗後成功復原。`);
+                this._piperTtsFailCount = 0;
+                this._piperTtsRetryAfter = 0;
+            }
             console.log(`[Piper TTS] ${workers.length} Workers loaded and ready.`);
             return workers[0];
         } catch (e) {
-            console.warn('[Piper TTS] Worker failed to load:', e);
             this._piperTtsLoading = false;
-            this._piperTtsLoadFailed = true;
+            this._piperTtsFailCount++;
+            const attemptsLeft = this._PIPER_MAX_ATTEMPTS - this._piperTtsFailCount;
+            if (attemptsLeft > 0) {
+                // 遞增退避：30s、60s、90s……冷卻結束後下一次 speak() 會自動重試
+                this._piperTtsRetryAfter = Date.now() + 30000 * this._piperTtsFailCount;
+                console.warn(`[Piper TTS] 載入失敗（第 ${this._piperTtsFailCount} 次）：${e && e.message}；` +
+                    `${30 * this._piperTtsFailCount} 秒後自動重試，尚餘 ${attemptsLeft} 次機會。`);
+            } else {
+                console.warn(`[Piper TTS] 已連續失敗 ${this._piperTtsFailCount} 次，本場不再重試：`, e);
+            }
+            this._notifyPiperFallback();
             return null;
         }
+    },
+
+    /**
+     * [FIX] 退回瀏覽器內建語音時，明確告知使用者一次。
+     * 原本失敗是完全靜默的——主席稿音色突然改變，使用者無從得知原因，
+     * 也不知道「重新整理頁面」可能就能恢復。整場只提示一次，避免干擾比賽。
+     */
+    _notifyPiperFallback() {
+        if (this._piperTtsFallbackNotified) return;
+        this._piperTtsFallbackNotified = true;
+        const canRetry = this._piperTtsFailCount < this._PIPER_MAX_ATTEMPTS;
+        this.showNotification(
+            canRetry
+                ? '語音模型載入失敗，暫時改用瀏覽器語音（稍後會自動重試）'
+                : '語音模型載入失敗，本場改用瀏覽器語音；如需高品質語音請重新整理頁面',
+            'warning', 6000
+        );
     },
 
     _pickWorker() {
